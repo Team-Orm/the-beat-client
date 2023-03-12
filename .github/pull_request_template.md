@@ -1,7 +1,10 @@
-## What is this PR?🔍
+## Description🎉
 <hr>
 
-## Changes or Description📝
+## Related Issues📝
+<hr>
+
+## Changes✅
 <hr>
 
 ## Screenshot📸
