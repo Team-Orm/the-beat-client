@@ -1,0 +1,47 @@
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-image: url("https://i.ytimg.com/vi/GtQhz6YMwPg/maxresdefault.jpg");
+  background-size: cover;
+  position: relative;
+}
+
+h1 {
+  position: absolute;
+  top: 50px;
+  font-size: 30px;
+  font-weight: bold;
+  z-index: 1;
+  background-color: transparent;
+  color: white;
+}
+
+form {
+  margin: 0;
+}
+
+.input-container {
+  margin: 10px 0;
+}
+
+.circular-button {
+  border-radius: 50px;
+  padding: 15px;
+  border: none;
+  background-color: #3f51b5;
+  color: #fff;
+  width: 130%;
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  font-size: 20px;
+  font-weight: bold;
+  border: 1px solid #ccc;
+}
+
+.circular-button:hover {
+  background-color: #1a237e;
+}
