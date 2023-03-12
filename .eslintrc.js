@@ -18,8 +18,13 @@ module.exports = {
   rules: {
     "spaced-comment": "off",
     "require-jsdoc": "off",
+    "react/prop-types": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/self-closing-comp": "off",
     "react/react-in-jsx-scope": "off",
-    "react/jsx-filename-extension": [1, { extensions: [".js", ".jsx"] }],
+    "react/jsx-filename-extension": ["warn", { extensions: [".js", ".jsx"] }],
+    "no-param-reassign": 0,
+    "no-plusplus": "off",
   },
   settings: {
     react: {
