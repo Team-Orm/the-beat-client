@@ -16,7 +16,7 @@ export default function Lobby() {
         "http://localhost:8000/api/users/logout",
       );
 
-      if (response.status === 302) {
+      if (response.status === 204) {
         localStorage.removeItem("jwt");
         auth.signOut();
 
@@ -26,7 +26,11 @@ export default function Lobby() {
       return true;
     } catch (err) {
       return navigate("/error", {
-        state: { status: err.status, message: err.message },
+        state: {
+          status: err.response.status,
+          text: err.response.statusText,
+          message: err.message,
+        },
       });
     }
   };
@@ -109,9 +113,7 @@ export default function Lobby() {
             </User>
           </UserLists>
           <RightBottom>
-            <LogoutButton type="button" onClick={handleLogout}>
-              방 만들기
-            </LogoutButton>
+            <LogoutButton type="button">방 만들기</LogoutButton>
             <LogoutButton type="button" onClick={handleLogout}>
               Logout
             </LogoutButton>

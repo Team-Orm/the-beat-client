@@ -4,11 +4,13 @@ import styled from "styled-components";
 
 export default function Error() {
   const location = useLocation();
-  const { status, message } = location.state || {};
+  const { status, message, text } = location.state || {};
 
   return (
     <ErrorContainer>
-      <h1>{status || "500"}, Internal Server Error</h1>
+      <h1>
+        {status || "500"}, {text || "Internal Server Error"}
+      </h1>
       <p>{message || "Something went wrong."}</p>
     </ErrorContainer>
   );
