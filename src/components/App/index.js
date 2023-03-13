@@ -10,6 +10,8 @@ import Loading from "../Loading";
 import RoomMaker from "../RoomMaker";
 import BattleRoom from "../BattleRoom";
 import BattleResults from "../BattleResults";
+import NotFound from "../Error/NotFound";
+import Error from "../Error";
 
 export default function App() {
   const [, loading] = useAuthState(auth);
@@ -23,6 +25,8 @@ export default function App() {
         <Route path="/battles/new" element={<RoomMaker />} />
         <Route path="/battles/:roomId" element={<BattleRoom />} />
         <Route path="/battles/results" element={<BattleResults />} />
+        <Route path="/error" element={<Error />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

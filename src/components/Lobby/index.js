@@ -10,6 +10,27 @@ export default function Lobby() {
 
   const { accessToken, email, displayName, photoURL } = auth.currentUser;
 
+  const handleLogout = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/users/logout",
+      );
+
+      if (response.status === 302) {
+        localStorage.removeItem("jwt");
+        auth.signOut();
+
+        return navigate("/login");
+      }
+
+      return true;
+    } catch (err) {
+      return navigate("/error", {
+        state: { status: err.status, message: err.message },
+      });
+    }
+  };
+
   useEffect(() => {
     const getJWTToken = async () => {
       const response = await axios.post(
@@ -39,12 +60,6 @@ export default function Lobby() {
 
     getPhotos();
   }, [photoURL]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("jwt");
-    auth.signOut();
-    return navigate("/login");
-  };
 
   return (
     <Background>
