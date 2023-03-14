@@ -35,6 +35,22 @@ export default function Lobby() {
     }
   };
 
+  const redirectToNewRoom = () => {
+    try {
+      navigate("/battles/new");
+
+      return true;
+    } catch (err) {
+      return navigate("/error", {
+        state: {
+          status: err.response.status,
+          text: err.response.statusText,
+          message: err.message,
+        },
+      });
+    }
+  };
+
   useEffect(() => {
     const getJWTToken = async () => {
       const response = await axios.post(
@@ -113,7 +129,9 @@ export default function Lobby() {
             </User>
           </UserLists>
           <RightBottom>
-            <LogoutButton type="button">방 만들기</LogoutButton>
+            <LogoutButton type="button" onClick={redirectToNewRoom}>
+              방 만들기
+            </LogoutButton>
             <LogoutButton type="button" onClick={handleLogout}>
               Logout
             </LogoutButton>

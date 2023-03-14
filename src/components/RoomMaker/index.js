@@ -1,27 +1,100 @@
-import React from "react";
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-underscore-dangle */
+import axios from "axios";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 export default function RoomMaker() {
+  const navigate = useNavigate();
+  const [rooms, setRooms] = useState([]);
+  const [hoveredRoom, setHoveredRoom] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const audioRef = useRef(null);
+
+  const handleClick = (roomId) => {
+    setSelectedRoom((prevSelectedRoom) =>
+      prevSelectedRoom === roomId ? null : roomId,
+    );
+  };
+
+  const playButton = (
+    <PlayButton
+      hovered={hoveredRoom !== null}
+      onClick={() => setIsPlaying(!isPlaying)}
+    >
+      {isPlaying ? "⏸️ BGM OFF" : "🎵 BGM ON"}
+    </PlayButton>
+  );
+
+  useEffect(() => {
+    async function getRoomsData() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/rooms/new");
+
+        if (response.data.result === "ok") {
+          setRooms(response.data.songs);
+        }
+
+        return true;
+      } catch (err) {
+        return navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.message,
+          },
+        });
+      }
+    }
+
+    getRoomsData();
+  }, [setRooms]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (hoveredRoom && isPlaying) {
+        audioRef.current.src = hoveredRoom.audioURL;
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [hoveredRoom, isPlaying]);
+
   return (
-    <RoomMakerContainer>
-      <SongTitleBox>
-        <ProfileImage src="/login.png" />
-        <SongTitleText>테스트 1입니다.</SongTitleText>
-        <CheckBox>✅</CheckBox>
-      </SongTitleBox>
-      <SongTitleBox>
-        <ProfileImage src="/login.png" />
-        <SongTitleText>테스트 2입니다.</SongTitleText>
-        <CheckBox>✅</CheckBox>
-      </SongTitleBox>
-      <SongTitleBox>
-        <ProfileImage src="/login.png" />
-        <SongTitleText>테스트 3입니다.</SongTitleText>
-        <CheckBox>✅</CheckBox>
-      </SongTitleBox>
+    <RoomMakerContainer
+      style={{
+        backgroundImage: `url(${hoveredRoom?.imageURL || null})`,
+      }}
+    >
+      <AudioContainer ref={audioRef} />
+      {playButton}
+      {rooms.map((room) => (
+        <SongContainer
+          key={room._id}
+          onMouseEnter={() => setHoveredRoom(room)}
+          onMouseLeave={() => setHoveredRoom(null)}
+          onClick={() => handleClick(room._id)}
+        >
+          <ProfileImage src={room.imageURL} />
+          <SongTitleText>
+            {room.title} - {room.artist}
+          </SongTitleText>
+          <CheckBox>{selectedRoom === room._id ? "✅" : null}</CheckBox>
+        </SongContainer>
+      ))}
       <ButtonContainer>
-        <CircularButton type="button">나가기</CircularButton>
-        <CircularButton type="button">만들기</CircularButton>
+        <ButtonContainer>
+          <CircularButton type="button" hovered={hoveredRoom !== null}>
+            나가기
+          </CircularButton>
+          <CircularButton type="button" hovered={hoveredRoom !== null}>
+            만들기
+          </CircularButton>
+        </ButtonContainer>
       </ButtonContainer>
     </RoomMakerContainer>
   );
@@ -34,14 +107,18 @@ const RoomMakerContainer = styled.div`
   align-items: center;
   height: 100vh;
   width: 100vw;
-  background-image: url("/room.png");
+  background: aliceblue;
   background-size: cover;
   background-position: center;
 `;
 
-const SongTitleBox = styled.div`
+const AudioContainer = styled.audio`
+  display: hidden;
+`;
+
+const SongContainer = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   height: 100px;
   width: 800px;
@@ -51,7 +128,23 @@ const SongTitleBox = styled.div`
   background-image: linear-gradient(to right, #000728, #00528f);
 
   :hover {
+    border: 3px solid white;
     background-image: linear-gradient(to right, #ffffff, #00528f);
+  }
+`;
+
+const PlayButton = styled.button`
+  position: absolute;
+  bottom: 30px;
+  font-size: 2em;
+  background-color: transparent;
+  border: ${(props) => (props.hovered ? "white" : "black")};
+  color: ${(props) => (props.hovered ? "white" : "black")};
+  border-radius: 5px;
+
+  :hover {
+    color: white;
+    background-color: black;
   }
 `;
 
@@ -66,6 +159,7 @@ const ProfileImage = styled.img`
   height: 80px;
   margin-left: 20px;
   border-radius: 50%;
+  object-fit: cover;
 `;
 
 const ButtonContainer = styled.div`
@@ -80,9 +174,9 @@ const CircularButton = styled.button`
   margin-right: 50px;
   background-color: transparent;
   border-radius: 10px;
-  border: 3px solid black;
   font-size: 2em;
-  color: black;
+  border: ${(props) => (props.hovered ? "white" : "black")};
+  color: ${(props) => (props.hovered ? "white" : "black")};
 
   :hover {
     color: white;
@@ -92,6 +186,9 @@ const CircularButton = styled.button`
 `;
 
 const CheckBox = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  flex: 4;
   margin-right: 30px;
   font-size: 0.5em;
 `;
