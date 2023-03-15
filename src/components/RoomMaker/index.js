@@ -1,32 +1,55 @@
-/* eslint-disable no-use-before-define */
 /* eslint-disable no-underscore-dangle */
 import axios from "axios";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { auth } from "../../features/api/firebaseApi";
 
 export default function RoomMaker() {
   const navigate = useNavigate();
-  const [rooms, setRooms] = useState([]);
-  const [hoveredRoom, setHoveredRoom] = useState(null);
+  const [songs, setSongs] = useState([]);
+  const [hoveredSong, setHoveredSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedSong, setSelectedSong] = useState(null);
   const audioRef = useRef(null);
 
   const handleClick = (roomId) => {
-    setSelectedRoom((prevSelectedRoom) =>
-      prevSelectedRoom === roomId ? null : roomId,
-    );
+    setSelectedSong((prev) => (prev === roomId ? null : roomId));
   };
 
   const playButton = (
     <PlayButton
-      hovered={hoveredRoom !== null}
+      hovered={hoveredSong !== null}
       onClick={() => setIsPlaying(!isPlaying)}
     >
       {isPlaying ? "⏸️ BGM OFF" : "🎵 BGM ON"}
     </PlayButton>
   );
+
+  const handleCreateRoom = async () => {
+    try {
+      const selectedSongData = songs.find((room) => room._id === selectedSong);
+
+      const response = await axios.post("http://localhost:8000/api/rooms/new", {
+        song: selectedSongData,
+        createdBy: auth.currentUser.displayName,
+      });
+
+      if (response.data.result === "ok") {
+        return navigate(`/battles/${response.data.room._id}`);
+      }
+
+      return true;
+    } catch (err) {
+      return navigate("/error", {
+        state: {
+          status: err.response.status,
+          text: err.response.statusText,
+          message: "No room is Selected",
+        },
+      });
+    }
+  };
 
   useEffect(() => {
     async function getRoomsData() {
@@ -34,7 +57,7 @@ export default function RoomMaker() {
         const response = await axios.get("http://localhost:8000/api/rooms/new");
 
         if (response.data.result === "ok") {
-          setRooms(response.data.songs);
+          setSongs(response.data.songs);
         }
 
         return true;
@@ -50,48 +73,52 @@ export default function RoomMaker() {
     }
 
     getRoomsData();
-  }, [setRooms]);
+  }, [setSongs]);
 
   useEffect(() => {
     if (audioRef.current) {
-      if (hoveredRoom && isPlaying) {
-        audioRef.current.src = hoveredRoom.audioURL;
+      if (hoveredSong && isPlaying) {
+        audioRef.current.src = hoveredSong.audioURL;
         audioRef.current.play();
       } else {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
     }
-  }, [hoveredRoom, isPlaying]);
+  }, [hoveredSong, isPlaying]);
 
   return (
     <RoomMakerContainer
       style={{
-        backgroundImage: `url(${hoveredRoom?.imageURL || null})`,
+        backgroundImage: `url(${hoveredSong?.imageURL || null})`,
       }}
     >
       <AudioContainer ref={audioRef} />
       {playButton}
-      {rooms.map((room) => (
+      {songs.map((song) => (
         <SongContainer
-          key={room._id}
-          onMouseEnter={() => setHoveredRoom(room)}
-          onMouseLeave={() => setHoveredRoom(null)}
-          onClick={() => handleClick(room._id)}
+          key={song._id}
+          onMouseEnter={() => setHoveredSong(song)}
+          onMouseLeave={() => setHoveredSong(null)}
+          onClick={() => handleClick(song._id)}
         >
-          <ProfileImage src={room.imageURL} />
+          <ProfileImage src={song.imageURL} />
           <SongTitleText>
-            {room.title} - {room.artist}
+            {song.title} - {song.artist}
           </SongTitleText>
-          <CheckBox>{selectedRoom === room._id ? "✅" : null}</CheckBox>
+          <CheckBox>{selectedSong === song._id ? "✅" : null}</CheckBox>
         </SongContainer>
       ))}
       <ButtonContainer>
         <ButtonContainer>
-          <CircularButton type="button" hovered={hoveredRoom !== null}>
+          <CircularButton type="button" hovered={hoveredSong !== null}>
             나가기
           </CircularButton>
-          <CircularButton type="button" hovered={hoveredRoom !== null}>
+          <CircularButton
+            type="button"
+            onClick={handleCreateRoom}
+            hovered={hoveredSong !== null}
+          >
             만들기
           </CircularButton>
         </ButtonContainer>
@@ -135,7 +162,7 @@ const SongContainer = styled.div`
 
 const PlayButton = styled.button`
   position: absolute;
-  bottom: 30px;
+  top: 30px;
   font-size: 2em;
   background-color: transparent;
   border: ${(props) => (props.hovered ? "white" : "black")};
