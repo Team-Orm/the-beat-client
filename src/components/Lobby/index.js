@@ -1,3 +1,4 @@
+import { io } from "socket.io-client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
@@ -7,6 +8,15 @@ import { auth } from "../../features/api/firebaseApi";
 export default function Lobby() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState();
+  const [socket, setSocket] = useState();
+  useEffect(() => {
+    const s = io("http://localhost:4000");
+    setSocket(s);
+
+    return () => {
+      s.disconnect();
+    };
+  }, []);
 
   const { accessToken, email, displayName, photoURL } = auth.currentUser;
 
