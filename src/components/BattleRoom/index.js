@@ -1,9 +1,24 @@
+import { io } from "socket.io-client";
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 import styled from "styled-components";
 
 export default function BattleRoom() {
-  const keys = ["S", "D", "F", "J", "K", "L"];
+  const params = useParams();
   const [activeKey, setActiveKey] = useState("");
+  const [songData, setSongData] = useState({});
+  const [socket, setSocket] = useState();
+  const keys = ["S", "D", "F", "J", "K", "L"];
+
+  useEffect(() => {
+    const s = io(`http://localhost:4000/battles/${params.roomId}`);
+    setSocket(s);
+
+    return () => {
+      s.disconnect();
+    };
+  }, []);
 
   const handleKeyDown = (event) => {
     const key = event.key.toUpperCase();
@@ -18,6 +33,23 @@ export default function BattleRoom() {
       setActiveKey("");
     }
   };
+
+  // const handleStart = (event) => {
+  // }
+
+  useEffect(() => {
+    async function getSong() {
+      const response = await axios.get(
+        `http://localhost:8000/api/rooms/${params.roomId}`,
+      );
+
+      if (response.status === 200) {
+        setSongData(response.data.song);
+      }
+    }
+
+    getSong();
+  }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);

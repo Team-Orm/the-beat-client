@@ -26,7 +26,7 @@ module.exports = {
     "no-param-reassign": 0,
     "import/prefer-default-export": "off",
     "no-plusplus": "off",
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "no-unused-expressions": "warn",
   },
   settings: {
