@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
@@ -9,16 +9,10 @@ export default function BattleRoom() {
   const [activeKey, setActiveKey] = useState("");
   const [songData, setSongData] = useState({});
   const [socket, setSocket] = useState();
+  const [countdown, setCountdown] = useState(3);
+  const [isPlaying, setIsPlaying] = useState(false);
   const keys = ["S", "D", "F", "J", "K", "L"];
-
-  useEffect(() => {
-    const s = io(`http://localhost:4000/battles/${params.roomId}`);
-    setSocket(s);
-
-    return () => {
-      s.disconnect();
-    };
-  }, []);
+  const audioRef = useRef(null);
 
   const handleKeyDown = (event) => {
     const key = event.key.toUpperCase();
@@ -34,8 +28,26 @@ export default function BattleRoom() {
     }
   };
 
-  // const handleStart = (event) => {
-  // }
+  const handleStart = () => {
+    const countdownTimer = setInterval(() => {
+      setCountdown((prevCountdown) => prevCountdown - 1);
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(countdownTimer);
+      setIsPlaying(true);
+      // Start playing the music here
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const s = io(`http://localhost:4000/battles/${params.roomId}`);
+    setSocket(s);
+
+    return () => {
+      s.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     async function getSong() {
@@ -65,8 +77,23 @@ export default function BattleRoom() {
     };
   }, [keys]);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.src = songData.audioURL;
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [isPlaying]);
+
   return (
     <Container>
+      <AudioContainer ref={audioRef} />
+      <StartButton onClick={handleStart}>Start</StartButton>
+      {countdown > 0 && <Count>{countdown}</Count>}
       <BattleRoomContainer>
         <BattleUserContainer>
           <div>
@@ -117,6 +144,7 @@ export default function BattleRoom() {
 
 const Container = styled.main`
   display: flex;
+  position: relative;
   flex-direction: column;
   width: 100vw;
   height: 100vh;
@@ -124,6 +152,42 @@ const Container = styled.main`
   background-size: cover;
   background-position: center;
   box-sizing: border-box;
+`;
+
+const AudioContainer = styled.audio`
+  display: hidden;
+`;
+
+const Count = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+`;
+
+const StartButton = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  padding: 10px 20px;
+  border: 2px solid white;
+  border-radius: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  z-index: 10;
+
+  :hover {
+    color: greenyellow;
+    border: 2px solid greenyellow;
+  }
 `;
 
 const BattleRoomContainer = styled.div`
