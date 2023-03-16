@@ -58,7 +58,7 @@ export default function BattleRoom() {
   };
 
   return (
-    <Container>
+    <Container songData={songData}>
       <AudioContainer ref={audioRef} />
       {!isCountingDown && (
         <StartButton onClick={handleStart}>Start</StartButton>
@@ -66,19 +66,11 @@ export default function BattleRoom() {
       {isCountingDown && countdown > 0 && <Count>{countdown}</Count>}
       <BattleRoomContainer>
         <BattleUserContainer>
-          <div>
-            <GradingText>Good</GradingText>
-            <CountText>12</CountText>
-          </div>
           <Controller>
             <GameController isPlaying={isPlaying} />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
-          <div>
-            <GradingText>Good</GradingText>
-            <CountText>12</CountText>
-          </div>
           <Controller>
             <GameController isPlaying={isPlaying} />
           </Controller>
@@ -108,7 +100,8 @@ const Container = styled.main`
   flex-direction: column;
   width: 100vw;
   height: 100vh;
-  background-image: url("/image2.png");
+  background-image: ${(props) =>
+    props.songData?.imageURL ? `url(${props.songData.imageURL})` : "none"};
   background-size: cover;
   background-position: center;
   box-sizing: border-box;
@@ -184,6 +177,12 @@ const GradingText = styled.div`
   font-size: 5em;
 `;
 
+const TextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+`;
+
 const CountText = styled.div`
   position: absolute;
   top: 45%;
@@ -196,7 +195,6 @@ const CountText = styled.div`
 const BottomContainer = styled.div`
   flex: 1;
   display: flex;
-  /* align-items: center; */
   justify-content: space-between;
 `;
 

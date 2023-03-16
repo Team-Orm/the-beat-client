@@ -1,5 +1,6 @@
 export const SPEED = 35;
 export const MILLISECOND = 1000;
+export const DIFFICULTY = 1000;
 export const KEYS = ["s", "d", "f", "j", "k", "l"];
 export const NOTES = [
   {
