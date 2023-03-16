@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { io } from "socket.io-client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -9,16 +10,40 @@ export default function Lobby() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState();
   const [socket, setSocket] = useState();
+  const [newUser, setNewUser] = useState({});
+  const [currentUserList, setCurrentUserList] = useState();
+  const [rooms, setRooms] = useState();
+
   useEffect(() => {
-    const s = io("http://localhost:4000");
-    setSocket(s);
+    if (auth && auth.currentUser) {
+      const { accessToken, email, displayName, photoURL, uid } =
+        auth.currentUser;
+      setNewUser({
+        accessToken,
+        email,
+        displayName,
+        photoURL,
+        uid,
+      });
+    }
+  }, [auth, auth?.currentUser]);
+
+  const { accessToken, email, displayName, photoURL, uid } = newUser;
+
+  useEffect(() => {
+    const socketClient = io("http://localhost:4000", {
+      query: {
+        userName: displayName,
+        profile: photoURL,
+        userKey: uid,
+      },
+    });
+    setSocket(socketClient);
 
     return () => {
-      s.disconnect();
+      socketClient.disconnect();
     };
-  }, []);
-
-  const { accessToken, email, displayName, photoURL } = auth.currentUser;
+  }, [displayName, photoURL]);
 
   const handleLogout = async () => {
     try {
@@ -91,6 +116,37 @@ export default function Lobby() {
     getPhotos();
   }, [photoURL]);
 
+  useEffect(() => {
+    if (socket) {
+      socket.emit("send-chat", {
+        user: auth.currentUser,
+        chat: "테스트 채팅!",
+      });
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("broadcast-chat", (user, chat) => {});
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("update-user", (currentUser) => {
+        setCurrentUserList(currentUser);
+      });
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("update-rooms", (updatedRooms) => {
+        setRooms((pre) => updatedRooms);
+      });
+    }
+  }, [socket, currentUserList]);
+
   return (
     <Background>
       <HeaderContainer>
@@ -101,18 +157,13 @@ export default function Lobby() {
         <LeftContainer>
           <Rooms>
             <RoomsLists>
-              <Room>
-                <RoomName>{email}의 방</RoomName>
-                <RoomSong>OMG - NewJeans</RoomSong>
-              </Room>
-              <Room>
-                <RoomName>{email}의 방</RoomName>
-                <RoomSong>배고파 - 햄버거</RoomSong>
-              </Room>
-              <Room>
-                <RoomName>{email}의 방</RoomName>
-                <RoomSong>부타이 - 로스 카츠 정식</RoomSong>
-              </Room>
+              {rooms &&
+                rooms.map((roomData) => (
+                  <Room key={roomData._id}>
+                    <RoomName>{roomData.createdBy}</RoomName>
+                    <RoomSong>{roomData.song}</RoomSong>
+                  </Room>
+                ))}
             </RoomsLists>
           </Rooms>
           <Chats>
@@ -129,14 +180,13 @@ export default function Lobby() {
         </LeftContainer>
         <RightContainer>
           <UserLists>
-            <User>
-              <ProfilePicture src={photos}></ProfilePicture>
-              <ProfileText>{displayName}</ProfileText>
-            </User>
-            <User>
-              <ProfilePicture src={photos}></ProfilePicture>
-              <ProfileText>{displayName}</ProfileText>
-            </User>
+            {currentUserList &&
+              currentUserList.map((userData) => (
+                <User key={userData.userKey}>
+                  <ProfilePicture src={userData.profile}></ProfilePicture>
+                  <ProfileText>{userData.userName}</ProfileText>
+                </User>
+              ))}
           </UserLists>
           <RightBottom>
             <LogoutButton type="button" onClick={redirectToNewRoom}>
