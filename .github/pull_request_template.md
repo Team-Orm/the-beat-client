@@ -1,10 +1,10 @@
-## Description🎉
+## 📝 Description
 
 
-## Related Issues📝
+## ❗ Related Issues
 
 
-## Changes✅
+## 🛠️ Changes
 
 
-## Screenshot📸
+## 📸 Screenshot
