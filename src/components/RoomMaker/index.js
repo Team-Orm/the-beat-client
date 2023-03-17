@@ -36,7 +36,7 @@ export default function RoomMaker() {
         uid: auth.currentUser.uid,
       });
 
-      if (response.data.result === "ok") {
+      if (response.status === 201) {
         return navigate(`/battles/${response.data.room._id}`);
       }
 
@@ -57,7 +57,7 @@ export default function RoomMaker() {
       try {
         const response = await axios.get("http://localhost:8000/api/rooms/new");
 
-        if (response.data.result === "ok") {
+        if (response.status === 200) {
           setSongs(response.data.songs);
         }
 
