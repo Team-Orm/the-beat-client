@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import { io } from "socket.io-client";
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
@@ -7,41 +6,13 @@ import styled from "styled-components";
 import GameController from "../GameController";
 
 export default function BattleRoom() {
-  const params = useParams();
   const [songData, setSongData] = useState({});
-  const [roomData, setRoomData] = useState({});
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const audioRef = useRef(null);
   const { roomId } = useParams();
-
-  useEffect(() => {
-    const socketClient = io(`http://localhost:4000/battles/${roomId}`, {
-      query: { roomId },
-    });
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    async function getSong() {
-      const response = await axios.get(
-        `http://localhost:8000/api/rooms/${roomId}`,
-      );
-
-      if (response.status === 200) {
-        setSongData(response.data.song);
-        setRoomData(response.data.room);
-      }
-    }
-
-    getSong();
-  }, []);
 
   const handleStart = () => {
     setIsCountingDown(true);
@@ -56,6 +27,31 @@ export default function BattleRoom() {
       audioRef.current.play();
     }, 3000);
   };
+
+  useEffect(() => {
+    const socketClient = io("http://localhost:4000/battles/", {
+      query: { roomId },
+    });
+    setSocket(socketClient);
+
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    const getSong = async () => {
+      const response = await axios.get(
+        `http://localhost:8000/api/rooms/${roomId}`,
+      );
+
+      if (response.status === 200) {
+        setSongData(response.data.song);
+      }
+    };
+
+    getSong();
+  }, [roomId]);
 
   return (
     <Container songData={songData}>
@@ -166,30 +162,6 @@ const BattleUserContainer = styled.div`
   position: relative;
   width: 30%;
   height: 100%;
-`;
-
-const GradingText = styled.div`
-  position: absolute;
-  top: 35%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 5em;
-`;
-
-const TextContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  z-index: 1;
-`;
-
-const CountText = styled.div`
-  position: absolute;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 5em;
 `;
 
 const BottomContainer = styled.div`

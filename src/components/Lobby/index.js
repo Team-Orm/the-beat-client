@@ -26,7 +26,7 @@ export default function Lobby() {
         uid,
       });
     }
-  }, [auth, auth?.currentUser]);
+  }, []);
 
   const { accessToken, email, displayName, photoURL, uid } = newUser;
 
@@ -43,7 +43,7 @@ export default function Lobby() {
     return () => {
       socketClient.disconnect();
     };
-  }, [displayName, photoURL]);
+  }, [displayName, photoURL, uid]);
 
   const handleLogout = async () => {
     try {
@@ -104,17 +104,39 @@ export default function Lobby() {
   }, [accessToken, email, displayName, photoURL]);
 
   useEffect(() => {
-    async function getPhotos() {
+    const getPhotos = async () => {
       const proxyUrl = "https://api.allorigins.win/raw?url=";
       const photo = await fetch(proxyUrl + photoURL);
       const blob = await photo.blob();
       const urls = URL.createObjectURL(blob);
 
       setPhotos(urls);
-    }
+    };
 
     getPhotos();
   }, [photoURL]);
+
+  useEffect(() => {
+    const updateRooms = async () => {
+      try {
+        if (socket) {
+          const response = await axios.get("http://localhost:8000/api/rooms");
+          const newRooms = await response.data.rooms;
+          setRooms(newRooms);
+        }
+      } catch (err) {
+        navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.message,
+          },
+        });
+      }
+    };
+
+    updateRooms();
+  }, [socket, setRooms, navigate]);
 
   useEffect(() => {
     if (socket) {
@@ -142,10 +164,10 @@ export default function Lobby() {
   useEffect(() => {
     if (socket) {
       socket.on("update-rooms", (updatedRooms) => {
-        setRooms((pre) => updatedRooms);
+        setRooms(() => updatedRooms);
       });
     }
-  }, [socket, currentUserList]);
+  }, [socket]);
 
   return (
     <Background>
@@ -155,7 +177,7 @@ export default function Lobby() {
       </HeaderContainer>
       <Container>
         <LeftContainer>
-          <Rooms>
+          <RoomsContainer>
             <RoomsLists>
               {rooms &&
                 rooms.map((roomData) => (
@@ -165,7 +187,7 @@ export default function Lobby() {
                   </Room>
                 ))}
             </RoomsLists>
-          </Rooms>
+          </RoomsContainer>
           <Chats>
             <ChatsHead>Chats</ChatsHead>
             <ChatList>
@@ -183,7 +205,7 @@ export default function Lobby() {
             {currentUserList &&
               currentUserList.map((userData) => (
                 <User key={userData.userKey}>
-                  <ProfilePicture src={userData.profile}></ProfilePicture>
+                  <ProfilePicture src={userData.profile} />
                   <ProfileText>{userData.userName}</ProfileText>
                 </User>
               ))}
@@ -256,7 +278,7 @@ const LeftContainer = styled.div`
   margin: 80px;
 `;
 
-const Rooms = styled.div`
+const RoomsContainer = styled.div`
   flex: 5;
   display: flex;
   justify-content: flex-start;

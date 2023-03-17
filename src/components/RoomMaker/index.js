@@ -53,7 +53,7 @@ export default function RoomMaker() {
   };
 
   useEffect(() => {
-    async function getRoomsData() {
+    const getRoomsData = async () => {
       try {
         const response = await axios.get("http://localhost:8000/api/rooms/new");
 
@@ -71,10 +71,10 @@ export default function RoomMaker() {
           },
         });
       }
-    }
+    };
 
     getRoomsData();
-  }, [setSongs]);
+  }, [navigate, setSongs]);
 
   useEffect(() => {
     if (audioRef.current) {

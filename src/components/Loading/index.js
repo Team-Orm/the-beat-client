@@ -1,4 +1,3 @@
-/* eslint-disable prefer-template */
 import React from "react";
 import styled from "styled-components";
 
