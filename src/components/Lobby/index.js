@@ -14,37 +14,6 @@ export default function Lobby() {
   const [currentUserList, setCurrentUserList] = useState();
   const [rooms, setRooms] = useState();
 
-  useEffect(() => {
-    if (auth && auth.currentUser) {
-      const { accessToken, email, displayName, photoURL, uid } =
-        auth.currentUser;
-      setNewUser({
-        accessToken,
-        email,
-        displayName,
-        photoURL,
-        uid,
-      });
-    }
-  }, []);
-
-  const { accessToken, email, displayName, photoURL, uid } = newUser;
-
-  useEffect(() => {
-    const socketClient = io("http://localhost:4000", {
-      query: {
-        userName: displayName,
-        profile: photoURL,
-        userKey: uid,
-      },
-    });
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, [displayName, photoURL, uid]);
-
   const handleLogout = async () => {
     try {
       const response = await axios.post(
@@ -87,10 +56,40 @@ export default function Lobby() {
   };
 
   useEffect(() => {
+    if (auth && auth.currentUser) {
+      const { accessToken, displayName, photoURL, uid } = auth.currentUser;
+
+      setNewUser({
+        accessToken,
+        displayName,
+        photoURL,
+        uid,
+      });
+    }
+  }, []);
+
+  const { accessToken, displayName, photoURL, uid } = newUser;
+
+  useEffect(() => {
+    const socketClient = io("http://localhost:4000", {
+      query: {
+        name: displayName,
+        profile: photoURL,
+        userKey: uid,
+      },
+    });
+    setSocket(socketClient);
+
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [displayName, photoURL, uid]);
+
+  useEffect(() => {
     const getJWTToken = async () => {
       const response = await axios.post(
         "http://localhost:8000/api/users/login",
-        { accessToken, email, displayName, photoURL },
+        { accessToken, displayName, photoURL },
       );
 
       if (response.data.result === "ok") {
@@ -101,7 +100,7 @@ export default function Lobby() {
     };
 
     getJWTToken();
-  }, [accessToken, email, displayName, photoURL]);
+  }, [accessToken, displayName, photoURL]);
 
   useEffect(() => {
     const getPhotos = async () => {
@@ -206,7 +205,7 @@ export default function Lobby() {
               currentUserList.map((userData) => (
                 <User key={userData.userKey}>
                   <ProfilePicture src={userData.profile} />
-                  <ProfileText>{userData.userName}</ProfileText>
+                  <ProfileText>{userData.name}</ProfileText>
                 </User>
               ))}
           </UserLists>

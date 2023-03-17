@@ -33,7 +33,7 @@ export default function RoomMaker() {
       const response = await axios.post("http://localhost:8000/api/rooms/new", {
         song: selectedSongData,
         createdBy: auth.currentUser.displayName,
-        email: auth.currentUser.email,
+        uid: auth.currentUser.uid,
       });
 
       if (response.data.result === "ok") {
