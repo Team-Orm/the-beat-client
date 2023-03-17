@@ -74,8 +74,8 @@ export default function Lobby() {
     const socketClient = io("http://localhost:4000", {
       query: {
         name: displayName,
-        profile: photoURL,
-        userKey: uid,
+        picture: photoURL,
+        uid,
       },
     });
     setSocket(socketClient);
@@ -202,10 +202,10 @@ export default function Lobby() {
         <RightContainer>
           <UserLists>
             {currentUserList &&
-              currentUserList.map((userData) => (
-                <User key={userData.userKey}>
-                  <ProfilePicture src={userData.profile} />
-                  <ProfileText>{userData.name}</ProfileText>
+              currentUserList.map(({ uid, picture, name }) => (
+                <User key={uid}>
+                  <ProfilePicture src={picture} />
+                  <ProfileText>{name}</ProfileText>
                 </User>
               ))}
           </UserLists>
