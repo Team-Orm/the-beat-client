@@ -38,12 +38,13 @@ export default function Lobby() {
         userKey: uid,
       },
     });
+
     setSocket(socketClient);
 
     return () => {
       socketClient.disconnect();
     };
-  }, [displayName, photoURL]);
+  }, [displayName, photoURL, uid]);
 
   const handleLogout = async () => {
     try {
@@ -134,7 +135,7 @@ export default function Lobby() {
   useEffect(() => {
     if (socket) {
       socket.on("update-user", (currentUser) => {
-        setCurrentUserList(currentUser);
+        setCurrentUserList(() => currentUser);
       });
     }
   }, [socket]);
@@ -142,11 +143,10 @@ export default function Lobby() {
   useEffect(() => {
     if (socket) {
       socket.on("update-rooms", (updatedRooms) => {
-        setRooms((pre) => updatedRooms);
+        setRooms(() => updatedRooms);
       });
     }
   }, [socket, currentUserList]);
-
   return (
     <Background>
       <HeaderContainer>
@@ -161,7 +161,7 @@ export default function Lobby() {
                 rooms.map((roomData) => (
                   <Room key={roomData._id}>
                     <RoomName>{roomData.createdBy}</RoomName>
-                    <RoomSong>{roomData.song}</RoomSong>
+                    <RoomSong>{roomData.song.title}</RoomSong>
                   </Room>
                 ))}
             </RoomsLists>
