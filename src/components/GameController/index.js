@@ -1,8 +1,11 @@
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-unsafe-optional-chaining */
-/* eslint-disable no-shadow */
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import styled from "styled-components";
 import {
   NOTES,
@@ -14,8 +17,11 @@ import {
 
 export default function GameController({ isPlaying }) {
   const [activeKey, setActiveKey] = useState("");
-  const [word, setWord] = useState("");
   const [notes, setNotes] = useState(NOTES);
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [word, setWord] = useState("");
+
   const canvasRef = useRef(null);
   const notesRef = useRef(notes);
   const deltaRef = useRef(null);
@@ -24,8 +30,19 @@ export default function GameController({ isPlaying }) {
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
 
-  const [score, setScore] = useState(0);
-  const [combo, setCombo] = useState(0);
+  const columnWidth = canvas?.width / KEYS.length;
+  const noteHeight = canvas?.width / (6 * 3 * 3);
+
+  const keyMappings = useMemo(() => {
+    return {
+      s: { positionX: columnWidth * 0, color: "red" },
+      d: { positionX: columnWidth * 1, color: "blue" },
+      f: { positionX: columnWidth * 2, color: "yellow" },
+      j: { positionX: columnWidth * 3, color: "purple" },
+      k: { positionX: columnWidth * 4, color: "orange" },
+      l: { positionX: columnWidth * 5, color: "skyblue" },
+    };
+  }, [columnWidth]);
 
   const calculateScore = (word) => {
     let score;
@@ -45,42 +62,6 @@ export default function GameController({ isPlaying }) {
     }
 
     return score;
-  };
-
-  const columnWidth = canvas?.width / KEYS.length;
-  const noteHeight = canvas?.width / (6 * 3 * 3);
-
-  const keyMappings = {
-    s: { positionX: columnWidth * 0, color: "red" },
-    d: { positionX: columnWidth * 1, color: "blue" },
-    f: { positionX: columnWidth * 2, color: "yellow" },
-    j: { positionX: columnWidth * 3, color: "purple" },
-    k: { positionX: columnWidth * 4, color: "orange" },
-    l: { positionX: columnWidth * 5, color: "skyblue" },
-  };
-
-  const renderInteracts = (ctx, note) => {
-    for (const key in keyMappings) {
-      if (keyMappings.hasOwnProperty(key) && activeKey === key) {
-        const gradient = ctx.createLinearGradient(
-          key.positionX,
-          window.innerHeight,
-          key.positionX,
-          0,
-        );
-
-        gradient.addColorStop(0, `red`);
-        gradient.addColorStop(1, "transparent");
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(
-          keyMappings[key].positionX,
-          0,
-          columnWidth,
-          window.innerHeight,
-        );
-      }
-    }
   };
 
   const onPress = useCallback((key) => {
@@ -110,20 +91,26 @@ export default function GameController({ isPlaying }) {
     setNotes((prev) => prev.filter((note) => note !== targetNote));
   }, []);
 
-  const activate = useCallback((event) => {
-    const { key } = event;
-    if (keyMappings[key]) {
-      setActiveKey(key);
-      onPress(key);
-    }
-  }, []);
+  const activate = useCallback(
+    (event) => {
+      const { key } = event;
+      if (keyMappings[key]) {
+        setActiveKey(key);
+        onPress(key);
+      }
+    },
+    [keyMappings, onPress],
+  );
 
-  const deActivate = useCallback((event) => {
-    const { key } = event;
-    if (keyMappings[key]) {
-      setActiveKey("");
-    }
-  }, []);
+  const deActivate = useCallback(
+    (event) => {
+      const { key } = event;
+      if (keyMappings[key]) {
+        setActiveKey("");
+      }
+    },
+    [keyMappings],
+  );
 
   const render = (ctx, note) => {
     const cornerRadius = 5;
@@ -206,10 +193,10 @@ export default function GameController({ isPlaying }) {
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
       timeRef.current += (now - deltaRef.current) / MILLISECOND;
       const visibleNotes = notes.filter((note) => note.time <= timeRef.current);
-      renderNotes(now, deltaRef.current, ctx, visibleNotes);
-      // renderInteracts(ctx);
-      animationFrameId = requestAnimationFrame(updateNotes);
 
+      renderNotes(now, deltaRef.current, ctx, visibleNotes);
+
+      animationFrameId = requestAnimationFrame(updateNotes);
       deltaRef.current = now;
     };
 
@@ -222,12 +209,12 @@ export default function GameController({ isPlaying }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPlaying, ctx, canvas]);
+  }, [isPlaying, ctx, canvas, notes, renderNotes]);
 
   useEffect(() => {
     notesRef.current = notes;
     setScore((prev) => prev + calculateScore(word));
-  }, [notes]);
+  }, [notes, word]);
 
   useEffect(() => {
     window.addEventListener("keydown", activate);

@@ -14,38 +14,6 @@ export default function Lobby() {
   const [currentUserList, setCurrentUserList] = useState();
   const [rooms, setRooms] = useState();
 
-  useEffect(() => {
-    if (auth && auth.currentUser) {
-      const { accessToken, email, displayName, photoURL, uid } =
-        auth.currentUser;
-      setNewUser({
-        accessToken,
-        email,
-        displayName,
-        photoURL,
-        uid,
-      });
-    }
-  }, [auth, auth?.currentUser]);
-
-  const { accessToken, email, displayName, photoURL, uid } = newUser;
-
-  useEffect(() => {
-    const socketClient = io("http://localhost:4000", {
-      query: {
-        userName: displayName,
-        profile: photoURL,
-        userKey: uid,
-      },
-    });
-
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, [displayName, photoURL, uid]);
-
   const handleLogout = async () => {
     try {
       const response = await axios.post(
@@ -88,10 +56,40 @@ export default function Lobby() {
   };
 
   useEffect(() => {
+    if (auth && auth.currentUser) {
+      const { accessToken, displayName, photoURL, uid } = auth.currentUser;
+
+      setNewUser({
+        accessToken,
+        displayName,
+        photoURL,
+        uid,
+      });
+    }
+  }, []);
+
+  const { accessToken, displayName, photoURL, uid } = newUser;
+
+  useEffect(() => {
+    const socketClient = io("http://localhost:4000", {
+      query: {
+        name: displayName,
+        picture: photoURL,
+        uid,
+      },
+    });
+    setSocket(socketClient);
+
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [displayName, photoURL, uid]);
+
+  useEffect(() => {
     const getJWTToken = async () => {
       const response = await axios.post(
         "http://localhost:8000/api/users/login",
-        { accessToken, email, displayName, photoURL },
+        { accessToken, displayName, photoURL },
       );
 
       if (response.data.result === "ok") {
@@ -102,20 +100,42 @@ export default function Lobby() {
     };
 
     getJWTToken();
-  }, [accessToken, email, displayName, photoURL]);
+  }, [accessToken, displayName, photoURL]);
 
   useEffect(() => {
-    async function getPhotos() {
+    const getPhotos = async () => {
       const proxyUrl = "https://api.allorigins.win/raw?url=";
       const photo = await fetch(proxyUrl + photoURL);
       const blob = await photo.blob();
       const urls = URL.createObjectURL(blob);
 
       setPhotos(urls);
-    }
+    };
 
     getPhotos();
   }, [photoURL]);
+
+  useEffect(() => {
+    const updateRooms = async () => {
+      try {
+        if (socket) {
+          const response = await axios.get("http://localhost:8000/api/rooms");
+          const newRooms = await response.data.rooms;
+          setRooms(newRooms);
+        }
+      } catch (err) {
+        navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.message,
+          },
+        });
+      }
+    };
+
+    updateRooms();
+  }, [socket, setRooms, navigate]);
 
   useEffect(() => {
     if (socket) {
@@ -146,7 +166,8 @@ export default function Lobby() {
         setRooms(() => updatedRooms);
       });
     }
-  }, [socket, currentUserList]);
+  }, [socket]);
+
   return (
     <Background>
       <HeaderContainer>
@@ -155,7 +176,7 @@ export default function Lobby() {
       </HeaderContainer>
       <Container>
         <LeftContainer>
-          <Rooms>
+          <RoomsContainer>
             <RoomsLists>
               {rooms &&
                 rooms.map((roomData) => (
@@ -165,7 +186,7 @@ export default function Lobby() {
                   </Room>
                 ))}
             </RoomsLists>
-          </Rooms>
+          </RoomsContainer>
           <Chats>
             <ChatsHead>Chats</ChatsHead>
             <ChatList>
@@ -181,10 +202,10 @@ export default function Lobby() {
         <RightContainer>
           <UserLists>
             {currentUserList &&
-              currentUserList.map((userData) => (
-                <User key={userData.userKey}>
-                  <ProfilePicture src={userData.profile}></ProfilePicture>
-                  <ProfileText>{userData.userName}</ProfileText>
+              currentUserList.map(({ uid, picture, name }) => (
+                <User key={uid}>
+                  <ProfilePicture src={picture} />
+                  <ProfileText>{name}</ProfileText>
                 </User>
               ))}
           </UserLists>
@@ -256,7 +277,7 @@ const LeftContainer = styled.div`
   margin: 80px;
 `;
 
-const Rooms = styled.div`
+const RoomsContainer = styled.div`
   flex: 5;
   display: flex;
   justify-content: flex-start;

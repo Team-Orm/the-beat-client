@@ -33,10 +33,10 @@ export default function RoomMaker() {
       const response = await axios.post("http://localhost:8000/api/rooms/new", {
         song: selectedSongData,
         createdBy: auth.currentUser.displayName,
-        email: auth.currentUser.email,
+        uid: auth.currentUser.uid,
       });
 
-      if (response.data.result === "ok") {
+      if (response.status === 201) {
         return navigate(`/battles/${response.data.room._id}`);
       }
 
@@ -53,11 +53,11 @@ export default function RoomMaker() {
   };
 
   useEffect(() => {
-    async function getRoomsData() {
+    const getRoomsData = async () => {
       try {
         const response = await axios.get("http://localhost:8000/api/rooms/new");
 
-        if (response.data.result === "ok") {
+        if (response.status === 200) {
           setSongs(response.data.songs);
         }
 
@@ -71,10 +71,10 @@ export default function RoomMaker() {
           },
         });
       }
-    }
+    };
 
     getRoomsData();
-  }, [setSongs]);
+  }, [navigate, setSongs]);
 
   useEffect(() => {
     if (audioRef.current) {
