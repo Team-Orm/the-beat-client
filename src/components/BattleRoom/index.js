@@ -151,7 +151,7 @@ const StartButton = styled.div`
 
 const BattleRoomContainer = styled.div`
   display: flex;
-  flex: 11;
+  flex: 9;
   justify-content: space-between;
   width: 100%;
   height: 100%;

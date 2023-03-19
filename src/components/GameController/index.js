@@ -30,6 +30,8 @@ export default function GameController({ isPlaying }) {
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
 
+  const canvasHeight = canvas?.height * 0.9;
+  const borderWidth = 5;
   const columnWidth = canvas?.width / KEYS.length;
   const noteHeight = canvas?.width / (6 * 3 * 3);
 
@@ -64,32 +66,43 @@ export default function GameController({ isPlaying }) {
     return score;
   };
 
-  const onPress = useCallback((key) => {
-    const targetNote = notesRef.current.find((note) => note.key === key);
-    const diffTimeNoteAndKey = Math.abs(
-      targetNote.time + 2.14 - timeRef.current, // 2.14 === note.positionY > canvas.height;
-    );
+  const onPress = useCallback(
+    (key) => {
+      const hitBoxPositionPercentage = 0.125;
+      const positionOfHitBox =
+        canvasHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
+      const averageFrame = MILLISECOND / 60;
+      const pixerPerFrame = (SPEED / 10) * averageFrame;
+      const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
+      const timeToHitBoxMiddle = distanceToHitBoxMiddle / pixerPerFrame; // time = distance / speed;
 
-    const accuracyTime = (SPEED * 10) / DIFFICULTY; // 0.35
-    const judge = diffTimeNoteAndKey < 0.35;
+      const targetNote = notesRef.current.find((note) => note.key === key);
+      const timeFromNoteToHitBox = Math.abs(
+        targetNote?.time + timeToHitBoxMiddle - timeRef.current,
+      );
 
-    if (!judge) {
-      return;
-    }
+      const maximumTiming = SPEED / DIFFICULTY; // 0.35
+      const withinTimingThreshold = timeFromNoteToHitBox < maximumTiming;
 
-    if (diffTimeNoteAndKey <= accuracyTime / 2) {
-      setWord("good");
-    } else if (diffTimeNoteAndKey <= accuracyTime / 3) {
-      setWord("excellent");
-    } else {
-      setWord("off beat");
-    }
+      if (!withinTimingThreshold) {
+        return;
+      }
 
-    setCombo((prev) => prev + 1);
+      if (timeFromNoteToHitBox <= maximumTiming / 3) {
+        setWord("excellent");
+      } else if (timeFromNoteToHitBox <= maximumTiming / 2) {
+        setWord("good");
+      } else {
+        setWord("off beat");
+      }
 
-    notesRef.current = notesRef.current.filter((note) => note !== targetNote);
-    setNotes((prev) => prev.filter((note) => note !== targetNote));
-  }, []);
+      setCombo((prev) => prev + 1);
+
+      notesRef.current = notesRef.current.filter((note) => note !== targetNote);
+      setNotes((prev) => prev.filter((note) => note !== targetNote));
+    },
+    [canvasHeight, noteHeight],
+  );
 
   const activate = useCallback(
     (event) => {
@@ -165,15 +178,18 @@ export default function GameController({ isPlaying }) {
   const update = useCallback(
     (now, delta, ctx, note) => {
       const diffTimeBetweenAnimationFrame = (now - delta) / MILLISECOND;
+
       if (note) {
         note.positionY += diffTimeBetweenAnimationFrame * SPEED;
       }
 
-      if (note.positionY > canvas.height) {
-        return;
+      if (note.positionY >= canvas.height) {
+        // console.log(note.positionY);
+        return false;
       }
+      // console.log(note.time - timeRef.current);
 
-      render(ctx, note);
+      return render(ctx, note);
     },
     [canvas?.height, render],
   );
@@ -241,7 +257,11 @@ export default function GameController({ isPlaying }) {
 
   return (
     <GameContainer>
-      <CanvasContainer ref={canvasRef} />
+      <CanvasContainer
+        ref={canvasRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+      />
       <TextContainer>
         <div>{word.toUpperCase()}</div>
         <div>{combo === 0 ? null : combo}</div>

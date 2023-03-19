@@ -12,7 +12,7 @@ export default function RoomMaker() {
   const [selectedSong, setSelectedSong] = useState(null);
   const audioRef = useRef(null);
 
-  const handleClick = (roomId) => {
+  const handleSelecet = (roomId) => {
     setSelectedSong((prev) => (prev === roomId ? null : roomId));
   };
 
@@ -27,12 +27,12 @@ export default function RoomMaker() {
 
   const handleCreateRoom = async () => {
     try {
-      const selectedSong = songs.find((room) => room._id === selectedSong);
+      const selected = songs.find((song) => song._id === selectedSong);
 
       const response = await axios.post(
         `${process.env.REACT_APP_SERVER_URL}/api/rooms/new`,
         {
-          song: selectedSong,
+          song: selected,
           createdBy: auth.currentUser.displayName,
           uid: auth.currentUser.uid,
         },
@@ -105,7 +105,7 @@ export default function RoomMaker() {
           key={song._id}
           onMouseEnter={() => setHoveredSong(song)}
           onMouseLeave={() => setHoveredSong(null)}
-          onClick={() => handleClick(song._id)}
+          onClick={() => handleSelecet(song._id)}
         >
           <ProfileImage src={song.imageURL} />
           <SongTitleText>
