@@ -1,11 +1,16 @@
 /* eslint-disable react/no-array-index-key */
-/* eslint-disable no-underscore-dangle */
 import { io } from "socket.io-client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../features/api/firebaseApi";
+import {
+  UPDATE_ROOMS,
+  SEND_CHAT,
+  BROADCAST_CHAT,
+  UPDATE_USER,
+} from "../../store/contants";
 
 export default function Lobby() {
   const navigate = useNavigate();
@@ -37,7 +42,7 @@ export default function Lobby() {
       e.preventDefault();
 
       if (chatMessage !== "" && socket) {
-        socket.emit("send-chat", {
+        socket.emit(SEND_CHAT, {
           user: displayName,
           chat: chatMessage,
         });
@@ -50,7 +55,7 @@ export default function Lobby() {
   const handleLogout = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/logout",
+        `${process.env.REACT_APP_SERVER_URL}/api/users/logout`,
       );
 
       if (response.status === 204) {
@@ -60,13 +65,13 @@ export default function Lobby() {
         return navigate("/login");
       }
 
-      return true;
+      throw new Error(response);
     } catch (err) {
       return navigate("/error", {
         state: {
           status: err.response.status,
           text: err.response.statusText,
-          message: err.message,
+          message: err.response.data.message,
         },
       });
     }
@@ -74,15 +79,13 @@ export default function Lobby() {
 
   const redirectToNewRoom = () => {
     try {
-      navigate("/battles/new");
-
-      return true;
+      return navigate("/battles/new");
     } catch (err) {
       return navigate("/error", {
         state: {
           status: err.response.status,
           text: err.response.statusText,
-          message: err.message,
+          message: err.response.data.message,
         },
       });
     }
@@ -102,7 +105,7 @@ export default function Lobby() {
   }, []);
 
   useEffect(() => {
-    const socketClient = io("http://localhost:4000", {
+    const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
       query: {
         name: displayName,
         picture: photoURL,
@@ -118,51 +121,81 @@ export default function Lobby() {
 
   useEffect(() => {
     const getJWTToken = async () => {
-      const response = await axios.post(
-        "http://localhost:8000/api/users/login",
-        { accessToken, displayName, photoURL },
-      );
+      try {
+        if (accessToken) {
+          const response = await axios.post(
+            `${process.env.REACT_APP_SERVER_URL}/api/users/login`,
+            { accessToken, displayName, uid, photoURL },
+          );
 
-      if (response.data.result === "ok") {
-        localStorage.setItem("jwt", response.data.token);
+          if (response.status === 201) {
+            return localStorage.setItem("jwt", response.data.token);
+          }
+
+          throw new Error(response);
+        }
+
+        return true;
+      } catch (err) {
+        return navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
       }
-
-      return true;
     };
 
     getJWTToken();
-  }, [accessToken, displayName, photoURL]);
+  }, [accessToken, displayName, navigate, photoURL, uid]);
 
   useEffect(() => {
     const getPhotos = async () => {
-      const proxyUrl = "https://api.allorigins.win/raw?url=";
-      const photo = await fetch(proxyUrl + photoURL);
-      const blob = await photo.blob();
-      const urls = URL.createObjectURL(blob);
-
-      setPhotos(urls);
-    };
-
-    getPhotos();
-  }, [photoURL]);
-
-  useEffect(() => {
-    const updateRooms = async () => {
       try {
-        if (socket) {
-          const response = await axios.get("http://localhost:8000/api/rooms");
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
+        const photo = await fetch(proxyUrl + photoURL);
+        const blob = await photo.blob();
+        const urls = URL.createObjectURL(blob);
 
-          if (response.status === 200) {
-            const newRooms = response.data.rooms;
-            setRoomsList(() => newRooms);
-          }
-        }
+        setPhotos(urls);
       } catch (err) {
         navigate("/error", {
           state: {
             status: err.response.status,
             text: err.response.statusText,
-            message: err.message,
+            message: err.response.data.message,
+          },
+        });
+      }
+    };
+
+    getPhotos();
+  }, [navigate, photoURL]);
+
+  useEffect(() => {
+    const updateRooms = async () => {
+      try {
+        if (socket) {
+          const response = await axios.get(
+            `${process.env.REACT_APP_SERVER_URL}/api/rooms`,
+          );
+
+          if (response.status === 200) {
+            const newRooms = await response.data.rooms;
+            return setRoomsList(() => newRooms);
+          }
+
+          throw new Error(response);
+        }
+
+        return true;
+      } catch (err) {
+        return navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
           },
         });
       }
@@ -173,7 +206,7 @@ export default function Lobby() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("broadcast-chat", (user, chat) => {
+      socket.on(BROADCAST_CHAT, (user, chat) => {
         setReceivedMessages((prevMessages) => [
           ...prevMessages,
           { user, chat },
@@ -184,7 +217,7 @@ export default function Lobby() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("update-user", (currentUser) => {
+      socket.on(UPDATE_USER, (currentUser) => {
         setCurrentUserList(() => currentUser);
       });
     }
@@ -192,7 +225,7 @@ export default function Lobby() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("update-rooms", (updatedRooms) => {
+      socket.on(UPDATE_ROOMS, (updatedRooms) => {
         setRoomsList(() => updatedRooms);
       });
     }
@@ -200,7 +233,7 @@ export default function Lobby() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [receivedMessages]);
+  }, [receivedMessages, scrollToBottom]);
 
   return (
     <Background>

@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 import axios from "axios";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,25 +27,28 @@ export default function RoomMaker() {
 
   const handleCreateRoom = async () => {
     try {
-      const selectedSongData = songs.find((room) => room._id === selectedSong);
+      const selectedSong = songs.find((room) => room._id === selectedSong);
 
-      const response = await axios.post("http://localhost:8000/api/rooms/new", {
-        song: selectedSongData,
-        createdBy: auth.currentUser.displayName,
-        uid: auth.currentUser.uid,
-      });
+      const response = await axios.post(
+        `${process.env.REACT_APP_SERVER_URL}/api/rooms/new`,
+        {
+          song: selectedSong,
+          createdBy: auth.currentUser.displayName,
+          uid: auth.currentUser.uid,
+        },
+      );
 
       if (response.status === 201) {
         return navigate(`/battles/${response.data.room._id}`);
       }
 
-      return true;
+      throw new Error(response);
     } catch (err) {
       return navigate("/error", {
         state: {
           status: err.response.status,
           text: err.response.statusText,
-          message: "No room is Selected",
+          message: err.response.data.message,
         },
       });
     }
@@ -55,19 +57,21 @@ export default function RoomMaker() {
   useEffect(() => {
     const getRoomsData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/rooms/new");
+        const response = await axios.get(
+          `${process.env.REACT_APP_SERVER_URL}/api/rooms/new`,
+        );
 
         if (response.status === 200) {
-          setSongs(response.data.songs);
+          return setSongs(response.data.songs);
         }
 
-        return true;
+        throw new Error(response);
       } catch (err) {
         return navigate("/error", {
           state: {
             status: err.response.status,
             text: err.response.statusText,
-            message: err.message,
+            message: err.response.data.message,
           },
         });
       }
@@ -91,7 +95,7 @@ export default function RoomMaker() {
   return (
     <RoomMakerContainer
       style={{
-        backgroundImage: `url(${hoveredSong?.imageURL || null})`,
+        backgroundImage: `url(${hoveredSong?.imageURL || "none"})`,
       }}
     >
       <AudioContainer ref={audioRef} />
@@ -111,18 +115,16 @@ export default function RoomMaker() {
         </SongContainer>
       ))}
       <ButtonContainer>
-        <ButtonContainer>
-          <CircularButton type="button" hovered={hoveredSong !== null}>
-            나가기
-          </CircularButton>
-          <CircularButton
-            type="button"
-            onClick={handleCreateRoom}
-            hovered={hoveredSong !== null}
-          >
-            만들기
-          </CircularButton>
-        </ButtonContainer>
+        <ActionButton type="button" hovered={hoveredSong !== null}>
+          나가기
+        </ActionButton>
+        <ActionButton
+          type="button"
+          onClick={handleCreateRoom}
+          hovered={hoveredSong !== null}
+        >
+          만들기
+        </ActionButton>
       </ButtonContainer>
     </RoomMakerContainer>
   );
@@ -135,21 +137,21 @@ const RoomMakerContainer = styled.div`
   align-items: center;
   height: 100vh;
   width: 100vw;
-  background: aliceblue;
+  background: white;
   background-size: cover;
   background-position: center;
 `;
 
 const AudioContainer = styled.audio`
-  display: hidden;
+  display: none;
 `;
 
 const SongContainer = styled.div`
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  height: 100px;
-  width: 800px;
+  height: 10%;
+  width: 60%;
   border-radius: 50px;
   font-size: 5em;
   color: white;
@@ -162,11 +164,10 @@ const SongContainer = styled.div`
 `;
 
 const PlayButton = styled.button`
-  position: absolute;
-  top: 30px;
   font-size: 2em;
+  padding: 10px 20px;
   background-color: transparent;
-  border: ${(props) => (props.hovered ? "white" : "black")};
+  border: ${(props) => (props.hovered ? "2px solid white" : "2px solid black")};
   color: ${(props) => (props.hovered ? "white" : "black")};
   border-radius: 5px;
 
@@ -192,18 +193,18 @@ const ProfileImage = styled.img`
 
 const ButtonContainer = styled.div`
   display: flex;
+  justify-content: space-around;
   flex-direction: row;
+  width: 50%;
 `;
 
-const CircularButton = styled.button`
+const ActionButton = styled.button`
   width: 200px;
   height: 75px;
-  margin-left: 50px;
-  margin-right: 50px;
   background-color: transparent;
   border-radius: 10px;
   font-size: 2em;
-  border: ${(props) => (props.hovered ? "white" : "black")};
+  border: ${(props) => (props.hovered ? "2px solid white" : "2px solid black")};
   color: ${(props) => (props.hovered ? "white" : "black")};
 
   :hover {
