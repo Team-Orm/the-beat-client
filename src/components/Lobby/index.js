@@ -154,7 +154,7 @@ export default function Lobby() {
 
           if (response.status === 200) {
             const newRooms = response.data.rooms;
-            setRoomsList(newRooms);
+            setRoomsList(() => newRooms);
           }
         }
       } catch (err) {
@@ -241,7 +241,7 @@ export default function Lobby() {
           </ChatInputContainer>
         </LeftContainer>
         <RightContainer>
-          <UserLists>
+          <UserList>
             {currentUserList &&
               currentUserList.map(({ uid, picture, name }) => (
                 <User key={uid}>
@@ -249,7 +249,7 @@ export default function Lobby() {
                   <ProfileText>{name}</ProfileText>
                 </User>
               ))}
-          </UserLists>
+          </UserList>
           <RightBottom>
             <LogoutButton type="button" onClick={redirectToNewRoom}>
               방 만들기
@@ -446,7 +446,7 @@ const RightContainer = styled.div`
   margin: 0 80px 0 0;
 `;
 
-const UserLists = styled.div`
+const UserList = styled.div`
   flex: 6.5;
   margin: 20px 20px 40px 20px;
   padding: 20px;
