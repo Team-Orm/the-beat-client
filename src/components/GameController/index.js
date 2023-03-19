@@ -22,12 +22,12 @@ export default function GameController({ isPlaying }) {
   const [activeKeys, setActiveKeys] = useState([]);
   const [notes, setNotes] = useState(NOTES);
   const [score, setScore] = useState(0);
-  const [combo, setCombo] = useState(0);
   const [word, setWord] = useState("");
 
   const canvasRef = useRef(null);
   const notesRef = useRef(notes);
   const deltaRef = useRef(null);
+  const comboRef = useRef(0);
   const timeRef = useRef(0);
 
   const canvas = canvasRef?.current;
@@ -91,29 +91,34 @@ export default function GameController({ isPlaying }) {
         return;
       }
 
-      if (timeFromNoteToHitBox <= maximumTiming / 4) {
-        setWord("excellent");
+      let currentWord;
+
+      if (timeFromNoteToHitBox <= maximumTiming / 5) {
+        currentWord = "excellent";
       } else if (timeFromNoteToHitBox <= maximumTiming / 3) {
-        setWord("good");
+        currentWord = "good";
       } else {
-        setWord("miss");
-        setCombo(() => 0);
+        currentWord = "miss";
       }
 
-      setCombo((prevCombo) => {
+      setWord(currentWord);
+
+      if (currentWord === "miss") {
+        comboRef.current = 0;
+      } else {
+        comboRef.current += 1;
+
         setScore((prevScore) => {
-          const incomingScore = calculateScore(word);
-          const comboBonus = prevCombo * incomingScore * 0.5;
+          const incomingScore = calculateScore(currentWord);
+          const comboBonus = comboRef.current * incomingScore * 0.5;
           return prevScore + incomingScore + comboBonus;
         });
-
-        return prevCombo + 1;
-      });
+      }
 
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [columnHeight, noteHeight, word],
+    [columnHeight, noteHeight],
   );
 
   const activate = useCallback(
@@ -276,7 +281,7 @@ export default function GameController({ isPlaying }) {
       />
       <TextContainer>
         <div>{word.toUpperCase()}</div>
-        <div>{combo === 0 ? null : combo}</div>
+        <div>{comboRef.current === 0 ? null : comboRef.current}</div>
         <div>{score === 0 ? null : score}</div>
       </TextContainer>
       <ColumnsContainer>
