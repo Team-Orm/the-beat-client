@@ -29,7 +29,7 @@ export default function BattleRoom() {
   };
 
   useEffect(() => {
-    const socketClient = io("http://localhost:4000/battles/", {
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
       query: { roomId },
     });
     setSocket(socketClient);
@@ -42,7 +42,7 @@ export default function BattleRoom() {
   useEffect(() => {
     const getSong = async () => {
       const response = await axios.get(
-        `http://localhost:8000/api/rooms/${roomId}`,
+        `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
       );
 
       if (response.status === 200) {

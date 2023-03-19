@@ -1,3 +1,10 @@
+export const UPDATE_ROOMS = "update-rooms";
+export const SEND_CHAT = "send-chat";
+export const BROADCAST_CHAT = "broadcast-chat";
+export const UPDATE_USER = "update-user";
+export const SEND_BATTLES = "send-battles";
+export const RECEIVE_BATTLES = "receive-battles";
+
 export const SPEED = 35;
 export const MILLISECOND = 1000;
 export const DIFFICULTY = 1000;

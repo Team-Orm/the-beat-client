@@ -112,73 +112,82 @@ export default function GameController({ isPlaying }) {
     [keyMappings],
   );
 
-  const render = (ctx, note) => {
-    const cornerRadius = 5;
+  const render = useCallback(
+    (ctx, note) => {
+      const cornerRadius = 5;
 
-    const mapping = keyMappings[note?.key];
-    if (mapping) {
-      note.positionX = mapping.positionX;
-      note.color = mapping.color;
-    }
+      const mapping = keyMappings[note?.key];
+      if (mapping) {
+        note.positionX = mapping.positionX;
+        note.color = mapping.color;
+      }
 
-    ctx.fillStyle = `${note?.color}`;
-    ctx.beginPath();
-    ctx.moveTo(note.positionX + cornerRadius, note.positionY);
-    ctx.lineTo(note.positionX + columnWidth - cornerRadius, note.positionY);
-    ctx.quadraticCurveTo(
-      note.positionX + columnWidth,
-      note.positionY,
-      note.positionX + columnWidth,
-      note.positionY + cornerRadius,
-    );
-    ctx.lineTo(
-      note.positionX + columnWidth,
-      note.positionY + noteHeight - cornerRadius,
-    );
-    ctx.quadraticCurveTo(
-      note.positionX + columnWidth,
-      note.positionY + noteHeight,
-      note.positionX + columnWidth - cornerRadius,
-      note.positionY + noteHeight,
-    );
-    ctx.lineTo(note.positionX + cornerRadius, note.positionY + noteHeight);
-    ctx.quadraticCurveTo(
-      note.positionX,
-      note.positionY + noteHeight,
-      note.positionX,
-      note.positionY + noteHeight - cornerRadius,
-    );
-    ctx.lineTo(note.positionX, note.positionY + cornerRadius);
-    ctx.quadraticCurveTo(
-      note.positionX,
-      note.positionY,
-      note.positionX + cornerRadius,
-      note.positionY,
-    );
-    ctx.closePath();
-    ctx.fill();
-  };
+      ctx.fillStyle = `${note?.color}`;
+      ctx.beginPath();
+      ctx.moveTo(note.positionX + cornerRadius, note.positionY);
+      ctx.lineTo(note.positionX + columnWidth - cornerRadius, note.positionY);
+      ctx.quadraticCurveTo(
+        note.positionX + columnWidth,
+        note.positionY,
+        note.positionX + columnWidth,
+        note.positionY + cornerRadius,
+      );
+      ctx.lineTo(
+        note.positionX + columnWidth,
+        note.positionY + noteHeight - cornerRadius,
+      );
+      ctx.quadraticCurveTo(
+        note.positionX + columnWidth,
+        note.positionY + noteHeight,
+        note.positionX + columnWidth - cornerRadius,
+        note.positionY + noteHeight,
+      );
+      ctx.lineTo(note.positionX + cornerRadius, note.positionY + noteHeight);
+      ctx.quadraticCurveTo(
+        note.positionX,
+        note.positionY + noteHeight,
+        note.positionX,
+        note.positionY + noteHeight - cornerRadius,
+      );
+      ctx.lineTo(note.positionX, note.positionY + cornerRadius);
+      ctx.quadraticCurveTo(
+        note.positionX,
+        note.positionY,
+        note.positionX + cornerRadius,
+        note.positionY,
+      );
+      ctx.closePath();
+      ctx.fill();
+    },
+    [columnWidth, keyMappings, noteHeight],
+  );
 
-  const update = (now, delta, ctx, note) => {
-    const diffTimeBetweenAnimationFrame = (now - delta) / MILLISECOND;
-    if (note) {
-      note.positionY += diffTimeBetweenAnimationFrame * SPEED;
-    }
+  const update = useCallback(
+    (now, delta, ctx, note) => {
+      const diffTimeBetweenAnimationFrame = (now - delta) / MILLISECOND;
+      if (note) {
+        note.positionY += diffTimeBetweenAnimationFrame * SPEED;
+      }
 
-    if (note.positionY > canvas.height) {
-      return;
-    }
+      if (note.positionY > canvas.height) {
+        return;
+      }
 
-    render(ctx, note);
-  };
+      render(ctx, note);
+    },
+    [canvas?.height, render],
+  );
 
-  const renderNotes = (now, delta, ctx, notes) => {
-    const notesArray = notes.sort((prev, next) => prev.time - next.time);
+  const renderNotes = useCallback(
+    (now, delta, ctx, notes) => {
+      const notesArray = notes.sort((prev, next) => prev.time - next.time);
 
-    notesArray.forEach((note) => {
-      update(now, delta, ctx, note);
-    });
-  };
+      notesArray.forEach((note) => {
+        update(now, delta, ctx, note);
+      });
+    },
+    [update],
+  );
 
   useEffect(() => {
     let animationFrameId;
