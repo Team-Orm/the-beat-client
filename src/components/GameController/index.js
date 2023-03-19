@@ -40,12 +40,12 @@ export default function GameController({ isPlaying }) {
 
   const keyMappings = useMemo(() => {
     return {
-      s: { positionX: columnWidth * 0, color: "red" },
-      d: { positionX: columnWidth * 1, color: "blue" },
-      f: { positionX: columnWidth * 2, color: "yellow" },
-      j: { positionX: columnWidth * 3, color: "purple" },
-      k: { positionX: columnWidth * 4, color: "orange" },
-      l: { positionX: columnWidth * 5, color: "skyblue" },
+      s: { positionX: columnWidth * 0, color: "rgba(255, 36, 0, 1)" },
+      d: { positionX: columnWidth * 1, color: "rgba(125, 249, 255, 1)" },
+      f: { positionX: columnWidth * 2, color: "rgba(255, 211, 0, 1)" },
+      j: { positionX: columnWidth * 3, color: "rgba(255, 211, 0, 1)" },
+      k: { positionX: columnWidth * 4, color: "rgba(125, 249, 255, 1)" },
+      l: { positionX: columnWidth * 5, color: "rgba(255, 36, 0, 1)" },
     };
   }, [columnWidth]);
 
@@ -97,8 +97,7 @@ export default function GameController({ isPlaying }) {
         setWord("good");
       } else {
         setWord("miss");
-        setCombo(0);
-        return;
+        setCombo(() => 0);
       }
 
       setCombo((prevCombo) => {
@@ -307,7 +306,6 @@ const getColor = (index) => {
       return COLUMN_RGB_COLORS[2];
   }
 };
-
 const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
