@@ -101,3 +101,18 @@ export const NOTES = [
     positionY: 0,
   },
 ];
+
+export const COLUMN_RGB_COLORS = ["255, 87, 34", "0, 188, 212", "246, 215, 67"];
+
+const getColor = (index) => {
+  switch (index) {
+    case 0:
+    case 5:
+      return COLUMN_RGB_COLORS[0];
+    case 1:
+    case 4:
+      return COLUMN_RGB_COLORS[1];
+    default:
+      return COLUMN_RGB_COLORS[2];
+  }
+};

@@ -10,7 +10,7 @@ import {
   SEND_CHAT,
   BROADCAST_CHAT,
   UPDATE_USER,
-} from "../../store/contants";
+} from "../../store/constants";
 
 export default function Lobby() {
   const navigate = useNavigate();
