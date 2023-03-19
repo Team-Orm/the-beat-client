@@ -221,16 +221,16 @@ export default function Lobby() {
                 ))}
             </RoomsLists>
           </RoomsContainer>
-          <Chats>
+          <ChatContainer>
             <ChatsHead>Chats</ChatsHead>
             <ChatList ref={chatListRef}>
               {receivedMessages.map(({ user, chat }, index) => (
-                <ChatContainer key={user + chat + index}>
+                <Chats key={user + chat + index}>
                   {user}: {chat}
-                </ChatContainer>
+                </Chats>
               ))}
             </ChatList>
-          </Chats>
+          </ChatContainer>
           <ChatInputContainer onSubmit={handleSendMessage}>
             <ChatMessageInput
               type="text"
@@ -365,7 +365,7 @@ const RoomSong = styled.div`
   color: black;
 `;
 
-const Chats = styled.div`
+const ChatContainer = styled.div`
   flex: 4;
   display: flex;
   justify-content: flex-start;
@@ -395,7 +395,7 @@ const ChatList = styled.div`
   overflow-y: auto;
 `;
 
-const ChatContainer = styled.div`
+const Chats = styled.div`
   margin: 0 15px;
   display: flex;
   width: 80%;
