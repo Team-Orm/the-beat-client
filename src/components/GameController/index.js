@@ -19,8 +19,6 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
-import Columns from "../Columns";
-
 export default function GameController({ isPlaying }) {
   const dispatch = useDispatch();
   const songDuration = Math.max(...NOTES.map((note) => note.time));
