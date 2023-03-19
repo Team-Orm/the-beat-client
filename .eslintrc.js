@@ -24,6 +24,7 @@ module.exports = {
     "no-unused-vars": "warn",
     "no-unused-expressions": "warn",
     "no-underscore-dangle": "off",
+    "no-unsafe-optional-chaining": "off",
     "react/jsx-filename-extension": ["error", { extensions: [".js", ".jsx"] }],
     "react/prop-types": "off",
     "react-hooks/rules-of-hooks": "error",

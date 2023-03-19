@@ -6,7 +6,10 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { totalScore, updateScore } from "../../features/reducers/gameSlice";
 import {
   NOTES,
   MILLISECOND,
@@ -19,9 +22,14 @@ import {
 import Columns from "../Columns";
 
 export default function GameController({ isPlaying }) {
+  const dispatch = useDispatch();
+  const songDuration = Math.max(...NOTES.map((note) => note.time));
+  const navigate = useNavigate();
+
   const [activeKeys, setActiveKeys] = useState([]);
+  const [songEnd, setSongEnd] = useState(false);
   const [notes, setNotes] = useState(NOTES);
-  const [score, setScore] = useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
   const [word, setWord] = useState("");
 
   const canvasRef = useRef(null);
@@ -108,10 +116,12 @@ export default function GameController({ isPlaying }) {
       } else {
         comboRef.current += 1;
 
-        setScore((prevScore) => {
+        setCurrentScore((prevScore) => {
           const incomingScore = calculateScore(currentWord);
           const comboBonus = comboRef.current * incomingScore * 0.5;
-          return prevScore + incomingScore + comboBonus;
+          const result = prevScore + incomingScore + comboBonus;
+
+          return result;
         });
       }
 
@@ -238,7 +248,12 @@ export default function GameController({ isPlaying }) {
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
-      animationFrameId = requestAnimationFrame(updateNotes);
+      if (timeRef.current >= songDuration + 3) {
+        setSongEnd(true);
+      } else {
+        animationFrameId = requestAnimationFrame(updateNotes);
+      }
+
       deltaRef.current = now;
     };
 
@@ -251,11 +266,19 @@ export default function GameController({ isPlaying }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPlaying, ctx, canvas, notes, renderNotes]);
+  }, [isPlaying, ctx, canvas, notes, renderNotes, songDuration, currentScore]);
+
+  useEffect(() => {
+    dispatch(updateScore(currentScore));
+
+    if (songEnd) {
+      dispatch(totalScore(currentScore));
+    }
+  }, [currentScore, dispatch, songEnd]);
 
   useEffect(() => {
     notesRef.current = notes;
-    setScore((prev) => prev + calculateScore(word));
+    setCurrentScore((prev) => prev + calculateScore(word));
   }, [notes, word]);
 
   useEffect(() => {
@@ -282,10 +305,18 @@ export default function GameController({ isPlaying }) {
       <TextContainer>
         <div>{word.toUpperCase()}</div>
         <div>{comboRef.current === 0 ? null : comboRef.current}</div>
-        <div>{score === 0 ? null : score}</div>
+        <div>{currentScore === 0 ? null : currentScore}</div>
       </TextContainer>
       <ColumnsContainer>
-        <Columns activeKeys={activeKeys} />
+        {/* <Columns activeKeys={activeKeys} /> */}
+        {KEYS.map((key, index) => (
+          <Column
+            key={key}
+            index={index}
+            colorIndex={index}
+            active={activeKeys.includes(key)}
+          />
+        ))}
       </ColumnsContainer>
       <HitBox />
       <KeyBox>
@@ -321,7 +352,7 @@ const GameContainer = styled.div`
 
 const CanvasContainer = styled.canvas`
   flex: 7;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.5);
   box-shadow: inset 0 0 0 5px white;
   width: 100%;
   height: 100%;
@@ -331,6 +362,27 @@ const ColumnsContainer = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
+`;
+
+const Column = styled.div`
+  position: absolute;
+  top: 5px;
+  left: ${({ index }) => `calc(100% / 6 * ${index})`};
+  background-color: transparent;
+  width: ${({ index }) =>
+    index === 5 ? `calc(100% / 6 - 5px)` : `calc(100% / 6)`};
+  height: ${`calc(87.5% - 10px)`};
+  border-right: ${({ index }) => (index === 5 ? null : "2px solid gray")};
+
+  ${({ active, colorIndex }) => {
+    const color = getColor(colorIndex);
+    return (
+      active &&
+      `
+      background: linear-gradient(to top, rgba(${color}, 0.8), rgba(${color}, 0));
+    `
+    );
+  }}
 `;
 
 const HitBox = styled.div`

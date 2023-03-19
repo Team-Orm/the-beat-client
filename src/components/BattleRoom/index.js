@@ -3,16 +3,20 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
+import { useSelector } from "react-redux";
 import GameController from "../GameController";
+import { auth } from "../../features/api/firebaseApi";
 
 export default function BattleRoom() {
-  const [songData, setSongData] = useState({});
+  const [song, setSong] = useState({});
+  const [room, setRoom] = useState({});
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const audioRef = useRef(null);
   const { roomId } = useParams();
+  const score = useSelector((state) => state.game.score);
 
   const handleStart = () => {
     setIsCountingDown(true);
@@ -23,7 +27,7 @@ export default function BattleRoom() {
     setTimeout(() => {
       clearInterval(countdownTimer);
       setIsPlaying(true);
-      audioRef.current.src = songData.audioURL;
+      audioRef.current.src = song.audioURL;
       audioRef.current.play();
     }, 3000);
   };
@@ -46,7 +50,8 @@ export default function BattleRoom() {
       );
 
       if (response.status === 200) {
-        setSongData(response.data.song);
+        setRoom(response.data.room);
+        setSong(response.data.song);
       }
     };
 
@@ -54,7 +59,7 @@ export default function BattleRoom() {
   }, [roomId]);
 
   return (
-    <Container songData={songData}>
+    <Container song={song}>
       <AudioContainer ref={audioRef} />
       {!isCountingDown && (
         <StartButton onClick={handleStart}>Start</StartButton>
@@ -75,8 +80,8 @@ export default function BattleRoom() {
       <BottomContainer>
         <ScoreContainer>
           <Records>
-            <div>oyobbeb</div>
-            <div>score: 100</div>
+            <div>{room?.createdBy && auth?.currentUser?.displayName}</div>
+            <div>score: {score}</div>
           </Records>
         </ScoreContainer>
         <ScoreContainer>
@@ -97,7 +102,7 @@ const Container = styled.main`
   width: 100vw;
   height: 100vh;
   background-image: ${(props) =>
-    props.songData?.imageURL ? `url(${props.songData.imageURL})` : "none"};
+    props.song?.imageURL ? `url(${props.song.imageURL})` : "none"};
   background-size: cover;
   background-position: center;
   box-sizing: border-box;
@@ -175,14 +180,15 @@ const ScoreContainer = styled.div`
   justify-content: center;
   align-items: center;
   width: 50vw;
-  background-color: gray;
+  background-color: transparent;
   font-size: 2em;
   color: black;
-  border: 2px solid black;
+  border: 5px solid white;
 `;
 
 const Records = styled.div`
   display: flex;
   justify-content: space-between;
   width: 80%;
+  color: white;
 `;

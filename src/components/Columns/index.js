@@ -20,6 +20,7 @@ export default function Columns({ activeKeys }) {
   const opacityStep = 0.03;
 
   const resizeCanvas = (canvas) => {
+    canvas.width = canvas.clientWidth;
     canvas.height = window.innerHeight * 0.9 * 0.875 - 5; // Adjust the multiplier and offset based on your desired height
   };
 
