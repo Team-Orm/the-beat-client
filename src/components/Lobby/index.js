@@ -1,5 +1,6 @@
+/* eslint-disable react/no-array-index-key */
 import { io } from "socket.io-client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -13,11 +14,43 @@ import {
 
 export default function Lobby() {
   const navigate = useNavigate();
-  const [photos, setPhotos] = useState();
-  const [socket, setSocket] = useState();
+
+  const [photos, setPhotos] = useState(null);
+  const [socket, setSocket] = useState(null);
   const [newUser, setNewUser] = useState({});
-  const [currentUserList, setCurrentUserList] = useState();
-  const [rooms, setRooms] = useState();
+  const [currentUserList, setCurrentUserList] = useState([]);
+  const [roomsList, setRoomsList] = useState([]);
+  const [chatMessage, setChatMessage] = useState("");
+  const [receivedMessages, setReceivedMessages] = useState([]);
+
+  const chatListRef = useRef(null);
+
+  const { accessToken, displayName, photoURL, uid } = newUser;
+
+  const scrollToBottom = useCallback(() => {
+    if (chatListRef.current) {
+      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+    }
+  }, [chatListRef]);
+
+  const handleChatMessageChange = (e) => {
+    setChatMessage(e.target.value);
+  };
+
+  const handleSendMessage = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      if (chatMessage !== "" && socket) {
+        socket.emit(SEND_CHAT, {
+          user: displayName,
+          chat: chatMessage,
+        });
+        setChatMessage("");
+      }
+    },
+    [chatMessage, displayName, socket],
+  );
 
   const handleLogout = async () => {
     try {
@@ -70,8 +103,6 @@ export default function Lobby() {
       });
     }
   }, []);
-
-  const { accessToken, displayName, photoURL, uid } = newUser;
 
   useEffect(() => {
     const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
@@ -149,11 +180,18 @@ export default function Lobby() {
           const response = await axios.get(
             `${process.env.REACT_APP_SERVER_URL}/api/rooms`,
           );
-          const newRooms = await response.data.rooms;
-          setRooms(newRooms);
+
+          if (response.status === 200) {
+            const newRooms = await response.data.rooms;
+            return setRoomsList(() => newRooms);
+          }
+
+          throw new Error(response);
         }
+
+        return true;
       } catch (err) {
-        navigate("/error", {
+        return navigate("/error", {
           state: {
             status: err.response.status,
             text: err.response.statusText,
@@ -164,20 +202,16 @@ export default function Lobby() {
     };
 
     updateRooms();
-  }, [socket, setRooms, navigate]);
+  }, [socket, setRoomsList, navigate]);
 
   useEffect(() => {
     if (socket) {
-      socket.emit(SEND_CHAT, {
-        user: auth.currentUser,
-        chat: "테스트 채팅!",
+      socket.on(BROADCAST_CHAT, (user, chat) => {
+        setReceivedMessages((prevMessages) => [
+          ...prevMessages,
+          { user, chat },
+        ]);
       });
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on(BROADCAST_CHAT, (user, chat) => {});
     }
   }, [socket]);
 
@@ -192,10 +226,14 @@ export default function Lobby() {
   useEffect(() => {
     if (socket) {
       socket.on(UPDATE_ROOMS, (updatedRooms) => {
-        setRooms(() => updatedRooms);
+        setRoomsList(() => updatedRooms);
       });
     }
   }, [socket]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [receivedMessages, scrollToBottom]);
 
   return (
     <Background>
@@ -207,8 +245,8 @@ export default function Lobby() {
         <LeftContainer>
           <RoomsContainer>
             <RoomsLists>
-              {rooms &&
-                rooms.map((roomData) => (
+              {roomsList.length &&
+                roomsList.map((roomData) => (
                   <Room key={roomData._id}>
                     <RoomName>{roomData.createdBy}</RoomName>
                     <RoomSong>{roomData.song.title}</RoomSong>
@@ -216,20 +254,27 @@ export default function Lobby() {
                 ))}
             </RoomsLists>
           </RoomsContainer>
-          <Chats>
+          <ChatContainer>
             <ChatsHead>Chats</ChatsHead>
-            <ChatList>
-              <ChatContainer>{displayName}: message</ChatContainer>
-              <ChatContainer>{displayName}: message</ChatContainer>
+            <ChatList ref={chatListRef}>
+              {receivedMessages.map(({ user, chat }, index) => (
+                <Chats key={user + chat + index}>
+                  {user}: {chat}
+                </Chats>
+              ))}
             </ChatList>
-          </Chats>
-          <ChatBoxBottom>
-            <ChatMessageInput type="text" />
+          </ChatContainer>
+          <ChatInputContainer onSubmit={handleSendMessage}>
+            <ChatMessageInput
+              type="text"
+              value={chatMessage}
+              onChange={handleChatMessageChange}
+            />
             <ChatSubmitButton>Send</ChatSubmitButton>
-          </ChatBoxBottom>
+          </ChatInputContainer>
         </LeftContainer>
         <RightContainer>
-          <UserLists>
+          <UserList>
             {currentUserList &&
               currentUserList.map(({ uid, picture, name }) => (
                 <User key={uid}>
@@ -237,7 +282,7 @@ export default function Lobby() {
                   <ProfileText>{name}</ProfileText>
                 </User>
               ))}
-          </UserLists>
+          </UserList>
           <RightBottom>
             <LogoutButton type="button" onClick={redirectToNewRoom}>
               방 만들기
@@ -353,12 +398,13 @@ const RoomSong = styled.div`
   color: black;
 `;
 
-const Chats = styled.div`
+const ChatContainer = styled.div`
   flex: 4;
   display: flex;
   justify-content: flex-start;
   flex-direction: column;
   color: gray;
+  height: 300px;
 `;
 
 const ChatsHead = styled.div`
@@ -375,21 +421,23 @@ const ChatList = styled.div`
   flex: 4;
   margin: 20px;
   padding: 20px;
+  max-height: calc(100% - 30px);
   background-color: rgba(0, 0, 0, 0.15);
   border: 2.5px solid white;
   border-radius: 20px;
+  overflow-y: auto;
 `;
 
-const ChatContainer = styled.div`
+const Chats = styled.div`
   margin: 0 15px;
   display: flex;
   width: 80%;
-  height: 20%;
+  min-height: 30px;
   align-items: center;
   color: black;
 `;
 
-const ChatBoxBottom = styled.form`
+const ChatInputContainer = styled.form`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -431,7 +479,7 @@ const RightContainer = styled.div`
   margin: 0 80px 0 0;
 `;
 
-const UserLists = styled.div`
+const UserList = styled.div`
   flex: 6.5;
   margin: 20px 20px 40px 20px;
   padding: 20px;
