@@ -20,11 +20,11 @@ export default function Lobby() {
 
   const chatListRef = useRef(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (chatListRef.current) {
       chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
     }
-  };
+  }, [chatListRef]);
 
   const { accessToken, displayName, photoURL, uid } = newUser;
   const handleChatMessageChange = (e) => {
