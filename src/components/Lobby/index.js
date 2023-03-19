@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable no-underscore-dangle */
 import { io } from "socket.io-client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -16,32 +16,36 @@ export default function Lobby() {
   const [currentUserList, setCurrentUserList] = useState([]);
   const [roomsList, setRoomsList] = useState([]);
   const [chatMessage, setChatMessage] = useState("");
-  const [ReceivedMessages, setReceivedMessages] = useState([]);
+  const [receivedMessages, setReceivedMessages] = useState([]);
 
   const chatListRef = useRef(null);
 
-  const scrollToBottom = () => {
+  const { accessToken, displayName, photoURL, uid } = newUser;
+
+  const scrollToBottom = useCallback(() => {
     if (chatListRef.current) {
       chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
     }
-  };
+  }, [chatListRef]);
 
-  const { accessToken, displayName, photoURL, uid } = newUser;
   const handleChatMessageChange = (e) => {
     setChatMessage(e.target.value);
   };
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
+  const handleSendMessage = useCallback(
+    (e) => {
+      e.preventDefault();
 
-    if (chatMessage !== "" && socket) {
-      socket.emit("send-chat", {
-        user: displayName,
-        chat: chatMessage,
-      });
-      setChatMessage("");
-    }
-  };
+      if (chatMessage !== "" && socket) {
+        socket.emit("send-chat", {
+          user: displayName,
+          chat: chatMessage,
+        });
+        setChatMessage("");
+      }
+    },
+    [chatMessage, displayName, socket],
+  );
 
   const handleLogout = async () => {
     try {
@@ -147,8 +151,11 @@ export default function Lobby() {
       try {
         if (socket) {
           const response = await axios.get("http://localhost:8000/api/rooms");
-          const newRooms = await response.data.rooms;
-          setRoomsList(newRooms);
+
+          if (response.status === 200) {
+            const newRooms = response.data.rooms;
+            setRoomsList(() => newRooms);
+          }
         }
       } catch (err) {
         navigate("/error", {
@@ -193,7 +200,7 @@ export default function Lobby() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [ReceivedMessages]);
+  }, [receivedMessages]);
 
   return (
     <Background>
@@ -205,7 +212,7 @@ export default function Lobby() {
         <LeftContainer>
           <RoomsContainer>
             <RoomsLists>
-              {roomsList &&
+              {roomsList.length &&
                 roomsList.map((roomData) => (
                   <Room key={roomData._id}>
                     <RoomName>{roomData.createdBy}</RoomName>
@@ -214,27 +221,27 @@ export default function Lobby() {
                 ))}
             </RoomsLists>
           </RoomsContainer>
-          <Chats>
+          <ChatContainer>
             <ChatsHead>Chats</ChatsHead>
             <ChatList ref={chatListRef}>
-              {ReceivedMessages.map(({ user, chat }, index) => (
-                <ChatContainer key={user + chat + index}>
+              {receivedMessages.map(({ user, chat }, index) => (
+                <Chats key={user + chat + index}>
                   {user}: {chat}
-                </ChatContainer>
+                </Chats>
               ))}
             </ChatList>
-          </Chats>
-          <ChatBoxBottom onSubmit={handleSendMessage}>
+          </ChatContainer>
+          <ChatInputContainer onSubmit={handleSendMessage}>
             <ChatMessageInput
               type="text"
               value={chatMessage}
               onChange={handleChatMessageChange}
             />
             <ChatSubmitButton>Send</ChatSubmitButton>
-          </ChatBoxBottom>
+          </ChatInputContainer>
         </LeftContainer>
         <RightContainer>
-          <UserLists>
+          <UserList>
             {currentUserList &&
               currentUserList.map(({ uid, picture, name }) => (
                 <User key={uid}>
@@ -242,7 +249,7 @@ export default function Lobby() {
                   <ProfileText>{name}</ProfileText>
                 </User>
               ))}
-          </UserLists>
+          </UserList>
           <RightBottom>
             <LogoutButton type="button" onClick={redirectToNewRoom}>
               방 만들기
@@ -358,14 +365,13 @@ const RoomSong = styled.div`
   color: black;
 `;
 
-const Chats = styled.div`
+const ChatContainer = styled.div`
   flex: 4;
   display: flex;
   justify-content: flex-start;
   flex-direction: column;
   color: gray;
-  height: 300px; // Chats 요소에 높이 설정
-  position: relative; // 상대적 위치 설정 (자식 요소의 위치를 조절하는 데 도움이 됩니다.)
+  height: 300px;
 `;
 
 const ChatsHead = styled.div`
@@ -389,7 +395,7 @@ const ChatList = styled.div`
   overflow-y: auto;
 `;
 
-const ChatContainer = styled.div`
+const Chats = styled.div`
   margin: 0 15px;
   display: flex;
   width: 80%;
@@ -398,7 +404,7 @@ const ChatContainer = styled.div`
   color: black;
 `;
 
-const ChatBoxBottom = styled.form`
+const ChatInputContainer = styled.form`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -440,7 +446,7 @@ const RightContainer = styled.div`
   margin: 0 80px 0 0;
 `;
 
-const UserLists = styled.div`
+const UserList = styled.div`
   flex: 6.5;
   margin: 20px 20px 40px 20px;
   padding: 20px;
