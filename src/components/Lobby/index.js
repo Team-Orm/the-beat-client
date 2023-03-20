@@ -10,6 +10,7 @@ import {
   SEND_CHAT,
   BROADCAST_CHAT,
   UPDATE_USER,
+  CHECK_USERS,
 } from "../../store/constants";
 
 export default function Lobby() {
@@ -250,7 +251,7 @@ export default function Lobby() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("check_users", (users) => {
+      socket.on(CHECK_USERS, (users) => {
         setConnectedUsers(users);
       });
     }

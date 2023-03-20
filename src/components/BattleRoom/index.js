@@ -6,7 +6,7 @@ import styled from "styled-components";
 import { useSelector } from "react-redux";
 import GameController from "../GameController";
 import { auth } from "../../features/api/firebaseApi";
-import { UPDATE_USER } from "../../store/constants";
+import { UPDATE_USER, USER_JOINED, USER_LEAVE } from "../../store/constants";
 
 export default function BattleRoom() {
   const [song, setSong] = useState({});
@@ -90,7 +90,7 @@ export default function BattleRoom() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("user_joined", (user) => {
+      socket.on(USER_JOINED, (user) => {
         setCurrentUserList((prevUserList) => [...prevUserList, user]);
       });
     }
@@ -98,7 +98,7 @@ export default function BattleRoom() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("user_leave", (user) => {
+      socket.on(USER_LEAVE, (user) => {
         setCurrentUserList((prevUserList) =>
           prevUserList.filter((users) => users.uid !== user.uid),
         );
