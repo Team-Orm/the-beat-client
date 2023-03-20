@@ -10,6 +10,7 @@ import {
   SEND_CHAT,
   BROADCAST_CHAT,
   UPDATE_USER,
+  CHECK_USERS,
 } from "../../store/constants";
 
 export default function Lobby() {
@@ -22,6 +23,7 @@ export default function Lobby() {
   const [roomsList, setRoomsList] = useState([]);
   const [chatMessage, setChatMessage] = useState("");
   const [receivedMessages, setReceivedMessages] = useState([]);
+  const [connectedUsers, setConnectedUsers] = useState({});
 
   const chatListRef = useRef(null);
 
@@ -50,6 +52,18 @@ export default function Lobby() {
       }
     },
     [chatMessage, displayName, socket],
+  );
+
+  const handleRoomClick = useCallback(
+    (roomId) => {
+      const targetUser = connectedUsers[roomId];
+      if (targetUser && Object.keys(targetUser).length === 2) {
+        alert("Room is full");
+      } else {
+        navigate(`/battles/${roomId}`);
+      }
+    },
+    [connectedUsers, navigate],
   );
 
   const handleLogout = async () => {
@@ -235,6 +249,14 @@ export default function Lobby() {
     scrollToBottom();
   }, [receivedMessages, scrollToBottom]);
 
+  useEffect(() => {
+    if (socket) {
+      socket.on(CHECK_USERS, (users) => {
+        setConnectedUsers(users);
+      });
+    }
+  }, [socket]);
+
   return (
     <Background>
       <HeaderContainer>
@@ -246,12 +268,17 @@ export default function Lobby() {
           <RoomsContainer>
             <RoomsLists>
               {roomsList.length &&
-                roomsList.map(({ _id, createdBy, song }) => (
-                  <Room key={_id}>
-                    <RoomName>{createdBy}</RoomName>
-                    <RoomSong>{song?.title}</RoomSong>
-                  </Room>
-                ))}
+                roomsList.map(({ _id, createdBy, song }) => {
+                  const targetUser = connectedUsers[_id];
+                  return (
+                    <Room key={_id} onClick={() => handleRoomClick(_id)}>
+                      <RoomName>{`${createdBy} ${
+                        targetUser ? Object.keys(targetUser).length : 0
+                      }/2`}</RoomName>
+                      <RoomSong>{song?.title}</RoomSong>
+                    </Room>
+                  );
+                })}
             </RoomsLists>
           </RoomsContainer>
           <ChatContainer>

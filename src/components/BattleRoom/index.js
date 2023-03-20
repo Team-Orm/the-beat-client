@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { useSelector } from "react-redux";
 import GameController from "../GameController";
 import { auth } from "../../features/api/firebaseApi";
+import { UPDATE_USER, USER_JOINED, USER_LEAVE } from "../../store/constants";
 
 export default function BattleRoom() {
   const [song, setSong] = useState({});
@@ -14,16 +15,20 @@ export default function BattleRoom() {
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
+  const [currentUserList, setCurrentUserList] = useState([]);
+  const [newUser, setNewUser] = useState({});
+
   const audioRef = useRef(null);
   const { roomId } = useParams();
   const score = useSelector((state) => state.game.score);
+
+  const { displayName, photoURL, uid } = newUser;
 
   const handleStart = () => {
     setIsCountingDown(true);
     const countdownTimer = setInterval(() => {
       setCountdown((prevCountdown) => prevCountdown - 1);
     }, 1000);
-
     setTimeout(() => {
       clearInterval(countdownTimer);
       setIsPlaying(true);
@@ -33,15 +38,32 @@ export default function BattleRoom() {
   };
 
   useEffect(() => {
+    if (auth && auth.currentUser) {
+      const { displayName, photoURL, uid } = auth.currentUser;
+
+      setNewUser({
+        displayName,
+        photoURL,
+        uid,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
-      query: { roomId },
+      query: {
+        roomId,
+        name: displayName,
+        picture: photoURL,
+        uid,
+      },
     });
     setSocket(socketClient);
 
     return () => {
       socketClient.disconnect();
     };
-  }, [roomId]);
+  }, [displayName, photoURL, roomId, uid]);
 
   useEffect(() => {
     const getSong = async () => {
@@ -58,6 +80,31 @@ export default function BattleRoom() {
     getSong();
   }, [roomId]);
 
+  useEffect(() => {
+    if (socket) {
+      socket.on(UPDATE_USER, (currentUserList) => {
+        setCurrentUserList(currentUserList);
+      });
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on(USER_JOINED, (user) => {
+        setCurrentUserList((prevUserList) => [...prevUserList, user]);
+      });
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on(USER_LEAVE, (user) => {
+        setCurrentUserList((prevUserList) =>
+          prevUserList.filter((users) => users.uid !== user.uid),
+        );
+      });
+    }
+  }, [socket]);
   return (
     <Container song={song}>
       <AudioContainer ref={audioRef} />

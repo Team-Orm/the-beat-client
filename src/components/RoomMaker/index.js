@@ -12,7 +12,7 @@ export default function RoomMaker() {
   const [selectedSong, setSelectedSong] = useState(null);
   const audioRef = useRef(null);
 
-  const handleSelecet = (roomId) => {
+  const handleSelect = (roomId) => {
     setSelectedSong((prev) => (prev === roomId ? null : roomId));
   };
 
@@ -105,7 +105,7 @@ export default function RoomMaker() {
           key={song._id}
           onMouseEnter={() => setHoveredSong(song)}
           onMouseLeave={() => setHoveredSong(null)}
-          onClick={() => handleSelecet(song._id)}
+          onClick={() => handleSelect(song._id)}
         >
           <ProfileImage src={song.imageURL} />
           <SongTitleText>
