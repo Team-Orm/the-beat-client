@@ -1,4 +1,3 @@
-/* eslint-disable no-unsafe-optional-chaining */
 import React, {
   useState,
   useEffect,
