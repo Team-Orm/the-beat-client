@@ -4,6 +4,9 @@ export const BROADCAST_CHAT = "broadcast-chat";
 export const UPDATE_USER = "update-user";
 export const SEND_BATTLES = "send-battles";
 export const RECEIVE_BATTLES = "receive-battles";
+export const USER_JOINED = "user_joined";
+export const USER_LEAVE = "user_leave";
+export const CHECK_USERS = "check_users";
 
 export const SPEED = 300;
 export const MILLISECOND = 1000;
