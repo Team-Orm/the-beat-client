@@ -1,4 +1,3 @@
-/* eslint-disable no-unsafe-optional-chaining */
 import React, {
   useState,
   useEffect,
@@ -6,41 +5,64 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import {
+  updateTotalScore,
+  updateScore,
+  updateCombo,
+} from "../../features/reducers/gameSlice";
 import {
   NOTES,
   MILLISECOND,
   SPEED,
   KEYS,
   DIFFICULTY,
-} from "../../store/contants";
+  COLUMN_RGB_COLORS,
+} from "../../store/constants";
 
 export default function GameController({ isPlaying }) {
-  const [activeKey, setActiveKey] = useState("");
+  const dispatch = useDispatch();
+  const songDuration = Math.max(...NOTES.map((note) => note.time));
+  const navigate = useNavigate();
+
+  const [activeKeys, setActiveKeys] = useState([]);
+  const [songEnd, setSongEnd] = useState(false);
   const [notes, setNotes] = useState(NOTES);
-  const [score, setScore] = useState(0);
-  const [combo, setCombo] = useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
   const [word, setWord] = useState("");
 
   const canvasRef = useRef(null);
   const notesRef = useRef(notes);
   const deltaRef = useRef(null);
+  const comboRef = useRef(0);
   const timeRef = useRef(0);
 
-  const canvas = canvasRef.current;
+  const canvas = canvasRef?.current;
   const ctx = canvas?.getContext("2d");
 
+  const columnHeight = canvas?.height * 0.9;
   const columnWidth = canvas?.width / KEYS.length;
-  const noteHeight = canvas?.width / (6 * 3 * 3);
+  const noteHeight = canvas?.width / (KEYS.length * 3 * 3);
+  const borderWidth = 5;
+
+  const comboResults = useMemo(() => {
+    return {
+      excellent: 0,
+      good: 0,
+      miss: 0,
+    };
+  }, []);
 
   const keyMappings = useMemo(() => {
     return {
-      s: { positionX: columnWidth * 0, color: "red" },
-      d: { positionX: columnWidth * 1, color: "blue" },
-      f: { positionX: columnWidth * 2, color: "yellow" },
-      j: { positionX: columnWidth * 3, color: "purple" },
-      k: { positionX: columnWidth * 4, color: "orange" },
-      l: { positionX: columnWidth * 5, color: "skyblue" },
+      s: { positionX: columnWidth * 0, color: "rgba(255, 36, 0, 1)" },
+      d: { positionX: columnWidth * 1, color: "rgba(125, 249, 255, 1)" },
+      f: { positionX: columnWidth * 2, color: "rgba(255, 211, 0, 1)" },
+      j: { positionX: columnWidth * 3, color: "rgba(255, 211, 0, 1)" },
+      k: { positionX: columnWidth * 4, color: "rgba(125, 249, 255, 1)" },
+      l: { positionX: columnWidth * 5, color: "rgba(255, 36, 0, 1)" },
     };
   }, [columnWidth]);
 
@@ -52,10 +74,10 @@ export default function GameController({ isPlaying }) {
         score = 100;
         break;
       case "good":
-        score = 80;
+        score = 70;
         break;
-      case "off beat":
-        score = 40;
+      case "miss":
+        score = 0;
         break;
       default:
         score = 0;
@@ -64,97 +86,128 @@ export default function GameController({ isPlaying }) {
     return score;
   };
 
-  const onPress = useCallback((key) => {
-    const targetNote = notesRef.current.find((note) => note.key === key);
-    const diffTimeNoteAndKey = Math.abs(
-      targetNote.time + 2.14 - timeRef.current, // 2.14 === note.positionY > canvas.height;
-    );
+  const onPressKey = useCallback(
+    (key) => {
+      const hitBoxPositionPercentage = 0.125;
+      const positionOfHitBox =
+        columnHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
+      const averageFrame = MILLISECOND / 60;
+      const pixerPerFrame = (SPEED / 10) * averageFrame;
+      const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
+      const timeToHitBoxMiddle = distanceToHitBoxMiddle / pixerPerFrame; // time = distance / speed;
 
-    const accuracyTime = (SPEED * 10) / DIFFICULTY; // 0.35
-    const judge = diffTimeNoteAndKey < 0.35;
+      const targetNote = notesRef.current.find((note) => note.key === key);
+      const timeFromNoteToHitBox = Math.abs(
+        targetNote?.time + timeToHitBoxMiddle - timeRef.current,
+      );
 
-    if (!judge) {
-      return;
-    }
+      const maximumTiming = SPEED / DIFFICULTY; // 0.35
+      const withinTimingThreshold = timeFromNoteToHitBox < maximumTiming;
 
-    if (diffTimeNoteAndKey <= accuracyTime / 2) {
-      setWord("good");
-    } else if (diffTimeNoteAndKey <= accuracyTime / 3) {
-      setWord("excellent");
-    } else {
-      setWord("off beat");
-    }
+      if (!withinTimingThreshold) {
+        return;
+      }
 
-    setCombo((prev) => prev + 1);
+      let currentWord;
 
-    notesRef.current = notesRef.current.filter((note) => note !== targetNote);
-    setNotes((prev) => prev.filter((note) => note !== targetNote));
-  }, []);
+      if (timeFromNoteToHitBox <= maximumTiming / 5) {
+        currentWord = "excellent";
+      } else if (timeFromNoteToHitBox <= maximumTiming / 3) {
+        currentWord = "good";
+      } else {
+        currentWord = "miss";
+      }
+
+      setWord(currentWord);
+
+      if (currentWord === "miss") {
+        comboRef.current = 0;
+      } else {
+        comboRef.current += 1;
+
+        setCurrentScore((prevScore) => {
+          const incomingScore = calculateScore(currentWord);
+          const comboBonus = comboRef.current * incomingScore * 0.5;
+          const result = prevScore + incomingScore + comboBonus;
+
+          return result;
+        });
+      }
+
+      comboResults[currentWord] += 1;
+
+      notesRef.current = notesRef.current.filter((note) => note !== targetNote);
+      setNotes((prev) => prev.filter((note) => note !== targetNote));
+    },
+    [columnHeight, comboResults, noteHeight],
+  );
 
   const activate = useCallback(
     (event) => {
       const { key } = event;
       if (keyMappings[key]) {
-        setActiveKey(key);
-        onPress(key);
+        setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
+        onPressKey(key);
       }
     },
-    [keyMappings, onPress],
+    [keyMappings, onPressKey],
   );
 
   const deActivate = useCallback(
     (event) => {
       const { key } = event;
       if (keyMappings[key]) {
-        setActiveKey("");
+        setActiveKeys((prevActiveKeys) => {
+          return prevActiveKeys.filter((activeKey) => activeKey !== key);
+        });
       }
     },
     [keyMappings],
   );
 
   const render = useCallback(
-    (ctx, note) => {
+    (ctx, { positionX, positionY, key, color }) => {
       const cornerRadius = 5;
 
-      const mapping = keyMappings[note?.key];
+      const mapping = keyMappings[key];
       if (mapping) {
-        note.positionX = mapping.positionX;
-        note.color = mapping.color;
+        positionX = mapping.positionX;
+        color = mapping.color;
       }
 
-      ctx.fillStyle = `${note?.color}`;
+      ctx.fillStyle = `${color}`;
       ctx.beginPath();
-      ctx.moveTo(note.positionX + cornerRadius, note.positionY);
-      ctx.lineTo(note.positionX + columnWidth - cornerRadius, note.positionY);
+      ctx.moveTo(positionX + cornerRadius, positionY);
+      ctx.lineTo(positionX + columnWidth - cornerRadius, positionY);
       ctx.quadraticCurveTo(
-        note.positionX + columnWidth,
-        note.positionY,
-        note.positionX + columnWidth,
-        note.positionY + cornerRadius,
+        positionX + columnWidth,
+        positionY,
+        positionX + columnWidth,
+        positionY + cornerRadius,
       );
       ctx.lineTo(
-        note.positionX + columnWidth,
-        note.positionY + noteHeight - cornerRadius,
+        positionX + columnWidth,
+        positionY + noteHeight - cornerRadius,
       );
       ctx.quadraticCurveTo(
-        note.positionX + columnWidth,
-        note.positionY + noteHeight,
-        note.positionX + columnWidth - cornerRadius,
-        note.positionY + noteHeight,
+        positionX + columnWidth,
+        positionY + noteHeight,
+        positionX + columnWidth - cornerRadius,
+        positionY + noteHeight,
       );
-      ctx.lineTo(note.positionX + cornerRadius, note.positionY + noteHeight);
+      ctx.lineTo(positionX + cornerRadius, positionY + noteHeight);
       ctx.quadraticCurveTo(
-        note.positionX,
-        note.positionY + noteHeight,
-        note.positionX,
-        note.positionY + noteHeight - cornerRadius,
+        positionX,
+        positionY + noteHeight,
+        positionX,
+        positionY + noteHeight - cornerRadius,
       );
-      ctx.lineTo(note.positionX, note.positionY + cornerRadius);
+      ctx.lineTo(positionX, positionY + cornerRadius);
       ctx.quadraticCurveTo(
-        note.positionX,
-        note.positionY,
-        note.positionX + cornerRadius,
-        note.positionY,
+        positionX,
+        positionY,
+        positionX + cornerRadius,
+        positionY,
       );
       ctx.closePath();
       ctx.fill();
@@ -165,15 +218,16 @@ export default function GameController({ isPlaying }) {
   const update = useCallback(
     (now, delta, ctx, note) => {
       const diffTimeBetweenAnimationFrame = (now - delta) / MILLISECOND;
+
       if (note) {
         note.positionY += diffTimeBetweenAnimationFrame * SPEED;
       }
 
-      if (note.positionY > canvas.height) {
-        return;
+      if (note.positionY >= canvas.height) {
+        return false;
       }
 
-      render(ctx, note);
+      return render(ctx, note);
     },
     [canvas?.height, render],
   );
@@ -205,7 +259,12 @@ export default function GameController({ isPlaying }) {
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
-      animationFrameId = requestAnimationFrame(updateNotes);
+      if (timeRef.current >= songDuration + 5) {
+        setSongEnd(true);
+      } else {
+        animationFrameId = requestAnimationFrame(updateNotes);
+      }
+
       deltaRef.current = now;
     };
 
@@ -218,17 +277,27 @@ export default function GameController({ isPlaying }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPlaying, ctx, canvas, notes, renderNotes]);
+  }, [isPlaying, ctx, canvas, notes, renderNotes, songDuration, currentScore]);
+
+  useEffect(() => {
+    dispatch(updateScore(currentScore));
+
+    if (songEnd) {
+      dispatch(updateCombo(comboResults));
+      dispatch(updateTotalScore(currentScore));
+      navigate("/battles/results");
+    }
+  }, [comboResults, currentScore, dispatch, navigate, songEnd]);
 
   useEffect(() => {
     notesRef.current = notes;
-    setScore((prev) => prev + calculateScore(word));
+    setCurrentScore((prev) => prev + calculateScore(word));
   }, [notes, word]);
 
   useEffect(() => {
-    window.addEventListener("keydown", activate);
+    window.addEventListener("keypress", activate);
     return () => {
-      window.removeEventListener("keydown", activate);
+      window.removeEventListener("keypress", activate);
     };
   }, [activate]);
 
@@ -241,21 +310,31 @@ export default function GameController({ isPlaying }) {
 
   return (
     <GameContainer>
-      <CanvasContainer ref={canvasRef} />
+      <CanvasContainer
+        ref={canvasRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+      />
       <TextContainer>
         <div>{word.toUpperCase()}</div>
-        <div>{combo === 0 ? null : combo}</div>
-        <div>{score === 0 ? null : score}</div>
+        <div>{comboRef.current === 0 ? null : comboRef.current}</div>
+        <div>{currentScore === 0 ? null : currentScore}</div>
       </TextContainer>
       <ColumnsContainer>
+        {/* <Columns activeKeys={activeKeys} /> */}
         {KEYS.map((key, index) => (
-          <Column key={key} index={index} active={key === activeKey} />
+          <Column
+            key={key}
+            index={index}
+            colorIndex={index}
+            active={activeKeys.includes(key)}
+          />
         ))}
       </ColumnsContainer>
       <HitBox />
       <KeyBox>
-        {KEYS.map((key) => (
-          <Key key={key} active={key === activeKey}>
+        {KEYS.map((key, index) => (
+          <Key key={key} colorIndex={index} active={activeKeys.includes(key)}>
             {key.toUpperCase()}
           </Key>
         ))}
@@ -264,6 +343,18 @@ export default function GameController({ isPlaying }) {
   );
 }
 
+const getColor = (index) => {
+  switch (index) {
+    case 0:
+    case 5:
+      return COLUMN_RGB_COLORS[0];
+    case 1:
+    case 4:
+      return COLUMN_RGB_COLORS[1];
+    default:
+      return COLUMN_RGB_COLORS[2];
+  }
+};
 const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -274,8 +365,10 @@ const GameContainer = styled.div`
 
 const CanvasContainer = styled.canvas`
   flex: 7;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.5);
   box-shadow: inset 0 0 0 5px white;
+  width: 100%;
+  height: 100%;
 `;
 
 const ColumnsContainer = styled.div`
@@ -288,20 +381,21 @@ const Column = styled.div`
   position: absolute;
   top: 5px;
   left: ${({ index }) => `calc(100% / 6 * ${index})`};
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: transparent;
   width: ${({ index }) =>
     index === 5 ? `calc(100% / 6 - 5px)` : `calc(100% / 6)`};
   height: ${`calc(87.5% - 10px)`};
   border-right: ${({ index }) => (index === 5 ? null : "2px solid gray")};
 
-  ${({ active }) =>
-    active &&
+  ${({ active, colorIndex }) => {
+    const color = getColor(colorIndex);
+    return (
+      active &&
+      `
+      background: linear-gradient(to top, rgba(${color}, 0.8), rgba(${color}, 0));
     `
-    background: linear-gradient(
-      rgba(217, 217, 217, 0) 0%,
-      rgba(255, 74, 74, 0.75) 100%
     );
-  `}
+  }}
 `;
 
 const HitBox = styled.div`
@@ -328,11 +422,15 @@ const Key = styled.div`
   width: 100%;
   box-shadow: inset 0 0 0 5px white;
 
-  ${({ active }) =>
-    active &&
+  ${({ active, colorIndex }) => {
+    const color = getColor(colorIndex);
+    return (
+      active &&
+      `
+      background: rgba(${color}, 1);
     `
-    background: rgba(217, 217, 217, 0.25)
-  `}
+    );
+  }}
 `;
 
 const TextContainer = styled.div`

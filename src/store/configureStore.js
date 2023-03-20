@@ -1,8 +1,8 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import { sampleReducer } from "../features/reducers/sample";
+import gameReducer from "../features/reducers/gameSlice";
 
 const rootReducer = combineReducers({
-  sample: sampleReducer.reducer,
+  game: gameReducer,
 });
 
 const store = configureStore({

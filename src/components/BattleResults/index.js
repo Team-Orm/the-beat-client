@@ -1,71 +1,56 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
+import { auth } from "../../features/api/firebaseApi";
 
 export default function BattleResults() {
+  const combo = useSelector((state) => state.game.combo);
+  const totalScore = useSelector((state) => state.game.totalScore);
+
   return (
     <BattleResultsContainer>
       <PageTitle>Results</PageTitle>
       <ResultsWrapper>
         <ResultPanel>
-          <Title>Winner</Title>
+          <Winner>Winner</Winner>
           <UserContainer>
-            <UserImage src="/login.png" />
-            <ResultsTitle>영빈님</ResultsTitle>
+            <UserImage src={auth?.currentUser?.photoURL} />
+            <ResultsBox>{auth?.currentUser?.displayName}</ResultsBox>
           </UserContainer>
-          <TitleContainer>
-            <ResultsTitle>perfect:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
-          <TitleContainer>
-            <ResultsTitle>good:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
-          <TitleContainer>
-            <ResultsTitle>bad:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
-          <TitleContainer>
-            <ResultsTitle>miss:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
+          {Object.keys(combo).map((key) => (
+            <RecordsContainer key={key}>
+              <ResultsBox>{key}</ResultsBox>
+              <Score>{combo[key]}</Score>
+            </RecordsContainer>
+          ))}
           <StyledHr />
-          <TitleContainer>
-            <ResultsTitle>Total: </ResultsTitle>
-            <ScoreTitle>101230</ScoreTitle>
-          </TitleContainer>
+          <RecordsContainer>
+            <ResultsBox>TotalScore: </ResultsBox>
+            <Score>{totalScore}</Score>
+          </RecordsContainer>
         </ResultPanel>
         <ResultPanel>
-          <Title>Loser</Title>
+          <Winner>Winner</Winner>
           <UserContainer>
-            <UserImage src="/login.png" />
-            <ResultsTitle>수빈님</ResultsTitle>
+            <UserImage src={auth?.currentUser?.photoURL} />
+            <ResultsBox>{auth?.currentUser?.displayName}</ResultsBox>
           </UserContainer>
-          <TitleContainer>
-            <ResultsTitle>perfect:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
-          <TitleContainer>
-            <ResultsTitle>good:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
-          <TitleContainer>
-            <ResultsTitle>bad:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
-          <TitleContainer>
-            <ResultsTitle>miss:</ResultsTitle>
-            <ScoreTitle>100</ScoreTitle>
-          </TitleContainer>
+          {Object.keys(combo).map((key) => (
+            <RecordsContainer key={key}>
+              <ResultsBox>{key}</ResultsBox>
+              <Score>{combo[key]}</Score>
+            </RecordsContainer>
+          ))}
           <StyledHr />
-          <TitleContainer>
-            <ResultsTitle>Total: </ResultsTitle>
-            <ScoreTitle>101230</ScoreTitle>
-          </TitleContainer>
+          <RecordsContainer>
+            <ResultsBox>TotalScore: </ResultsBox>
+            <Score>{totalScore}</Score>
+          </RecordsContainer>
         </ResultPanel>
       </ResultsWrapper>
       <ButtonContainer>
-        <CircularButton type="button">나가기</CircularButton>
-        <CircularButton type="button">기록하기</CircularButton>
+        <ActionButton type="button">기록하기</ActionButton>
+        <ActionButton type="button">나가기</ActionButton>
       </ButtonContainer>
     </BattleResultsContainer>
   );
@@ -73,38 +58,56 @@ export default function BattleResults() {
 
 const BattleResultsContainer = styled.div`
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-around;
   flex-direction: column;
   align-items: center;
   height: 100vh;
   width: 100vw;
-  background-image: url("/battleresult777.png");
-  background-size: cover;
-  background-position: center;
 `;
 
-const Title = styled.h1`
-  margin: auto;
-  font-size: 5em;
+const PageTitle = styled.h2`
+  display: flex;
+  justify-content: center;
+  font-size: 3em;
+  margin: 0;
+  padding: 20px;
+  width: 100%;
 `;
 
 const ResultsWrapper = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  height: 100%;
 `;
 
 const ResultPanel = styled.div`
   display: flex;
+  justify-content: space-evenly;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  width: 500px;
-  height: 600px;
-  margin: 0 20px;
+  margin: 0 5%;
+  width: 100%;
+  height: 100%;
   border: 5px solid black;
   border-radius: 10px;
   background-color: transparent;
+`;
+
+const Winner = styled.h1`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3em;
+  width: 100%;
+  height: 12.5%;
+  margin: 0;
+`;
+
+const UserContainer = styled.div`
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
 `;
 
 const UserImage = styled.img`
@@ -113,25 +116,40 @@ const UserImage = styled.img`
   border-radius: 50%;
 `;
 
-const TitleContainer = styled.div`
+const RecordsContainer = styled.div`
   display: flex;
   justify-content: space-between;
+  width: 70%;
+`;
+
+const ResultsBox = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 2em;
+  color: black;
+`;
+
+const Score = styled.h1`
+  font-size: 2em;
+  color: black;
+`;
+
+const StyledHr = styled.hr`
   width: 75%;
-  flex-direction: row;
+  border: 3px solid black;
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
-  justify-content: center;
-  width: 75%;
-  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  height: 20%;
 `;
 
-const CircularButton = styled.button`
-  width: 200px;
-  height: 75px;
-  margin-left: 25px;
-  margin-right: 25px;
+const ActionButton = styled.button`
+  width: 20%;
+  height: 40%;
   background-color: transparent;
   border-radius: 10px;
   border: 3px solid black;
@@ -143,34 +161,4 @@ const CircularButton = styled.button`
     border: 3px solid black;
     background-color: black;
   }
-`;
-
-const ResultsTitle = styled.h1`
-  margin-left: 10px;
-  font-size: 2em;
-  color: black;
-`;
-
-const ScoreTitle = styled.h1`
-  margin-left: 30px;
-  font-size: 2em;
-  color: black;
-`;
-
-const UserContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-`;
-
-const PageTitle = styled.h1`
-  font-size: 5em;
-  margin-top: 5px;
-  margin-bottom: 0px;
-  color: black;
-`;
-
-const StyledHr = styled.hr`
-  border: 3px solid black;
-  width: 400px;
 `;

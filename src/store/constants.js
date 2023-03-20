@@ -5,7 +5,7 @@ export const UPDATE_USER = "update-user";
 export const SEND_BATTLES = "send-battles";
 export const RECEIVE_BATTLES = "receive-battles";
 
-export const SPEED = 35;
+export const SPEED = 300;
 export const MILLISECOND = 1000;
 export const DIFFICULTY = 1000;
 export const KEYS = ["s", "d", "f", "j", "k", "l"];
@@ -101,3 +101,5 @@ export const NOTES = [
     positionY: 0,
   },
 ];
+
+export const COLUMN_RGB_COLORS = ["255, 36, 0", "125, 249, 255", "255, 211, 0"];

@@ -10,7 +10,7 @@ import {
   SEND_CHAT,
   BROADCAST_CHAT,
   UPDATE_USER,
-} from "../../store/contants";
+} from "../../store/constants";
 
 export default function Lobby() {
   const navigate = useNavigate();
@@ -246,10 +246,10 @@ export default function Lobby() {
           <RoomsContainer>
             <RoomsLists>
               {roomsList.length &&
-                roomsList.map((roomData) => (
-                  <Room key={roomData._id}>
-                    <RoomName>{roomData.createdBy}</RoomName>
-                    <RoomSong>{roomData.song.title}</RoomSong>
+                roomsList.map(({ _id, createdBy, song }) => (
+                  <Room key={_id}>
+                    <RoomName>{createdBy}</RoomName>
+                    <RoomSong>{song?.title}</RoomSong>
                   </Room>
                 ))}
             </RoomsLists>
