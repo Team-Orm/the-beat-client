@@ -9,7 +9,11 @@ import React, {
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { totalScore, updateScore } from "../../features/reducers/gameSlice";
+import {
+  updateTotalScore,
+  updateScore,
+  updateCombo,
+} from "../../features/reducers/gameSlice";
 import {
   NOTES,
   MILLISECOND,
@@ -43,6 +47,14 @@ export default function GameController({ isPlaying }) {
   const columnWidth = canvas?.width / KEYS.length;
   const noteHeight = canvas?.width / (KEYS.length * 3 * 3);
   const borderWidth = 5;
+
+  const comboResults = useMemo(() => {
+    return {
+      excellent: 0,
+      good: 0,
+      miss: 0,
+    };
+  }, []);
 
   const keyMappings = useMemo(() => {
     return {
@@ -123,10 +135,12 @@ export default function GameController({ isPlaying }) {
         });
       }
 
+      comboResults[currentWord] += 1;
+
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [columnHeight, noteHeight],
+    [columnHeight, comboResults, noteHeight],
   );
 
   const activate = useCallback(
@@ -246,7 +260,7 @@ export default function GameController({ isPlaying }) {
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
-      if (timeRef.current >= songDuration + 3) {
+      if (timeRef.current >= songDuration + 5) {
         setSongEnd(true);
       } else {
         animationFrameId = requestAnimationFrame(updateNotes);
@@ -270,9 +284,11 @@ export default function GameController({ isPlaying }) {
     dispatch(updateScore(currentScore));
 
     if (songEnd) {
-      dispatch(totalScore(currentScore));
+      dispatch(updateCombo(comboResults));
+      dispatch(updateTotalScore(currentScore));
+      navigate("/battles/results");
     }
-  }, [currentScore, dispatch, songEnd]);
+  }, [comboResults, currentScore, dispatch, navigate, songEnd]);
 
   useEffect(() => {
     notesRef.current = notes;

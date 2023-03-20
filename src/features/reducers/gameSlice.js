@@ -3,6 +3,11 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   score: 0,
   totalScore: 0,
+  combo: {
+    excellent: 0,
+    good: 0,
+    miss: 0,
+  },
 };
 
 export const gameSlice = createSlice({
@@ -12,11 +17,14 @@ export const gameSlice = createSlice({
     updateScore: (state, action) => {
       state.score = action.payload;
     },
-    totalScore: (state, action) => {
+    updateTotalScore: (state, action) => {
       state.totalScore = action.payload;
+    },
+    updateCombo: (state, action) => {
+      state.combo = action.payload;
     },
   },
 });
 
-export const { updateScore, totalScore } = gameSlice.actions;
+export const { updateScore, updateTotalScore, updateCombo } = gameSlice.actions;
 export default gameSlice.reducer;
