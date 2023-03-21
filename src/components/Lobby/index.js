@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import { io } from "socket.io-client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
@@ -15,8 +14,6 @@ import {
 
 export default function Lobby() {
   const navigate = useNavigate();
-
-  const [photos, setPhotos] = useState(null);
   const [socket, setSocket] = useState(null);
   const [newUser, setNewUser] = useState({});
   const [currentUserList, setCurrentUserList] = useState([]);
@@ -26,14 +23,7 @@ export default function Lobby() {
   const [connectedUsers, setConnectedUsers] = useState({});
 
   const chatListRef = useRef(null);
-
   const { accessToken, displayName, photoURL, uid } = newUser;
-
-  const scrollToBottom = useCallback(() => {
-    if (chatListRef.current) {
-      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
-    }
-  }, [chatListRef]);
 
   const handleChatMessageChange = (e) => {
     setChatMessage(e.target.value);
@@ -57,14 +47,29 @@ export default function Lobby() {
   const handleRoomClick = useCallback(
     (roomId) => {
       const targetUser = connectedUsers[roomId];
+
       if (targetUser && Object.keys(targetUser).length === 2) {
-        alert("Room is full");
-      } else {
-        navigate(`/battles/${roomId}`);
+        return alert("방이 가득 차 있습니다.");
       }
+
+      return navigate(`/battles/${roomId}`);
     },
     [connectedUsers, navigate],
   );
+
+  const handleMakeRoom = () => {
+    try {
+      return navigate("/battles/new");
+    } catch (err) {
+      return navigate("/error", {
+        state: {
+          status: err.response.status,
+          text: err.response.statusText,
+          message: err.response.data.message,
+        },
+      });
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -91,32 +96,21 @@ export default function Lobby() {
     }
   };
 
-  const redirectToNewRoom = () => {
-    try {
-      return navigate("/battles/new");
-    } catch (err) {
-      return navigate("/error", {
-        state: {
-          status: err.response.status,
-          text: err.response.statusText,
-          message: err.response.data.message,
-        },
-      });
+  const scrollToBottom = useCallback(() => {
+    if (chatListRef.current) {
+      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
     }
-  };
+  }, [chatListRef]);
 
   useEffect(() => {
-    if (auth && auth.currentUser) {
-      const { accessToken, displayName, photoURL, uid } = auth.currentUser;
+    scrollToBottom();
+  }, [receivedMessages, scrollToBottom]);
 
-      setNewUser({
-        accessToken,
-        displayName,
-        photoURL,
-        uid,
-      });
+  useEffect(() => {
+    if (!auth.currentUser) {
+      navigate("/login");
     }
-  }, []);
+  }, [auth.currentUser, navigate]);
 
   useEffect(() => {
     const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
@@ -132,60 +126,6 @@ export default function Lobby() {
       socketClient.disconnect();
     };
   }, [displayName, photoURL, uid]);
-
-  useEffect(() => {
-    const getJWTToken = async () => {
-      try {
-        if (accessToken) {
-          const response = await axios.post(
-            `${process.env.REACT_APP_SERVER_URL}/api/users/login`,
-            { accessToken, displayName, uid, photoURL },
-          );
-
-          if (response.status === 201) {
-            return localStorage.setItem("jwt", response.data.token);
-          }
-
-          throw new Error(response);
-        }
-
-        return true;
-      } catch (err) {
-        return navigate("/error", {
-          state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
-          },
-        });
-      }
-    };
-
-    getJWTToken();
-  }, [accessToken, displayName, navigate, photoURL, uid]);
-
-  useEffect(() => {
-    const getPhotos = async () => {
-      try {
-        const proxyUrl = "https://api.allorigins.win/raw?url=";
-        const photo = await fetch(proxyUrl + photoURL);
-        const blob = await photo.blob();
-        const urls = URL.createObjectURL(blob);
-
-        setPhotos(urls);
-      } catch (err) {
-        navigate("/error", {
-          state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
-          },
-        });
-      }
-    };
-
-    getPhotos();
-  }, [navigate, photoURL]);
 
   useEffect(() => {
     const updateRooms = async () => {
@@ -219,42 +159,70 @@ export default function Lobby() {
   }, [socket, setRoomsList, navigate]);
 
   useEffect(() => {
-    if (socket) {
-      socket.on(BROADCAST_CHAT, (user, chat) => {
-        setReceivedMessages((prevMessages) => [
-          ...prevMessages,
-          { user, chat },
-        ]);
-      });
-    }
-  }, [socket]);
+    const getTokenAndSetUser = async () => {
+      try {
+        if (auth && auth.currentUser) {
+          const { accessToken, displayName, photoURL, uid } = auth.currentUser;
+          setNewUser({ accessToken, displayName, photoURL, uid });
+
+          const response = await axios.post(
+            `${process.env.REACT_APP_SERVER_URL}/api/users/login`,
+            { accessToken, displayName, uid, photoURL },
+          );
+
+          if (response.status === 201) {
+            return localStorage.setItem("jwt", response.data.token);
+          }
+
+          throw new Error(response);
+        }
+
+        return true;
+      } catch (err) {
+        return navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
+      }
+    };
+
+    getTokenAndSetUser();
+  }, [accessToken, displayName, photoURL, uid, navigate]);
 
   useEffect(() => {
-    if (socket) {
-      socket.on(UPDATE_USER, (currentUser) => {
-        setCurrentUserList(() => currentUser);
-      });
-    }
-  }, [socket]);
+    if (!socket) return;
 
-  useEffect(() => {
-    if (socket) {
-      socket.on(UPDATE_ROOMS, (updatedRooms) => {
-        setRoomsList(() => updatedRooms);
-      });
-    }
-  }, [socket]);
+    const handleBroadcastChat = (user, chat) => {
+      setReceivedMessages((prevMessages) => [...prevMessages, { user, chat }]);
+    };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [receivedMessages, scrollToBottom]);
+    const handleUpdateUser = (currentUser) => {
+      setCurrentUserList(() => currentUser);
+    };
 
-  useEffect(() => {
-    if (socket) {
-      socket.on(CHECK_USERS, (users) => {
-        setConnectedUsers(users);
-      });
-    }
+    const handleUpdateRooms = (updatedRooms) => {
+      setRoomsList(() => updatedRooms);
+    };
+
+    const handleCheckUsers = (users) => {
+      setConnectedUsers(users);
+    };
+
+    socket.on(BROADCAST_CHAT, handleBroadcastChat);
+    socket.on(UPDATE_USER, handleUpdateUser);
+    socket.on(UPDATE_ROOMS, handleUpdateRooms);
+    socket.on(CHECK_USERS, handleCheckUsers);
+
+    // eslint-disable-next-line consistent-return
+    return () => {
+      socket.off(BROADCAST_CHAT, handleBroadcastChat);
+      socket.off(UPDATE_USER, handleUpdateUser);
+      socket.off(UPDATE_ROOMS, handleUpdateRooms);
+      socket.off(CHECK_USERS, handleCheckUsers);
+    };
   }, [socket]);
 
   return (
@@ -285,6 +253,7 @@ export default function Lobby() {
             <ChatsHead>Chats</ChatsHead>
             <ChatList ref={chatListRef}>
               {receivedMessages.map(({ user, chat }, index) => (
+                // eslint-disable-next-line react/no-array-index-key
                 <Chats key={user + chat + index}>
                   {user}: {chat}
                 </Chats>
@@ -311,7 +280,7 @@ export default function Lobby() {
               ))}
           </UserList>
           <RightBottom>
-            <LogoutButton type="button" onClick={redirectToNewRoom}>
+            <LogoutButton type="button" onClick={handleMakeRoom}>
               방 만들기
             </LogoutButton>
             <LogoutButton type="button" onClick={handleLogout}>
@@ -406,6 +375,14 @@ const Room = styled.div`
   border-radius: 30px;
   background-color: rgb(70, 70, 70);
   color: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: -8px -8px 16px rgba(255, 255, 255, 0.1),
+      8px 8px 16px rgba(0, 0, 0, 0.6);
+    transform: translateY(-5px);
+  }
 `;
 
 const RoomName = styled.div`

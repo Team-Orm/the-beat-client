@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { auth } from "../../features/api/firebaseApi";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,6 +19,12 @@ export default function Login() {
 
     return true;
   };
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      navigate("/");
+    }
+  }, [auth.currentUser, navigate]);
 
   return (
     <LoginContainer>

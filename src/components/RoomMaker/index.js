@@ -156,9 +156,12 @@ const SongContainer = styled.div`
   font-size: 5em;
   color: white;
   background-image: linear-gradient(to right, #000728, #00528f);
+  transition: all 0.3s ease;
+  cursor: pointer;
 
   :hover {
     border: 3px solid white;
+    transform: scale(1.1);
     background-image: linear-gradient(to right, #ffffff, #00528f);
   }
 `;
