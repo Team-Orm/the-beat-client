@@ -2,25 +2,28 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
+import { useSelector } from "react-redux";
 
 export default function AudioVisualizer({ song, isPlaying }) {
   const navigate = useNavigate();
   const [audioBuffer, setAudioBuffer] = useState(null);
-  const audioSourceRef = useRef(null);
+  const end = useSelector((state) => state.game.end);
+  const sourceRef = useRef(null);
+
   const createAudioContextAndSource = useCallback((audioBuffer) => {
     const audioContext = new AudioContext();
     const source = audioContext.createBufferSource();
-
     if (audioBuffer) {
       source.buffer = audioBuffer;
     }
+
+    sourceRef.current = source;
 
     return { audioContext, source };
   }, []);
 
   const startVisualization = useCallback(async () => {
     const { audioContext, source } = createAudioContextAndSource(audioBuffer);
-    audioSourceRef.current = source;
     await audioContext.resume();
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
@@ -34,16 +37,12 @@ export default function AudioVisualizer({ song, isPlaying }) {
     const ctx = canvas.getContext("2d");
     const { width } = canvas;
     const { height } = canvas;
-
     const particles = [];
 
     const draw = () => {
       requestAnimationFrame(draw);
-
       analyser.getByteTimeDomainData(dataArray);
-
       ctx.clearRect(0, 0, width, height);
-
       ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
       ctx.fillRect(0, 0, width, height);
 
@@ -58,6 +57,7 @@ export default function AudioVisualizer({ song, isPlaying }) {
       const innerCircleRadius = baseRadius * scaleFactor;
 
       ctx.beginPath();
+
       let angle = -Math.PI / 2;
 
       for (let i = 0; i < bufferLength - 1; i++) {
@@ -117,43 +117,35 @@ export default function AudioVisualizer({ song, isPlaying }) {
 
     draw();
 
-    source.start(0);
+    sourceRef.current.start(0);
   }, [audioBuffer, createAudioContextAndSource]);
 
-  const stopAudio = useCallback(() => {
-    if (audioSourceRef.current) {
-      audioSourceRef.current.stop();
-    }
-  }, []);
-
   const getBuffer = useCallback(async () => {
-    if (song?.audioURL) {
-      try {
-        const response = await axios.get(
-          "http://localhost:8000/proxy/audio-server",
-          {
-            responseType: "arraybuffer",
-            params: { url: song?.audioURL },
-          },
-        );
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_SERVER_URL}/proxy/audio-server`,
+        {
+          responseType: "arraybuffer",
+          params: { url: song?.audioURL },
+        },
+      );
 
-        if (response.status === 200) {
-          const audioData = new Uint8Array(response.data).buffer;
-          const { audioContext, source } = createAudioContextAndSource(null);
+      if (response.status === 200) {
+        const audioData = new Uint8Array(response.data).buffer;
+        const { audioContext, source } = createAudioContextAndSource(null);
+        const buffer = await audioContext.decodeAudioData(audioData);
 
-          const buffer = await audioContext.decodeAudioData(audioData);
-          setAudioBuffer(buffer);
-          source.buffer = buffer;
-        }
-      } catch (err) {
-        navigate("/error", {
-          state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.message,
-          },
-        });
+        setAudioBuffer(buffer);
+        source.buffer = buffer;
       }
+    } catch (err) {
+      navigate("/error", {
+        state: {
+          status: err.response.status,
+          text: err.response.statusText,
+          message: err.message,
+        },
+      });
     }
   }, [createAudioContextAndSource, navigate, song?.audioURL]);
 
@@ -161,9 +153,13 @@ export default function AudioVisualizer({ song, isPlaying }) {
     if (song?.audioURL) {
       getBuffer();
     }
+  }, [getBuffer, song?.audioURL]);
 
-    return stopAudio;
-  }, [getBuffer, song?.audioURL, stopAudio]);
+  useEffect(() => {
+    if (end && sourceRef.current) {
+      sourceRef.current.stop();
+    }
+  }, [end]);
 
   useEffect(() => {
     if (isPlaying && audioBuffer) {
@@ -173,7 +169,7 @@ export default function AudioVisualizer({ song, isPlaying }) {
 
   return (
     <CanvasWrapper>
-      <canvas id="audio-visualizer" width="1920" height="1000" />
+      <canvas id="audio-visualizer" width="1900" height="1000" />
     </CanvasWrapper>
   );
 }
