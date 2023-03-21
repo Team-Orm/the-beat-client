@@ -6,6 +6,7 @@ import styled from "styled-components";
 export default function AudioVisualizer({ song, isPlaying }) {
   const navigate = useNavigate();
   const [audioBuffer, setAudioBuffer] = useState(null);
+  const audioSourceRef = useRef(null);
   const createAudioContextAndSource = useCallback((audioBuffer) => {
     const audioContext = new AudioContext();
     const source = audioContext.createBufferSource();
@@ -19,6 +20,7 @@ export default function AudioVisualizer({ song, isPlaying }) {
 
   const startVisualization = useCallback(async () => {
     const { audioContext, source } = createAudioContextAndSource(audioBuffer);
+    audioSourceRef.current = source;
     await audioContext.resume();
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
@@ -118,6 +120,12 @@ export default function AudioVisualizer({ song, isPlaying }) {
     source.start(0);
   }, [audioBuffer, createAudioContextAndSource]);
 
+  const stopAudio = useCallback(() => {
+    if (audioSourceRef.current) {
+      audioSourceRef.current.stop();
+    }
+  }, []);
+
   const getBuffer = useCallback(async () => {
     if (song?.audioURL) {
       try {
@@ -150,27 +158,29 @@ export default function AudioVisualizer({ song, isPlaying }) {
   }, [createAudioContextAndSource, navigate, song?.audioURL]);
 
   useEffect(() => {
-    if (isPlaying) {
-      startVisualization();
-    }
-  }, [isPlaying, startVisualization]);
-
-  useEffect(() => {
     if (song?.audioURL) {
       getBuffer();
     }
-  }, [getBuffer, song?.audioURL]);
+
+    return stopAudio;
+  }, [getBuffer, song?.audioURL, stopAudio]);
+
+  useEffect(() => {
+    if (isPlaying && audioBuffer) {
+      startVisualization();
+    }
+  }, [audioBuffer, isPlaying, startVisualization]);
 
   return (
     <CanvasWrapper>
-      <canvas id="audio-visualizer" width="1900" height="880" />
+      <canvas id="audio-visualizer" width="1920" height="1000" />
     </CanvasWrapper>
   );
 }
 
 const CanvasWrapper = styled.div`
   position: absolute;
-  top: 45%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
