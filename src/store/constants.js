@@ -8,9 +8,9 @@ export const USER_JOINED = "user_joined";
 export const USER_LEAVE = "user_leave";
 export const CHECK_USERS = "check_users";
 
-export const SPEED = 300;
+export const SPEED = 500;
 export const MILLISECOND = 1000;
-export const DIFFICULTY = 1000;
+export const DIFFICULTY = 1500;
 export const KEYS = ["s", "d", "f", "j", "k", "l"];
 export const NOTES = [
   {

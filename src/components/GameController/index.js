@@ -1,13 +1,15 @@
+/* eslint-disable consistent-return */
 import React, {
   useState,
   useEffect,
   useRef,
   useCallback,
   useMemo,
+  useLayoutEffect,
 } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import {
   updateTotalScore,
   updateScore,
@@ -86,6 +88,8 @@ export default function GameController({ isPlaying }) {
     return score;
   };
 
+  const [animateCombo, setAnimateCombo] = useState(false);
+
   const onPressKey = useCallback(
     (key) => {
       const hitBoxPositionPercentage = 0.125;
@@ -123,6 +127,7 @@ export default function GameController({ isPlaying }) {
       if (currentWord === "miss") {
         comboRef.current = 0;
       } else {
+        setAnimateCombo(true);
         comboRef.current += 1;
 
         setCurrentScore((prevScore) => {
@@ -243,7 +248,7 @@ export default function GameController({ isPlaying }) {
     [update],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let animationFrameId;
 
     const updateNotes = () => {
@@ -308,6 +313,15 @@ export default function GameController({ isPlaying }) {
     };
   }, [deActivate]);
 
+  useLayoutEffect(() => {
+    if (animateCombo) {
+      const timer = setTimeout(() => {
+        setAnimateCombo(false);
+      }, 250); // The duration of the animation in milliseconds
+      return () => clearTimeout(timer);
+    }
+  }, [animateCombo]);
+
   return (
     <GameContainer>
       <CanvasContainer
@@ -317,11 +331,12 @@ export default function GameController({ isPlaying }) {
       />
       <TextContainer>
         <div>{word.toUpperCase()}</div>
-        <div>{comboRef.current === 0 ? null : comboRef.current}</div>
+        <ComboText animate={animateCombo}>
+          {comboRef.current === 0 ? null : comboRef.current}
+        </ComboText>
         <div>{currentScore === 0 ? null : currentScore}</div>
       </TextContainer>
       <ColumnsContainer>
-        {/* <Columns activeKeys={activeKeys} /> */}
         {KEYS.map((key, index) => (
           <Column
             key={key}
@@ -369,6 +384,27 @@ const CanvasContainer = styled.canvas`
   box-shadow: inset 0 0 0 5px white;
   width: 100%;
   height: 100%;
+`;
+
+const growAndShrink = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(2);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+const ComboText = styled.div`
+  animation: ${({ animate }) =>
+    animate
+      ? css`
+          ${growAndShrink} 0.25s
+        `
+      : "none"};
 `;
 
 const ColumnsContainer = styled.div`
@@ -421,6 +457,7 @@ const Key = styled.div`
   color: white;
   width: 100%;
   box-shadow: inset 0 0 0 5px white;
+  transition: transform 0.1s ease;
 
   ${({ active, colorIndex }) => {
     const color = getColor(colorIndex);
@@ -428,6 +465,7 @@ const Key = styled.div`
       active &&
       `
       background: rgba(${color}, 1);
+      transform: scale(1.25);
     `
     );
   }}

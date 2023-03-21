@@ -20,8 +20,8 @@ export default function App() {
     <>
       <GlobalStyle />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={loading ? <Loading /> : <Lobby />} />
+        <Route path="/login" element={loading ? <Loading /> : <Login />} />
+        <Route path="/" element={<Lobby />} />
         <Route path="/battles/new" element={<RoomMaker />} />
         <Route path="/battles/:roomId" element={<BattleRoom />} />
         <Route path="/battles/results" element={<BattleResults />} />
