@@ -1,12 +1,14 @@
 import { io } from "socket.io-client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
-import GameController from "../GameController";
 import { auth } from "../../features/api/firebaseApi";
 import { UPDATE_USER, USER_JOINED, USER_LEAVE } from "../../store/constants";
+
+import GameController from "../GameController";
+import AudioVisualizer from "../AudioVisualizer";
 
 export default function BattleRoom() {
   const [song, setSong] = useState({});
@@ -105,9 +107,11 @@ export default function BattleRoom() {
       });
     }
   }, [socket]);
+
   return (
     <Container song={song}>
       <AudioContainer ref={audioRef} />
+      <AudioVisualizer song={song} isPlaying={isPlaying} />
       {!isCountingDown && (
         <StartButton onClick={handleStart}>Start</StartButton>
       )}
