@@ -20,6 +20,8 @@ export default function BattleRoom() {
   const [battleUser, setBattleUser] = useState({});
   const [render, setRender] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [myReady, setMyReady] = useState(false);
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
@@ -45,6 +47,11 @@ export default function BattleRoom() {
       clearInterval(countdownTimer);
       setIsPlaying(true);
     }, 3000);
+  };
+
+  const handleReady = () => {
+    socket.emit("send-ready");
+    setMyReady(!myReady);
   };
 
   useEffect(() => {
@@ -97,11 +104,15 @@ export default function BattleRoom() {
       setBattleUser(null);
     });
 
+    socket?.on("receive-ready", () => {
+      setReady(!ready);
+    });
+
     socket?.on("room-full", () => {
       alert("방이 가득 차 있습니다.");
       navigate("/");
     });
-  }, [combo, displayName, navigate, photoURL, score, socket]);
+  }, [combo, displayName, navigate, photoURL, ready, score, socket]);
 
   useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
@@ -122,17 +133,26 @@ export default function BattleRoom() {
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
       {!isCountingDown && room?.uid === auth?.currentUser?.uid && (
-        <StartButton onClick={handleStart}>Start</StartButton>
+        <StartButton onClick={handleStart} disabled={!ready}>
+          Start
+        </StartButton>
+      )}
+      {!isCountingDown && room?.uid !== auth?.currentUser?.uid && !ready && (
+        <StartButton onClick={handleReady}>Ready</StartButton>
       )}
       {isCountingDown && countdown > 0 && <Count>{countdown}</Count>}
       <BattleRoomContainer>
         <BattleUserContainer>
           <Controller>
+            {room?.uid !== auth?.currentUser?.uid && myReady && (
+              <Ready>Ready</Ready>
+            )}
             <GameController isPlaying={isPlaying} isRender={render} />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
+            {ready && <Ready>Ready</Ready>}
             <GameController isPlaying={isPlaying} isRender={render} />
           </Controller>
         </BattleUserContainer>
@@ -183,10 +203,11 @@ const Container = styled.main`
 `;
 
 const Controller = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 0;C
+  padding: 0;
 `;
 
 const Count = styled.div`
@@ -210,7 +231,7 @@ const Photo = styled.img`
   object-fit: cover;
 `;
 
-const StartButton = styled.div`
+const StartButton = styled.button`
   position: absolute;
   display: flex;
   align-items: center;
@@ -224,11 +245,23 @@ const StartButton = styled.div`
   transform: translate(-50%, -50%);
   color: white;
   z-index: 10;
+  background-color: transparent;
 
   :hover {
-    color: greenyellow;
-    border: 2px solid greenyellow;
+    ${({ disabled }) =>
+      !disabled &&
+      `
+      color: greenyellow;
+      border: 5px solid greenyellow;
+    `}
   }
+
+  ${({ disabled }) =>
+    disabled &&
+    `
+    cursor: not-allowed;
+    opacity: 0.6;
+  `}
 `;
 
 const BattleRoomContainer = styled.div`
@@ -246,8 +279,23 @@ const BattleUserContainer = styled.div`
   height: 100%;
 `;
 
+const Ready = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: transparent;
+  border: 5px solid greenyellow;
+  font-size: 5em;
+  z-index: 12;
+  color: greenyellow;
+  padding: 10px 20px;
+  border-radius: 10px;
+`;
+
 const ProfileContainer = styled.div`
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: space-between;
   width: 100%;

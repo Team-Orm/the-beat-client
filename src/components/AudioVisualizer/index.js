@@ -169,7 +169,11 @@ export default function AudioVisualizer({ song, isPlaying }) {
 
   return (
     <CanvasWrapper>
-      <canvas id="audio-visualizer" width="1900" height="1000" />
+      <canvas
+        id="audio-visualizer"
+        width={window.innerWidth}
+        height={window.innerHeight}
+      />
     </CanvasWrapper>
   );
 }
