@@ -8,6 +8,7 @@ const initialState = {
     good: 0,
     miss: 0,
   },
+  end: false,
 };
 
 export const gameSlice = createSlice({
@@ -23,8 +24,12 @@ export const gameSlice = createSlice({
     updateCombo: (state, action) => {
       state.combo = action.payload;
     },
+    isSongEnd: (state) => {
+      state.end = true;
+    },
   },
 });
 
-export const { updateScore, updateTotalScore, updateCombo } = gameSlice.actions;
+export const { updateScore, updateTotalScore, updateCombo, isSongEnd } =
+  gameSlice.actions;
 export default gameSlice.reducer;

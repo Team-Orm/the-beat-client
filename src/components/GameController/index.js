@@ -14,6 +14,7 @@ import {
   updateTotalScore,
   updateScore,
   updateCombo,
+  isSongEnd,
 } from "../../features/reducers/gameSlice";
 import {
   NOTES,
@@ -287,6 +288,7 @@ export default function GameController({ isPlaying }) {
     dispatch(updateScore(currentScore));
 
     if (songEnd) {
+      dispatch(isSongEnd());
       dispatch(updateCombo(comboResults));
       dispatch(updateTotalScore(currentScore));
       navigate("/battles/results");
