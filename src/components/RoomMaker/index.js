@@ -19,6 +19,7 @@ export default function RoomMaker() {
   const handleCreateRoom = async () => {
     try {
       const selected = songs.find((song) => song._id === selectedSong);
+      const jwt = localStorage.getItem("jwt");
 
       const response = await axios.post(
         `${process.env.REACT_APP_SERVER_URL}/api/rooms/new`,
@@ -26,6 +27,11 @@ export default function RoomMaker() {
           song: selected,
           createdBy: auth.currentUser.displayName,
           uid: auth.currentUser.uid,
+        },
+        {
+          headers: {
+            authorization: `Bearer ${jwt}`,
+          },
         },
       );
 

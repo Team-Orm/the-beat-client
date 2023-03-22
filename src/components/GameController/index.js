@@ -24,7 +24,13 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
-export default function GameController({ isRender }) {
+export default function GameController({
+  isRender,
+  isCurrentUser,
+  handleKeyPress,
+  handleKeyRelease,
+  otherKeys,
+}) {
   const dispatch = useDispatch();
   const songDuration = Math.max(...NOTES.map((note) => note.time));
   const navigate = useNavigate();
@@ -149,25 +155,31 @@ export default function GameController({ isRender }) {
 
   const activate = useCallback(
     (event) => {
+      if (!isCurrentUser) return;
+
       const { key } = event;
       if (keyMappings[key]) {
         setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
         onPressKey(key);
+        handleKeyPress(key);
       }
     },
-    [keyMappings, onPressKey],
+    [handleKeyPress, isCurrentUser, keyMappings, onPressKey],
   );
 
   const deActivate = useCallback(
     (event) => {
+      if (!isCurrentUser) return;
+
       const { key } = event;
       if (keyMappings[key]) {
         setActiveKeys((prevActiveKeys) => {
           return prevActiveKeys.filter((activeKey) => activeKey !== key);
         });
+        handleKeyRelease(key);
       }
     },
-    [keyMappings],
+    [handleKeyRelease, isCurrentUser, keyMappings],
   );
 
   const render = useCallback(
@@ -341,14 +353,22 @@ export default function GameController({ isRender }) {
             key={key}
             index={index}
             colorIndex={index}
-            active={activeKeys.includes(key)}
+            active={
+              otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
+            }
           />
         ))}
       </ColumnsContainer>
       <HitBox />
       <KeyBox>
         {KEYS.map((key, index) => (
-          <Key key={key} colorIndex={index} active={activeKeys.includes(key)}>
+          <Key
+            key={key}
+            colorIndex={index}
+            active={
+              otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
+            }
+          >
             {key.toUpperCase()}
           </Key>
         ))}

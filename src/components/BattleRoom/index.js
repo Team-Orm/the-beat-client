@@ -22,6 +22,7 @@ export default function BattleRoom() {
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [ready, setReady] = useState(false);
   const [myReady, setMyReady] = useState(false);
+  const [activeKeys, setActiveKeys] = useState([]);
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
@@ -31,8 +32,50 @@ export default function BattleRoom() {
   const score = useSelector((state) => state.game.score);
   const combo = useSelector((state) => state.game.currentCombo);
 
+  const handleKeyPress = (key) => {
+    socket.emit("opponent-key-press", key);
+  };
+
+  const handleKeyRelease = (key) => {
+    socket.emit("opponent-key-release", key);
+  };
+
+  const handleOut = async () => {
+    if (auth?.currentUser?.uid === room?.uid) {
+      try {
+        const jwt = localStorage.getItem("jwt");
+
+        const response = await axios.delete(
+          `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+          {
+            headers: {
+              authorization: `Bearer ${jwt}`,
+            },
+          },
+        );
+
+        if (response.status === 204) {
+          socket.emit("delete-room");
+        }
+      } catch (err) {
+        navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
+      }
+    }
+
+    navigate("/");
+  };
+
   const handleStart = () => {
+    socket.emit("send-start");
     setIsCountingDown(true);
+    setReady(!ready);
+
     const countdownTimer = setInterval(() => {
       setCountdown((prevCountdown) => {
         if (prevCountdown === 2) {
@@ -104,8 +147,43 @@ export default function BattleRoom() {
       setBattleUser(null);
     });
 
+    socket?.on("receive-opponent-key-press", (key) => {
+      setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
+    });
+
+    socket?.on("receive-opponent-key-release", (key) => {
+      setActiveKeys((prevActiveKeys) => {
+        return prevActiveKeys.filter((activeKey) => activeKey !== key);
+      });
+    });
+
+    socket?.on("receive-delete", () => {
+      navigate("/");
+      alert("방을 만든 유저가 나갔습니다.");
+    });
+
     socket?.on("receive-ready", () => {
       setReady(!ready);
+    });
+
+    socket?.on("receive-start", () => {
+      setIsCountingDown(true);
+      setMyReady(false);
+
+      const countdownTimer = setInterval(() => {
+        setCountdown((prevCountdown) => {
+          if (prevCountdown === 2) {
+            setRender(true);
+          }
+
+          return prevCountdown - 1;
+        });
+      }, 1000);
+
+      setTimeout(() => {
+        clearInterval(countdownTimer);
+        setIsPlaying(true);
+      }, 3000);
     });
 
     socket?.on("room-full", () => {
@@ -132,6 +210,9 @@ export default function BattleRoom() {
   return (
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
+      <OutButton type="button" onClick={handleOut}>
+        나가기
+      </OutButton>
       {!isCountingDown && room?.uid === auth?.currentUser?.uid && (
         <StartButton onClick={handleStart} disabled={!ready}>
           Start
@@ -147,13 +228,24 @@ export default function BattleRoom() {
             {room?.uid !== auth?.currentUser?.uid && myReady && (
               <Ready>Ready</Ready>
             )}
-            <GameController isPlaying={isPlaying} isRender={render} />
+            <GameController
+              isPlaying={isPlaying}
+              isRender={render}
+              handleKeyPress={handleKeyPress}
+              handleKeyRelease={handleKeyRelease}
+              isCurrentUser
+            />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
             {ready && <Ready>Ready</Ready>}
-            <GameController isPlaying={isPlaying} isRender={render} />
+            <GameController
+              isPlaying={isPlaying}
+              isRender={render}
+              isCurrentUser={false}
+              otherKeys={activeKeys}
+            />
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>
@@ -262,6 +354,24 @@ const StartButton = styled.button`
     cursor: not-allowed;
     opacity: 0.6;
   `}
+`;
+
+const OutButton = styled.button`
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4em;
+  padding: 10px 20px;
+  border: 5px solid white;
+  border-radius: 20px;
+  color: white;
+  background-color: transparent;
+
+  :hover {
+    color: greenyellow;
+    border: 5px solid greenyellow;
+  }
 `;
 
 const BattleRoomContainer = styled.div`
