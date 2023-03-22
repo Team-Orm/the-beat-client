@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-bind */
 import { io } from "socket.io-client";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -13,6 +14,7 @@ import AudioVisualizer from "../AudioVisualizer";
 export default function BattleRoom() {
   const [song, setSong] = useState({});
   const [room, setRoom] = useState({});
+  const [note, setNote] = useState([]);
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -73,6 +75,7 @@ export default function BattleRoom() {
       if (response.status === 200) {
         setRoom(response.data.room);
         setSong(response.data.song);
+        setNote(response.data.note.note);
       }
     };
 
@@ -115,12 +118,12 @@ export default function BattleRoom() {
       <BattleRoomContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} />
+            <GameController isPlaying={isPlaying} note={note} />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} />
+            <GameController isPlaying={isPlaying} note={note} />
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>
