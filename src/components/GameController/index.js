@@ -25,7 +25,7 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
-export default function GameController({ isPlaying }) {
+export default function GameController({ isPlaying, isRender }) {
   const dispatch = useDispatch();
   const songDuration = Math.max(...NOTES.map((note) => note.time));
   const navigate = useNavigate();
@@ -273,7 +273,7 @@ export default function GameController({ isPlaying }) {
       deltaRef.current = now;
     };
 
-    if (isPlaying) {
+    if (isRender) {
       updateNotes();
     }
 
@@ -282,7 +282,7 @@ export default function GameController({ isPlaying }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPlaying, ctx, canvas, notes, renderNotes, songDuration, currentScore]);
+  }, [ctx, canvas, notes, renderNotes, songDuration, currentScore, isRender]);
 
   useEffect(() => {
     dispatch(updateScore(currentScore));

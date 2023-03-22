@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
@@ -11,11 +11,14 @@ import GameController from "../GameController";
 import AudioVisualizer from "../AudioVisualizer";
 
 export default function BattleRoom() {
+  const navigate = useNavigate();
+
   const [song, setSong] = useState({});
   const [room, setRoom] = useState({});
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [render, setRender] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [currentUserList, setCurrentUserList] = useState([]);
   const [newUser, setNewUser] = useState({});
@@ -30,14 +33,16 @@ export default function BattleRoom() {
     const countdownTimer = setInterval(() => {
       setCountdown((prevCountdown) => {
         if (prevCountdown === 2) {
-          setIsPlaying(true);
+          setRender(true);
         }
 
         return prevCountdown - 1;
       });
     }, 1000);
+
     setTimeout(() => {
       clearInterval(countdownTimer);
+      setIsPlaying(true);
     }, 3000);
   };
 
@@ -71,45 +76,62 @@ export default function BattleRoom() {
 
   useEffect(() => {
     const getSong = async () => {
-      const jwt = localStorage.getItem("jwt");
+      try {
+        const jwt = localStorage.getItem("jwt");
 
-      const response = await axios.get(
-        `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
-      );
+        const response = await axios.get(
+          `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+          {
+            headers: {
+              authorization: `Bearer ${jwt}`,
+            },
+          },
+        );
 
-      if (response.status === 200) {
-        setRoom(response.data.room);
-        setSong(response.data.song);
+        if (response.status === 200) {
+          setRoom(response.data.room);
+          setSong(response.data.song);
+        }
+      } catch (err) {
+        navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
       }
     };
 
     getSong();
-  }, [roomId]);
+  }, [navigate, roomId]);
 
   useEffect(() => {
-    if (socket) {
-      socket.on(UPDATE_USER, (currentUserList) => {
-        setCurrentUserList(currentUserList);
-      });
-    }
-  }, [socket]);
+    if (!socket) return;
 
-  useEffect(() => {
-    if (socket) {
-      socket.on(USER_JOINED, (user) => {
-        setCurrentUserList((prevUserList) => [...prevUserList, user]);
-      });
-    }
-  }, [socket]);
+    const handleUpdateUser = (currentUserList) => {
+      setCurrentUserList(currentUserList);
+    };
 
-  useEffect(() => {
-    if (socket) {
-      socket.on(USER_LEAVE, (user) => {
-        setCurrentUserList((prevUserList) =>
-          prevUserList.filter((users) => users.uid !== user.uid),
-        );
-      });
-    }
+    const handleUserJoined = (user) => {
+      setCurrentUserList((prevUser) => [...prevUser, user]);
+    };
+
+    const handleUserLeave = (user) => {
+      setCurrentUserList((prevUserArray) =>
+        prevUserArray.filter((prevUser) => prevUser.uid !== user.uid),
+      );
+    };
+
+    socket.on(UPDATE_USER, handleUpdateUser);
+    socket.on(USER_JOINED, handleUserJoined);
+    socket.on(USER_LEAVE, handleUserLeave);
+
+    return () => {
+      socket.off(UPDATE_USER, handleUpdateUser);
+      socket.off(USER_JOINED, handleUserJoined);
+      socket.off(USER_LEAVE, handleUserLeave);
+    };
   }, [socket]);
 
   return (
@@ -122,12 +144,12 @@ export default function BattleRoom() {
       <BattleRoomContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} />
+            <GameController isPlaying={isPlaying} isRender={render} />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} />
+            <GameController isPlaying={isPlaying} isRender={render} />
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>

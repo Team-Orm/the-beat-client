@@ -216,7 +216,6 @@ export default function Lobby() {
     socket.on(UPDATE_ROOMS, handleUpdateRooms);
     socket.on(CHECK_USERS, handleCheckUsers);
 
-    // eslint-disable-next-line consistent-return
     return () => {
       socket.off(BROADCAST_CHAT, handleBroadcastChat);
       socket.off(UPDATE_USER, handleUpdateUser);
