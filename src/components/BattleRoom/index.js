@@ -5,7 +5,6 @@ import axios from "axios";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
 import { auth } from "../../features/api/firebaseApi";
-import { UPDATE_USER, USER_JOINED, USER_LEAVE } from "../../store/constants";
 
 import GameController from "../GameController";
 import AudioVisualizer from "../AudioVisualizer";
@@ -18,15 +17,17 @@ export default function BattleRoom() {
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [battleUser, setBattleUser] = useState({});
   const [render, setRender] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
-  const [currentUserList, setCurrentUserList] = useState([]);
-  const [newUser, setNewUser] = useState({});
+
+  const { displayName, photoURL, uid } = auth.currentUser
+    ? auth.currentUser
+    : { displayName: null, photoURL: null, uid: null };
 
   const { roomId } = useParams();
   const score = useSelector((state) => state.game.score);
-
-  const { displayName, photoURL, uid } = newUser;
+  const combo = useSelector((state) => state.game.currentCombo);
 
   const handleStart = () => {
     setIsCountingDown(true);
@@ -45,34 +46,6 @@ export default function BattleRoom() {
       setIsPlaying(true);
     }, 3000);
   };
-
-  useEffect(() => {
-    if (auth && auth.currentUser) {
-      const { displayName, photoURL, uid } = auth.currentUser;
-
-      setNewUser({
-        displayName,
-        photoURL,
-        uid,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
-      query: {
-        roomId,
-        name: displayName,
-        picture: photoURL,
-        uid,
-      },
-    });
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, [displayName, photoURL, roomId, uid]);
 
   useEffect(() => {
     const getSong = async () => {
@@ -105,39 +78,50 @@ export default function BattleRoom() {
 
     getSong();
   }, [navigate, roomId]);
+  socket?.emit("send-user");
 
   useEffect(() => {
-    if (!socket) return;
+    socket?.emit("send-battles", score, combo);
 
-    const handleUpdateUser = (currentUserList) => {
-      setCurrentUserList(currentUserList);
-    };
-
-    const handleUserJoined = (user) => {
-      setCurrentUserList((prevUser) => [...prevUser, user]);
-    };
-
-    const handleUserLeave = (user) => {
-      setCurrentUserList((prevUserArray) =>
-        prevUserArray.filter((prevUser) => prevUser.uid !== user.uid),
+    socket?.on("receive-user", (currentUserArray) => {
+      const battleUser = Object.values(currentUserArray).filter(
+        (u) => u.uid !== auth?.currentUser?.uid,
       );
-    };
 
-    socket.on(UPDATE_USER, handleUpdateUser);
-    socket.on(USER_JOINED, handleUserJoined);
-    socket.on(USER_LEAVE, handleUserLeave);
+      setBattleUser(battleUser[0]);
+    });
+
+    socket?.emit("send-connect");
+
+    socket?.on("user-left", () => {
+      setBattleUser(null);
+    });
+
+    socket?.on("room-full", () => {
+      alert("방이 가득 차 있습니다.");
+      navigate("/");
+    });
+  }, [combo, displayName, navigate, photoURL, score, socket]);
+
+  useEffect(() => {
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+      query: { displayName, photoURL, uid, roomId },
+    });
+    setSocket(socketClient);
 
     return () => {
-      socket.off(UPDATE_USER, handleUpdateUser);
-      socket.off(USER_JOINED, handleUserJoined);
-      socket.off(USER_LEAVE, handleUserLeave);
+      socketClient.disconnect();
     };
-  }, [socket]);
+  }, [displayName, photoURL, roomId, uid]);
 
   return (
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
-      {!isCountingDown && (
+      {!isCountingDown && room?.uid === auth?.currentUser?.uid && (
         <StartButton onClick={handleStart}>Start</StartButton>
       )}
       {isCountingDown && countdown > 0 && <Count>{countdown}</Count>}
@@ -156,14 +140,28 @@ export default function BattleRoom() {
       <BottomContainer>
         <ScoreContainer>
           <Records>
-            <div>{room?.createdBy && auth?.currentUser?.displayName}</div>
-            <div>score: {score}</div>
+            <ProfileContainer>
+              <Profile>
+                <Photo src={auth?.currentUser?.photoURL} alt="Me" />
+                {auth?.currentUser?.displayName}
+              </Profile>
+              score: {score}
+            </ProfileContainer>
           </Records>
         </ScoreContainer>
         <ScoreContainer>
           <Records>
-            <div>score: 100</div>
-            <div>HyukE</div>
+            <ProfileContainer>
+              <div>score: {score}</div>
+              {battleUser?.photoURL ? (
+                <Profile>
+                  {battleUser?.displayName}
+                  <Photo src={battleUser.photoURL} alt="battleUser" />
+                </Profile>
+              ) : (
+                "🙅🏼"
+              )}
+            </ProfileContainer>
           </Records>
         </ScoreContainer>
       </BottomContainer>
@@ -188,7 +186,7 @@ const Controller = styled.div`
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 0;C
 `;
 
 const Count = styled.div`
@@ -196,7 +194,7 @@ const Count = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2em;
+  font-size: 5em;
   padding: 10px 20px;
   top: 50%;
   left: 50%;
@@ -205,14 +203,21 @@ const Count = styled.div`
   z-index: 10;
 `;
 
+const Photo = styled.img`
+  height: 45px;
+  width: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
 const StartButton = styled.div`
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2em;
+  font-size: 5em;
   padding: 10px 20px;
-  border: 2px solid white;
+  border: 5px solid white;
   border-radius: 20px;
   top: 50%;
   left: 50%;
@@ -239,6 +244,22 @@ const BattleUserContainer = styled.div`
   position: relative;
   width: 30%;
   height: 100%;
+`;
+
+const ProfileContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+`;
+
+const Profile = styled.div`
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 50%;
 `;
 
 const BottomContainer = styled.div`

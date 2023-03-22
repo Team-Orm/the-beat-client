@@ -11,10 +11,9 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import styled, { css, keyframes } from "styled-components";
 import {
-  updateTotalScore,
   updateScore,
-  updateCombo,
   isSongEnd,
+  updateCombo,
 } from "../../features/reducers/gameSlice";
 import {
   NOTES,
@@ -25,7 +24,7 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
-export default function GameController({ isPlaying, isRender }) {
+export default function GameController({ isRender }) {
   const dispatch = useDispatch();
   const songDuration = Math.max(...NOTES.map((note) => note.time));
   const navigate = useNavigate();
@@ -129,6 +128,7 @@ export default function GameController({ isPlaying, isRender }) {
       } else {
         setAnimateCombo(true);
         comboRef.current += 1;
+        dispatch(updateCombo(comboRef.current));
 
         setCurrentScore((prevScore) => {
           const incomingScore = calculateScore(currentWord);
@@ -144,7 +144,7 @@ export default function GameController({ isPlaying, isRender }) {
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [comboResults, timeToHitBoxMiddle],
+    [comboResults, dispatch, timeToHitBoxMiddle],
   );
 
   const activate = useCallback(
@@ -288,9 +288,7 @@ export default function GameController({ isPlaying, isRender }) {
     dispatch(updateScore(currentScore));
 
     if (songEnd) {
-      dispatch(isSongEnd());
-      dispatch(updateCombo(comboResults));
-      dispatch(updateTotalScore(currentScore));
+      dispatch(isSongEnd(comboResults, currentScore));
       navigate("/battles/results");
     }
   }, [comboResults, currentScore, dispatch, navigate, songEnd]);
@@ -301,9 +299,9 @@ export default function GameController({ isPlaying, isRender }) {
   }, [notes, word]);
 
   useEffect(() => {
-    window.addEventListener("keypress", activate);
+    window.addEventListener("keydown", activate);
     return () => {
-      window.removeEventListener("keypress", activate);
+      window.removeEventListener("keydown", activate);
     };
   }, [activate]);
 

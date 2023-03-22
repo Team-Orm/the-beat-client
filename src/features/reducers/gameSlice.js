@@ -8,6 +8,7 @@ const initialState = {
     good: 0,
     miss: 0,
   },
+  currentCombo: 0,
   end: false,
 };
 
@@ -18,13 +19,12 @@ export const gameSlice = createSlice({
     updateScore: (state, action) => {
       state.score = action.payload;
     },
-    updateTotalScore: (state, action) => {
-      state.totalScore = action.payload;
-    },
     updateCombo: (state, action) => {
-      state.combo = action.payload;
+      state.currentCombo = action.payload;
     },
-    isSongEnd: (state) => {
+    isSongEnd: (state, action) => {
+      state.totalScore = action.payload.currentScore;
+      state.combo = action.payload.comboResults;
       state.end = true;
     },
   },
