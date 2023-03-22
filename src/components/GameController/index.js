@@ -48,6 +48,13 @@ export default function GameController({ isPlaying }) {
   const columnWidth = canvas?.width / KEYS.length;
   const noteHeight = canvas?.width / (KEYS.length * 3 * 3);
   const borderWidth = 5;
+  const hitBoxPositionPercentage = 0.125;
+  const positionOfHitBox =
+    columnHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
+  const averageFrame = MILLISECOND / 60;
+  const pixerPerFrame = (SPEED / 10) * averageFrame;
+  const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
+  const timeToHitBoxMiddle = distanceToHitBoxMiddle / pixerPerFrame; // time = distance / speed;
 
   const comboResults = useMemo(() => {
     return {
@@ -92,20 +99,12 @@ export default function GameController({ isPlaying }) {
 
   const onPressKey = useCallback(
     (key) => {
-      const hitBoxPositionPercentage = 0.125;
-      const positionOfHitBox =
-        columnHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
-      const averageFrame = MILLISECOND / 60;
-      const pixerPerFrame = (SPEED / 10) * averageFrame;
-      const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
-      const timeToHitBoxMiddle = distanceToHitBoxMiddle / pixerPerFrame; // time = distance / speed;
-
       const targetNote = notesRef.current.find((note) => note.key === key);
       const timeFromNoteToHitBox = Math.abs(
         targetNote?.time + timeToHitBoxMiddle - timeRef.current,
       );
 
-      const maximumTiming = SPEED / DIFFICULTY; // 0.35
+      const maximumTiming = SPEED / DIFFICULTY; // 0.33
       const withinTimingThreshold = timeFromNoteToHitBox < maximumTiming;
 
       if (!withinTimingThreshold) {
@@ -144,7 +143,7 @@ export default function GameController({ isPlaying }) {
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [columnHeight, comboResults, noteHeight],
+    [comboResults, timeToHitBoxMiddle],
   );
 
   const activate = useCallback(
@@ -317,7 +316,7 @@ export default function GameController({ isPlaying }) {
     if (animateCombo) {
       const timer = setTimeout(() => {
         setAnimateCombo(false);
-      }, 250); // The duration of the animation in milliseconds
+      }, 250);
       return () => clearTimeout(timer);
     }
   }, [animateCombo]);

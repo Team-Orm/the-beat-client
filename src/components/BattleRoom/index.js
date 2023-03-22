@@ -27,11 +27,16 @@ export default function BattleRoom() {
   const handleStart = () => {
     setIsCountingDown(true);
     const countdownTimer = setInterval(() => {
-      setCountdown((prevCountdown) => prevCountdown - 1);
+      setCountdown((prevCountdown) => {
+        if (prevCountdown === 2) {
+          setIsPlaying(true);
+        }
+
+        return prevCountdown - 1;
+      });
     }, 1000);
     setTimeout(() => {
       clearInterval(countdownTimer);
-      setIsPlaying(true);
       audioRef.current.src = song.audioURL;
       audioRef.current.play();
     }, 3000);
@@ -67,6 +72,8 @@ export default function BattleRoom() {
 
   useEffect(() => {
     const getSong = async () => {
+      const jwt = localStorage.getItem("jwt");
+      console.log(jwt);
       const response = await axios.get(
         `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
       );
