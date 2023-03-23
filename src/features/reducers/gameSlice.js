@@ -32,8 +32,6 @@ export const gameSlice = createSlice({
       const missNumber =
         maxNotesNumber - (comboResults.excellent + comboResults.good);
 
-      console.log(maxNotesNumber);
-
       const results = {
         excellent: comboResults.excellent,
         good: comboResults.good,
