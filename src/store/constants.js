@@ -11,6 +11,9 @@ export const SEND_CONNECT = "send-connect";
 export const SEND_BATTLES = "send-battles";
 export const SEND_USER = "send-user";
 export const SEND_READY = "send-ready";
+export const SEND_RESULTS = "send-results";
+
+export const RECEIVE_RESULTS = "receive-results";
 export const RECEIVE_BATTLES = "receive-battles";
 export const RECEIVE_USER = "receive-user";
 export const RECEIVE_LOBBY_USERS = "receive-lobby-users";
@@ -23,9 +26,10 @@ export const RECEIVE_OPPONENT_KEY_RELEASE = "receive-opponent-key-release";
 export const RECEIVE_DELETE = "receive-delete";
 export const RECEIVE_READY = "receive-ready";
 export const RECEIVE_START = "receive-start";
-export const ROOM_FULL = "room-full";
 
+export const ROOM_FULL = "room-full";
 export const DELETE_ROOM = "delete-room";
+export const USER_OUT = "user-out";
 
 export const SPEED = 500;
 export const MILLISECOND = 1000;

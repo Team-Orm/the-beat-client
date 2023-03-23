@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
+import { RECEIVE_RESULTS, SEND_RESULTS, USER_OUT } from "../../store/constants";
 
 export default function BattleResults() {
   const comboResults = useSelector((state) => state.game.comboResults);
@@ -17,16 +18,16 @@ export default function BattleResults() {
     ? auth.currentUser
     : { displayName: null, photoURL: null, uid: null };
 
-  socket?.emit("send-results", comboResults, totalScore);
+  socket?.emit(SEND_RESULTS, comboResults, totalScore);
 
   useEffect(() => {
-    socket?.on("receive-results", (comboResults, totalScore, user) => {
+    socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
       setBattleUserResults(comboResults);
       setBattleUserProfile({ totalScore, user });
     });
 
-    socket?.on("user-out", () => {
-      console.log("User Is out");
+    socket?.on(USER_OUT, () => {
+      console.log("User is out");
     });
   }, [comboResults, resultId, socket, totalScore]);
 
