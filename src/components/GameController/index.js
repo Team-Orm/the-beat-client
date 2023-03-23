@@ -14,6 +14,7 @@ import {
   updateTotalScore,
   updateScore,
   updateCombo,
+  isSongEnd,
 } from "../../features/reducers/gameSlice";
 import {
   NOTES,
@@ -24,25 +25,26 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
-export default function GameController({ isPlaying }) {
+export default function GameController({ isPlaying, note }) {
   const dispatch = useDispatch();
-  const songDuration = Math.max(...NOTES.map((note) => note.time));
   const navigate = useNavigate();
 
   const [activeKeys, setActiveKeys] = useState([]);
   const [songEnd, setSongEnd] = useState(false);
-  const [notes, setNotes] = useState(NOTES);
+  const [notes, setNotes] = useState([]);
   const [currentScore, setCurrentScore] = useState(0);
   const [word, setWord] = useState("");
 
   const canvasRef = useRef(null);
-  const notesRef = useRef(notes);
+  const notesRef = useRef(note);
   const deltaRef = useRef(null);
   const comboRef = useRef(0);
   const timeRef = useRef(0);
 
   const canvas = canvasRef?.current;
   const ctx = canvas?.getContext("2d");
+
+  const songDuration = Math.max(...notes.map((note) => note.time));
 
   const columnHeight = canvas?.height * 0.9;
   const columnWidth = canvas?.width / KEYS.length;
@@ -259,7 +261,7 @@ export default function GameController({ isPlaying }) {
 
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
       timeRef.current += (now - deltaRef.current) / MILLISECOND;
-      const visibleNotes = notes.filter((note) => note.time <= timeRef.current);
+      const visibleNotes = note.filter((note) => note.time <= timeRef.current);
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
@@ -281,12 +283,13 @@ export default function GameController({ isPlaying }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPlaying, ctx, canvas, notes, renderNotes, songDuration, currentScore]);
+  }, [isPlaying, ctx, canvas, note, renderNotes, songDuration, currentScore]);
 
   useEffect(() => {
     dispatch(updateScore(currentScore));
 
     if (songEnd) {
+      dispatch(isSongEnd());
       dispatch(updateCombo(comboResults));
       dispatch(updateTotalScore(currentScore));
       navigate("/battles/results");
@@ -311,6 +314,12 @@ export default function GameController({ isPlaying }) {
       window.removeEventListener("keyup", deActivate);
     };
   }, [deActivate]);
+
+  useEffect(() => {
+    if (note.length) {
+      setNotes(note);
+    }
+  }, [note]);
 
   useLayoutEffect(() => {
     if (animateCombo) {

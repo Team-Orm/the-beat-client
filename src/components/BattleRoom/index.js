@@ -1,16 +1,20 @@
+/* eslint-disable react/jsx-no-bind */
 import { io } from "socket.io-client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
-import GameController from "../GameController";
 import { auth } from "../../features/api/firebaseApi";
 import { UPDATE_USER, USER_JOINED, USER_LEAVE } from "../../store/constants";
+
+import GameController from "../GameController";
+import AudioVisualizer from "../AudioVisualizer";
 
 export default function BattleRoom() {
   const [song, setSong] = useState({});
   const [room, setRoom] = useState({});
+  const [note, setNote] = useState([]);
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -18,7 +22,6 @@ export default function BattleRoom() {
   const [currentUserList, setCurrentUserList] = useState([]);
   const [newUser, setNewUser] = useState({});
 
-  const audioRef = useRef(null);
   const { roomId } = useParams();
   const score = useSelector((state) => state.game.score);
 
@@ -28,17 +31,12 @@ export default function BattleRoom() {
     setIsCountingDown(true);
     const countdownTimer = setInterval(() => {
       setCountdown((prevCountdown) => {
-        if (prevCountdown === 2) {
-          setIsPlaying(true);
-        }
-
         return prevCountdown - 1;
       });
     }, 1000);
     setTimeout(() => {
       clearInterval(countdownTimer);
-      audioRef.current.src = song.audioURL;
-      audioRef.current.play();
+      setIsPlaying(true);
     }, 3000);
   };
 
@@ -81,6 +79,7 @@ export default function BattleRoom() {
       if (response.status === 200) {
         setRoom(response.data.room);
         setSong(response.data.song);
+        setNote(response.data.note.note);
       }
     };
 
@@ -112,9 +111,10 @@ export default function BattleRoom() {
       });
     }
   }, [socket]);
+
   return (
     <Container song={song}>
-      <AudioContainer ref={audioRef} />
+      <AudioVisualizer song={song} isPlaying={isPlaying} />
       {!isCountingDown && (
         <StartButton onClick={handleStart}>Start</StartButton>
       )}
@@ -122,12 +122,12 @@ export default function BattleRoom() {
       <BattleRoomContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} />
+            <GameController isPlaying={isPlaying} note={note} />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} />
+            <GameController isPlaying={isPlaying} note={note} />
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>
@@ -160,10 +160,6 @@ const Container = styled.main`
   background-size: cover;
   background-position: center;
   box-sizing: border-box;
-`;
-
-const AudioContainer = styled.audio`
-  display: hidden;
 `;
 
 const Controller = styled.div`
