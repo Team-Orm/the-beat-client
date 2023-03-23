@@ -16,18 +16,10 @@ export default function RoomMaker() {
     setSelectedSong((prev) => (prev === roomId ? null : roomId));
   };
 
-  const playButton = (
-    <PlayButton
-      hovered={hoveredSong !== null}
-      onClick={() => setIsPlaying(!isPlaying)}
-    >
-      {isPlaying ? "⏸️ BGM OFF" : "🎵 BGM ON"}
-    </PlayButton>
-  );
-
   const handleCreateRoom = async () => {
     try {
       const selected = songs.find((song) => song._id === selectedSong);
+      const jwt = localStorage.getItem("jwt");
 
       const response = await axios.post(
         `${process.env.REACT_APP_SERVER_URL}/api/rooms/new`,
@@ -35,6 +27,11 @@ export default function RoomMaker() {
           song: selected,
           createdBy: auth.currentUser.displayName,
           uid: auth.currentUser.uid,
+        },
+        {
+          headers: {
+            authorization: `Bearer ${jwt}`,
+          },
         },
       );
 
@@ -44,7 +41,7 @@ export default function RoomMaker() {
 
       throw new Error(response);
     } catch (err) {
-      return navigate("/error", {
+      navigate("/error", {
         state: {
           status: err.response.status,
           text: err.response.statusText,
@@ -57,8 +54,15 @@ export default function RoomMaker() {
   useEffect(() => {
     const getRoomsData = async () => {
       try {
+        const jwt = localStorage.getItem("jwt");
+
         const response = await axios.get(
           `${process.env.REACT_APP_SERVER_URL}/api/rooms/new`,
+          {
+            headers: {
+              authorization: `Bearer ${jwt}`,
+            },
+          },
         );
 
         if (response.status === 200) {
@@ -67,7 +71,7 @@ export default function RoomMaker() {
 
         throw new Error(response);
       } catch (err) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
             status: err.response.status,
             text: err.response.statusText,
@@ -99,7 +103,12 @@ export default function RoomMaker() {
       }}
     >
       <AudioContainer ref={audioRef} />
-      {playButton}
+      <PlayButton
+        hovered={hoveredSong !== null}
+        onClick={() => setIsPlaying(!isPlaying)}
+      >
+        {isPlaying ? "⏸️ BGM OFF" : "🎵 BGM ON"}
+      </PlayButton>
       {songs.map((song) => (
         <SongContainer
           key={song._id}

@@ -9,21 +9,24 @@ import {
   SEND_CHAT,
   BROADCAST_CHAT,
   UPDATE_USER,
-  CHECK_USERS,
+  LOBBY_ROOMS,
+  RECEIVE_LOBBY_USERS,
+  FROM_BATTLE,
 } from "../../store/constants";
 
 export default function Lobby() {
   const navigate = useNavigate();
   const [socket, setSocket] = useState(null);
-  const [newUser, setNewUser] = useState({});
   const [currentUserList, setCurrentUserList] = useState([]);
   const [roomsList, setRoomsList] = useState([]);
   const [chatMessage, setChatMessage] = useState("");
   const [receivedMessages, setReceivedMessages] = useState([]);
-  const [connectedUsers, setConnectedUsers] = useState({});
+  const [usersInRooms, setUsersInRooms] = useState({});
 
   const chatListRef = useRef(null);
-  const { accessToken, displayName, photoURL, uid } = newUser;
+  const { accessToken, displayName, photoURL, uid } = auth.currentUser
+    ? auth.currentUser
+    : { accessToken: null, displayName: null, photoURL: null, uid: null };
 
   const handleChatMessageChange = (e) => {
     setChatMessage(e.target.value);
@@ -46,15 +49,15 @@ export default function Lobby() {
 
   const handleRoomClick = useCallback(
     (roomId) => {
-      const targetUser = connectedUsers[roomId];
+      const targetUser = usersInRooms[roomId];
 
       if (targetUser && Object.keys(targetUser).length === 2) {
-        return alert("방이 가득 차 있습니다.");
+        return alert("방이 가득 차 있습니다.?");
       }
 
       return navigate(`/battles/${roomId}`);
     },
-    [connectedUsers, navigate],
+    [usersInRooms, navigate],
   );
 
   const handleMakeRoom = () => {
@@ -114,11 +117,11 @@ export default function Lobby() {
 
   useEffect(() => {
     const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
-      query: {
-        name: displayName,
-        picture: photoURL,
-        uid,
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
       },
+      query: { displayName, photoURL, uid },
     });
     setSocket(socketClient);
 
@@ -162,9 +165,6 @@ export default function Lobby() {
     const getTokenAndSetUser = async () => {
       try {
         if (auth && auth.currentUser) {
-          const { accessToken, displayName, photoURL, uid } = auth.currentUser;
-          setNewUser({ accessToken, displayName, photoURL, uid });
-
           const response = await axios.post(
             `${process.env.REACT_APP_SERVER_URL}/api/users/login`,
             { accessToken, displayName, uid, photoURL },
@@ -176,8 +176,6 @@ export default function Lobby() {
 
           throw new Error(response);
         }
-
-        return true;
       } catch (err) {
         return navigate("/error", {
           state: {
@@ -193,36 +191,27 @@ export default function Lobby() {
   }, [accessToken, displayName, photoURL, uid, navigate]);
 
   useEffect(() => {
-    if (!socket) return;
+    socket?.emit(RECEIVE_LOBBY_USERS);
 
-    const handleBroadcastChat = (user, chat) => {
+    socket?.on(LOBBY_ROOMS, (rooms) => {
+      setUsersInRooms(() => rooms);
+    });
+
+    socket?.on(UPDATE_USER, (user) => {
+      setCurrentUserList(() => user);
+    });
+
+    socket?.on(UPDATE_ROOMS, (rooms) => {
+      setRoomsList(() => rooms);
+    });
+
+    socket?.on(BROADCAST_CHAT, (user, chat) => {
       setReceivedMessages((prevMessages) => [...prevMessages, { user, chat }]);
-    };
+    });
 
-    const handleUpdateUser = (currentUser) => {
-      setCurrentUserList(() => currentUser);
-    };
-
-    const handleUpdateRooms = (updatedRooms) => {
-      setRoomsList(() => updatedRooms);
-    };
-
-    const handleCheckUsers = (users) => {
-      setConnectedUsers(users);
-    };
-
-    socket.on(BROADCAST_CHAT, handleBroadcastChat);
-    socket.on(UPDATE_USER, handleUpdateUser);
-    socket.on(UPDATE_ROOMS, handleUpdateRooms);
-    socket.on(CHECK_USERS, handleCheckUsers);
-
-    // eslint-disable-next-line consistent-return
-    return () => {
-      socket.off(BROADCAST_CHAT, handleBroadcastChat);
-      socket.off(UPDATE_USER, handleUpdateUser);
-      socket.off(UPDATE_ROOMS, handleUpdateRooms);
-      socket.off(CHECK_USERS, handleCheckUsers);
-    };
+    socket?.on(FROM_BATTLE, (updatedRooms) => {
+      setUsersInRooms(() => updatedRooms);
+    });
   }, [socket]);
 
   return (
@@ -237,12 +226,13 @@ export default function Lobby() {
             <RoomsLists>
               {roomsList.length &&
                 roomsList.map(({ _id, createdBy, song }) => {
-                  const targetUser = connectedUsers[_id];
                   return (
                     <Room key={_id} onClick={() => handleRoomClick(_id)}>
                       <RoomName>{`${createdBy} ${
-                        targetUser ? Object.keys(targetUser).length : 0
-                      }/2`}</RoomName>
+                        usersInRooms[_id]?.users.length
+                          ? usersInRooms[_id]?.users.length
+                          : 0
+                      } / 2`}</RoomName>
                       <RoomSong>{song?.title}</RoomSong>
                     </Room>
                   );
@@ -272,10 +262,10 @@ export default function Lobby() {
         <RightContainer>
           <UserList>
             {currentUserList &&
-              currentUserList.map(({ uid, picture, name }) => (
-                <User key={uid}>
-                  <ProfilePicture src={picture} />
-                  <ProfileText>{name}</ProfileText>
+              currentUserList?.map(({ photoURL, displayName }) => (
+                <User key={photoURL}>
+                  <ProfilePicture src={photoURL} />
+                  <ProfileText>{displayName}</ProfileText>
                 </User>
               ))}
           </UserList>

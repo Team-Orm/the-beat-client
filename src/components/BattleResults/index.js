@@ -1,11 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
 
 export default function BattleResults() {
   const combo = useSelector((state) => state.game.combo);
   const totalScore = useSelector((state) => state.game.totalScore);
+  const roomId = useSelector((state) => state.game.roomid);
+  const [socket, setSocket] = useState();
+
+  const { displayName, photoURL, uid } = auth.currentUser
+    ? auth.currentUser
+    : { displayName: null, photoURL: null, uid: null };
+
+  useEffect(() => {
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/`, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+      query: { displayName, photoURL, uid, roomId },
+    });
+    setSocket(socketClient);
+
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [displayName, photoURL, roomId, uid]);
 
   return (
     <BattleResultsContainer>
@@ -14,8 +36,8 @@ export default function BattleResults() {
         <ResultPanel>
           <Winner>Winner</Winner>
           <UserContainer>
-            <UserImage src={auth?.currentUser?.photoURL} />
-            <ResultsBox>{auth?.currentUser?.displayName}</ResultsBox>
+            <UserImage src={photoURL} />
+            <ResultsBox>{displayName}</ResultsBox>
           </UserContainer>
           {Object.keys(combo).map((key) => (
             <RecordsContainer key={key}>
@@ -32,8 +54,8 @@ export default function BattleResults() {
         <ResultPanel>
           <Winner>Winner</Winner>
           <UserContainer>
-            <UserImage src={auth?.currentUser?.photoURL} />
-            <ResultsBox>{auth?.currentUser?.displayName}</ResultsBox>
+            <UserImage src={photoURL} />
+            <ResultsBox>{displayName}</ResultsBox>
           </UserContainer>
           {Object.keys(combo).map((key) => (
             <RecordsContainer key={key}>
