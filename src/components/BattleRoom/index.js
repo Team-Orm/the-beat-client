@@ -1,39 +1,115 @@
 /* eslint-disable react/jsx-no-bind */
 import { io } from "socket.io-client";
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
 import { auth } from "../../features/api/firebaseApi";
-import { UPDATE_USER, USER_JOINED, USER_LEAVE } from "../../store/constants";
 
 import GameController from "../GameController";
 import AudioVisualizer from "../AudioVisualizer";
+import {
+  DELETE_ROOM,
+  OPPONENT_KEY_PRESS,
+  OPPONENT_KEY_RELEASE,
+  RECEIVE_BATTLES,
+  RECEIVE_DELETE,
+  RECEIVE_OPPONENT_KEY_PRESS,
+  RECEIVE_OPPONENT_KEY_RELEASE,
+  RECEIVE_READY,
+  RECEIVE_START,
+  RECEIVE_USER,
+  ROOM_FULL,
+  SEND_BATTLES,
+  SEND_CONNECT,
+  SEND_READY,
+  SEND_START,
+  SEND_USER,
+  USER_LEFT,
+} from "../../store/constants";
 
 export default function BattleRoom() {
+  const navigate = useNavigate();
+
   const [song, setSong] = useState({});
   const [room, setRoom] = useState({});
   const [note, setNote] = useState([]);
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [battleUser, setBattleUser] = useState({});
+  const [render, setRender] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
-  const [currentUserList, setCurrentUserList] = useState([]);
-  const [newUser, setNewUser] = useState({});
+  const [ready, setReady] = useState(false);
+  const [myReady, setMyReady] = useState(false);
+  const [activeKeys, setActiveKeys] = useState([]);
+  const [battleuserScoreAndCombo, setBattleUserScoreAndCombo] = useState({});
+
+  const { displayName, photoURL, uid } = auth.currentUser
+    ? auth.currentUser
+    : { displayName: null, photoURL: null, uid: null };
 
   const { roomId } = useParams();
   const score = useSelector((state) => state.game.score);
+  const combo = useSelector((state) => state.game.currentCombo);
+  const word = useSelector((state) => state.game.word);
 
-  const { displayName, photoURL, uid } = newUser;
+  const handleKeyPress = (key) => {
+    socket.emit(OPPONENT_KEY_PRESS, key);
+  };
+
+  const handleKeyRelease = (key) => {
+    socket.emit(OPPONENT_KEY_RELEASE, key);
+  };
+
+  const handleReady = () => {
+    socket.emit(SEND_READY);
+    setMyReady(!myReady);
+  };
+
+  const handleOut = useCallback(async () => {
+    if (auth?.currentUser?.uid === room?.uid) {
+      try {
+        const jwt = localStorage.getItem("jwt");
+
+        const response = await axios.delete(
+          `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+          {
+            headers: {
+              authorization: `Bearer ${jwt}`,
+            },
+          },
+        );
+
+        if (response.status === 204) {
+          socket.emit(DELETE_ROOM);
+        }
+      } catch (err) {
+        navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
+      }
+    }
+
+    navigate("/");
+  }, [navigate, room?.uid, roomId, socket]);
 
   const handleStart = () => {
+    socket.emit(SEND_START);
     setIsCountingDown(true);
+    setReady(!ready);
+
     const countdownTimer = setInterval(() => {
       setCountdown((prevCountdown) => {
         return prevCountdown - 1;
       });
     }, 1000);
+
     setTimeout(() => {
       clearInterval(countdownTimer);
       setIsPlaying(true);
@@ -41,25 +117,115 @@ export default function BattleRoom() {
   };
 
   useEffect(() => {
-    if (auth && auth.currentUser) {
-      const { displayName, photoURL, uid } = auth.currentUser;
+    const getSong = async () => {
+      try {
+        const jwt = localStorage.getItem("jwt");
 
-      setNewUser({
-        displayName,
-        photoURL,
-        uid,
+        const response = await axios.get(
+          `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+          {
+            headers: {
+              authorization: `Bearer ${jwt}`,
+            },
+          },
+        );
+
+        if (response.status === 200) {
+          setRoom(response.data.room);
+          setSong(response.data.song);
+          setNote(response.data.note.note);
+        }
+      } catch (err) {
+        navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
+      }
+    };
+
+    getSong();
+  }, [navigate, roomId]);
+
+  useEffect(() => {
+    socket?.emit(SEND_USER);
+  }, [socket]);
+
+  useEffect(() => {
+    socket?.emit(SEND_BATTLES, score, combo, word);
+
+    socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
+      setBattleUserScoreAndCombo({ score, combo, word });
+    });
+
+    socket?.on(RECEIVE_USER, (currentUserArray) => {
+      const battleUser = Object.values(currentUserArray).filter(
+        (u) => u.uid !== auth?.currentUser?.uid,
+      );
+
+      setBattleUser(battleUser[0]);
+    });
+
+    socket?.emit(SEND_CONNECT);
+
+    socket?.on(USER_LEFT, () => {
+      setBattleUser(null);
+    });
+
+    socket?.on(RECEIVE_OPPONENT_KEY_PRESS, (key) => {
+      setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
+    });
+
+    socket?.on(RECEIVE_OPPONENT_KEY_RELEASE, (key) => {
+      setActiveKeys((prevActiveKeys) => {
+        return prevActiveKeys.filter((activeKey) => activeKey !== key);
       });
-    }
-  }, []);
+    });
+
+    socket?.on(RECEIVE_DELETE, () => {
+      navigate("/");
+      alert("방을 만든 유저가 나갔습니다.");
+    });
+
+    socket?.on(RECEIVE_READY, () => {
+      setReady(!ready);
+    });
+
+    socket?.on(RECEIVE_START, () => {
+      setIsCountingDown(true);
+      setMyReady(false);
+
+      const countdownTimer = setInterval(() => {
+        setCountdown((prevCountdown) => {
+          if (prevCountdown === 2) {
+            setRender(true);
+          }
+
+          return prevCountdown - 1;
+        });
+      }, 1000);
+
+      setTimeout(() => {
+        clearInterval(countdownTimer);
+        setIsPlaying(true);
+      }, 3000);
+    });
+
+    socket?.on(ROOM_FULL, () => {
+      alert("방이 가득 차 있습니다.");
+      navigate("/");
+    });
+  }, [combo, displayName, navigate, photoURL, ready, score, socket, word]);
 
   useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
-      query: {
-        roomId,
-        name: displayName,
-        picture: photoURL,
-        uid,
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
       },
+      query: { displayName, photoURL, uid, roomId },
     });
     setSocket(socketClient);
 
@@ -68,80 +234,74 @@ export default function BattleRoom() {
     };
   }, [displayName, photoURL, roomId, uid]);
 
-  useEffect(() => {
-    const getSong = async () => {
-      const jwt = localStorage.getItem("jwt");
-      console.log(jwt);
-      const response = await axios.get(
-        `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
-      );
-
-      if (response.status === 200) {
-        setRoom(response.data.room);
-        setSong(response.data.song);
-        setNote(response.data.note.note);
-      }
-    };
-
-    getSong();
-  }, [roomId]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on(UPDATE_USER, (currentUserList) => {
-        setCurrentUserList(currentUserList);
-      });
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on(USER_JOINED, (user) => {
-        setCurrentUserList((prevUserList) => [...prevUserList, user]);
-      });
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on(USER_LEAVE, (user) => {
-        setCurrentUserList((prevUserList) =>
-          prevUserList.filter((users) => users.uid !== user.uid),
-        );
-      });
-    }
-  }, [socket]);
-
   return (
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
-      {!isCountingDown && (
-        <StartButton onClick={handleStart}>Start</StartButton>
+      <OutButton type="button" onClick={handleOut}>
+        나가기
+      </OutButton>
+      {!isCountingDown && room?.uid === auth?.currentUser?.uid && (
+        <StartButton onClick={handleStart} disabled={!ready}>
+          Start
+        </StartButton>
+      )}
+      {!isCountingDown && room?.uid !== auth?.currentUser?.uid && !ready && (
+        <StartButton onClick={handleReady}>Ready</StartButton>
       )}
       {isCountingDown && countdown > 0 && <Count>{countdown}</Count>}
       <BattleRoomContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} note={note} />
+            {room?.uid !== auth?.currentUser?.uid && myReady && (
+              <Ready>Ready</Ready>
+            )}
+            <GameController
+              isPlaying={isPlaying}
+              handleKeyPress={handleKeyPress}
+              handleKeyRelease={handleKeyRelease}
+              isCurrentUser
+              note={note}
+            />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
-            <GameController isPlaying={isPlaying} note={note} />
+            {ready && <Ready>Ready</Ready>}
+            <GameController
+              isPlaying={isPlaying}
+              isCurrentUser={false}
+              otherKeys={activeKeys}
+              otherScoreAndCombo={battleuserScoreAndCombo}
+              note={note}
+            />
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>
       <BottomContainer>
         <ScoreContainer>
           <Records>
-            <div>{room?.createdBy && auth?.currentUser?.displayName}</div>
-            <div>score: {score}</div>
+            <ProfileContainer>
+              <Profile>
+                <Photo src={auth?.currentUser?.photoURL} alt="Me" />
+                {auth?.currentUser?.displayName}
+              </Profile>
+              score: {score}
+            </ProfileContainer>
           </Records>
         </ScoreContainer>
         <ScoreContainer>
           <Records>
-            <div>score: 100</div>
-            <div>HyukE</div>
+            <ProfileContainer>
+              <div>score: {battleuserScoreAndCombo.score}</div>
+              {battleUser?.photoURL ? (
+                <Profile>
+                  {battleUser?.displayName}
+                  <Photo src={battleUser.photoURL} alt="battleUser" />
+                </Profile>
+              ) : (
+                "🙅🏼"
+              )}
+            </ProfileContainer>
           </Records>
         </ScoreContainer>
       </BottomContainer>
@@ -163,6 +323,7 @@ const Container = styled.main`
 `;
 
 const Controller = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -174,7 +335,7 @@ const Count = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2em;
+  font-size: 5em;
   padding: 10px 20px;
   top: 50%;
   left: 50%;
@@ -183,24 +344,61 @@ const Count = styled.div`
   z-index: 10;
 `;
 
-const StartButton = styled.div`
+const Photo = styled.img`
+  height: 45px;
+  width: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const StartButton = styled.button`
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2em;
+  font-size: 5em;
   padding: 10px 20px;
-  border: 2px solid white;
+  border: 5px solid white;
   border-radius: 20px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
   z-index: 10;
+  background-color: transparent;
+
+  :hover {
+    ${({ disabled }) =>
+      !disabled &&
+      `
+      color: greenyellow;
+      border: 5px solid greenyellow;
+    `}
+  }
+
+  ${({ disabled }) =>
+    disabled &&
+    `
+    cursor: not-allowed;
+    opacity: 0.6;
+  `}
+`;
+
+const OutButton = styled.button`
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4em;
+  padding: 10px 20px;
+  border: 5px solid white;
+  border-radius: 20px;
+  color: white;
+  background-color: transparent;
 
   :hover {
     color: greenyellow;
-    border: 2px solid greenyellow;
+    border: 5px solid greenyellow;
   }
 `;
 
@@ -217,6 +415,37 @@ const BattleUserContainer = styled.div`
   position: relative;
   width: 30%;
   height: 100%;
+`;
+
+const Ready = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: transparent;
+  border: 5px solid greenyellow;
+  font-size: 5em;
+  z-index: 12;
+  color: greenyellow;
+  padding: 10px 20px;
+  border-radius: 10px;
+`;
+
+const ProfileContainer = styled.div`
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+`;
+
+const Profile = styled.div`
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 50%;
 `;
 
 const BottomContainer = styled.div`

@@ -1,20 +1,18 @@
-/* eslint-disable consistent-return */
 import React, {
   useState,
   useEffect,
   useRef,
   useCallback,
   useMemo,
-  useLayoutEffect,
 } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import styled, { css, keyframes } from "styled-components";
 import {
-  updateTotalScore,
   updateScore,
-  updateCombo,
   isSongEnd,
+  updateCombo,
+  updateWord,
 } from "../../features/reducers/gameSlice";
 import {
   NOTES,
@@ -25,9 +23,18 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
-export default function GameController({ isPlaying, note }) {
+export default function GameController({
+  isPlaying,
+  isCurrentUser,
+  handleKeyPress,
+  handleKeyRelease,
+  otherKeys,
+  otherScoreAndCombo,
+  note,
+}) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { roomId } = useParams();
 
   const [activeKeys, setActiveKeys] = useState([]);
   const [songEnd, setSongEnd] = useState(false);
@@ -101,7 +108,30 @@ export default function GameController({ isPlaying, note }) {
 
   const onPressKey = useCallback(
     (key) => {
-      const targetNote = notesRef.current.find((note) => note.key === key);
+      const notesCloseToHitBox = notesRef.current.filter(
+        (note) =>
+          note.key === key && note.positionY >= positionOfHitBox - noteHeight,
+      );
+
+      // If there are no notes close to the hitbox, do nothing
+      if (notesCloseToHitBox.length === 0) {
+        return;
+      }
+
+      // Find the note with the minimum timeFromNoteToHitBox
+      const targetNote = notesCloseToHitBox.reduce((minNote, currentNote) => {
+        const minTimeFromNoteToHitBox = Math.abs(
+          minNote?.time + timeToHitBoxMiddle - timeRef.current,
+        );
+        const currentTimeFromNoteToHitBox = Math.abs(
+          currentNote?.time + timeToHitBoxMiddle - timeRef.current,
+        );
+
+        return currentTimeFromNoteToHitBox < minTimeFromNoteToHitBox
+          ? currentNote
+          : minNote;
+      });
+
       const timeFromNoteToHitBox = Math.abs(
         targetNote?.time + timeToHitBoxMiddle - timeRef.current,
       );
@@ -114,7 +144,6 @@ export default function GameController({ isPlaying, note }) {
       }
 
       let currentWord;
-
       if (timeFromNoteToHitBox <= maximumTiming / 5) {
         currentWord = "excellent";
       } else if (timeFromNoteToHitBox <= maximumTiming / 3) {
@@ -123,13 +152,16 @@ export default function GameController({ isPlaying, note }) {
         currentWord = "miss";
       }
 
+      dispatch(updateWord(currentWord));
       setWord(currentWord);
 
       if (currentWord === "miss") {
         comboRef.current = 0;
+        dispatch(updateCombo(comboRef.current));
       } else {
         setAnimateCombo(true);
         comboRef.current += 1;
+        dispatch(updateCombo(comboRef.current));
 
         setCurrentScore((prevScore) => {
           const incomingScore = calculateScore(currentWord);
@@ -145,30 +177,36 @@ export default function GameController({ isPlaying, note }) {
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [comboResults, timeToHitBoxMiddle],
+    [comboResults, dispatch, noteHeight, positionOfHitBox, timeToHitBoxMiddle],
   );
 
   const activate = useCallback(
     (event) => {
+      if (!isCurrentUser) return;
+
       const { key } = event;
       if (keyMappings[key]) {
         setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
         onPressKey(key);
+        handleKeyPress(key);
       }
     },
-    [keyMappings, onPressKey],
+    [handleKeyPress, isCurrentUser, keyMappings, onPressKey],
   );
 
   const deActivate = useCallback(
     (event) => {
+      if (!isCurrentUser) return;
+
       const { key } = event;
       if (keyMappings[key]) {
         setActiveKeys((prevActiveKeys) => {
           return prevActiveKeys.filter((activeKey) => activeKey !== key);
         });
+        handleKeyRelease(key);
       }
     },
-    [keyMappings],
+    [handleKeyRelease, isCurrentUser, keyMappings],
   );
 
   const render = useCallback(
@@ -230,12 +268,18 @@ export default function GameController({ isPlaying, note }) {
       }
 
       if (note.positionY >= canvas.height) {
-        return false;
+        if (note.time < timeRef.current - SPEED / DIFFICULTY) {
+          comboRef.current = 0;
+          comboResults.miss += 1;
+          notesRef.current = notesRef.current.filter((n) => n !== note);
+          setNotes((prev) => prev.filter((n) => n !== note));
+          setWord(() => "miss");
+        }
+      } else {
+        return render(ctx, note);
       }
-
-      return render(ctx, note);
     },
-    [canvas?.height, render],
+    [canvas?.height, comboResults, render],
   );
 
   const renderNotes = useCallback(
@@ -249,7 +293,7 @@ export default function GameController({ isPlaying, note }) {
     [update],
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     let animationFrameId;
 
     const updateNotes = () => {
@@ -283,18 +327,16 @@ export default function GameController({ isPlaying, note }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isPlaying, ctx, canvas, note, renderNotes, songDuration, currentScore]);
+  }, [ctx, canvas, notes, renderNotes, songDuration, currentScore]);
 
   useEffect(() => {
     dispatch(updateScore(currentScore));
 
     if (songEnd) {
-      dispatch(isSongEnd());
-      dispatch(updateCombo(comboResults));
-      dispatch(updateTotalScore(currentScore));
+      dispatch(isSongEnd({ comboResults, currentScore, roomId }));
       navigate("/battles/results");
     }
-  }, [comboResults, currentScore, dispatch, navigate, songEnd]);
+  }, [comboResults, currentScore, dispatch, navigate, roomId, songEnd]);
 
   useEffect(() => {
     notesRef.current = notes;
@@ -302,9 +344,9 @@ export default function GameController({ isPlaying, note }) {
   }, [notes, word]);
 
   useEffect(() => {
-    window.addEventListener("keypress", activate);
+    window.addEventListener("keydown", activate);
     return () => {
-      window.removeEventListener("keypress", activate);
+      window.removeEventListener("keydown", activate);
     };
   }, [activate]);
 
@@ -321,7 +363,7 @@ export default function GameController({ isPlaying, note }) {
     }
   }, [note]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (animateCombo) {
       const timer = setTimeout(() => {
         setAnimateCombo(false);
@@ -338,11 +380,23 @@ export default function GameController({ isPlaying, note }) {
         height={window.innerHeight}
       />
       <TextContainer>
-        <div>{word.toUpperCase()}</div>
+        {isCurrentUser ? (
+          <div>{word !== "" && word.toUpperCase()}</div>
+        ) : (
+          otherScoreAndCombo?.word?.toUpperCase()
+        )}
         <ComboText animate={animateCombo}>
-          {comboRef.current === 0 ? null : comboRef.current}
+          {otherScoreAndCombo?.combo ? (
+            otherScoreAndCombo?.combo
+          ) : (
+            <div>{comboRef.current === 0 ? null : comboRef.current}</div>
+          )}
         </ComboText>
-        <div>{currentScore === 0 ? null : currentScore}</div>
+        {otherScoreAndCombo?.score ? (
+          otherScoreAndCombo?.score
+        ) : (
+          <div>{currentScore === 0 ? null : currentScore}</div>
+        )}
       </TextContainer>
       <ColumnsContainer>
         {KEYS.map((key, index) => (
@@ -350,14 +404,22 @@ export default function GameController({ isPlaying, note }) {
             key={key}
             index={index}
             colorIndex={index}
-            active={activeKeys.includes(key)}
+            active={
+              otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
+            }
           />
         ))}
       </ColumnsContainer>
       <HitBox />
       <KeyBox>
         {KEYS.map((key, index) => (
-          <Key key={key} colorIndex={index} active={activeKeys.includes(key)}>
+          <Key
+            key={key}
+            colorIndex={index}
+            active={
+              otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
+            }
+          >
             {key.toUpperCase()}
           </Key>
         ))}
