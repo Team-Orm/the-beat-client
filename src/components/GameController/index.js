@@ -1,19 +1,18 @@
-/* eslint-disable consistent-return */
 import React, {
   useState,
   useEffect,
   useRef,
   useCallback,
   useMemo,
-  useLayoutEffect,
 } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import styled, { css, keyframes } from "styled-components";
 import {
   updateScore,
   isSongEnd,
   updateCombo,
+  updateWord,
 } from "../../features/reducers/gameSlice";
 import {
   NOTES,
@@ -30,10 +29,12 @@ export default function GameController({
   handleKeyPress,
   handleKeyRelease,
   otherKeys,
+  otherScoreAndCombo,
 }) {
   const dispatch = useDispatch();
-  const songDuration = Math.max(...NOTES.map((note) => note.time));
   const navigate = useNavigate();
+  const { roomId } = useParams();
+  const songDuration = Math.max(...NOTES.map((note) => note.time));
 
   const [activeKeys, setActiveKeys] = useState([]);
   const [songEnd, setSongEnd] = useState(false);
@@ -105,7 +106,30 @@ export default function GameController({
 
   const onPressKey = useCallback(
     (key) => {
-      const targetNote = notesRef.current.find((note) => note.key === key);
+      const notesCloseToHitBox = notesRef.current.filter(
+        (note) =>
+          note.key === key && note.positionY >= positionOfHitBox - noteHeight,
+      );
+
+      // If there are no notes close to the hitbox, do nothing
+      if (notesCloseToHitBox.length === 0) {
+        return;
+      }
+
+      // Find the note with the minimum timeFromNoteToHitBox
+      const targetNote = notesCloseToHitBox.reduce((minNote, currentNote) => {
+        const minTimeFromNoteToHitBox = Math.abs(
+          minNote?.time + timeToHitBoxMiddle - timeRef.current,
+        );
+        const currentTimeFromNoteToHitBox = Math.abs(
+          currentNote?.time + timeToHitBoxMiddle - timeRef.current,
+        );
+
+        return currentTimeFromNoteToHitBox < minTimeFromNoteToHitBox
+          ? currentNote
+          : minNote;
+      });
+
       const timeFromNoteToHitBox = Math.abs(
         targetNote?.time + timeToHitBoxMiddle - timeRef.current,
       );
@@ -118,7 +142,6 @@ export default function GameController({
       }
 
       let currentWord;
-
       if (timeFromNoteToHitBox <= maximumTiming / 5) {
         currentWord = "excellent";
       } else if (timeFromNoteToHitBox <= maximumTiming / 3) {
@@ -127,10 +150,12 @@ export default function GameController({
         currentWord = "miss";
       }
 
+      dispatch(updateWord(currentWord));
       setWord(currentWord);
 
       if (currentWord === "miss") {
         comboRef.current = 0;
+        dispatch(updateCombo(comboRef.current));
       } else {
         setAnimateCombo(true);
         comboRef.current += 1;
@@ -150,7 +175,7 @@ export default function GameController({
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [comboResults, dispatch, timeToHitBoxMiddle],
+    [comboResults, dispatch, noteHeight, positionOfHitBox, timeToHitBoxMiddle],
   );
 
   const activate = useCallback(
@@ -241,12 +266,18 @@ export default function GameController({
       }
 
       if (note.positionY >= canvas.height) {
-        return false;
+        if (note.time < timeRef.current - SPEED / DIFFICULTY) {
+          comboRef.current = 0;
+          comboResults.miss += 1;
+          notesRef.current = notesRef.current.filter((n) => n !== note);
+          setNotes((prev) => prev.filter((n) => n !== note));
+          setWord(() => "miss");
+        }
+      } else {
+        return render(ctx, note);
       }
-
-      return render(ctx, note);
     },
-    [canvas?.height, render],
+    [canvas?.height, comboResults, render],
   );
 
   const renderNotes = useCallback(
@@ -260,7 +291,7 @@ export default function GameController({
     [update],
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     let animationFrameId;
 
     const updateNotes = () => {
@@ -300,10 +331,10 @@ export default function GameController({
     dispatch(updateScore(currentScore));
 
     if (songEnd) {
-      dispatch(isSongEnd(comboResults, currentScore));
+      dispatch(isSongEnd({ comboResults, currentScore, roomId }));
       navigate("/battles/results");
     }
-  }, [comboResults, currentScore, dispatch, navigate, songEnd]);
+  }, [comboResults, currentScore, dispatch, navigate, roomId, songEnd]);
 
   useEffect(() => {
     notesRef.current = notes;
@@ -324,7 +355,7 @@ export default function GameController({
     };
   }, [deActivate]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (animateCombo) {
       const timer = setTimeout(() => {
         setAnimateCombo(false);
@@ -341,11 +372,23 @@ export default function GameController({
         height={window.innerHeight}
       />
       <TextContainer>
-        <div>{word.toUpperCase()}</div>
+        {isCurrentUser ? (
+          <div>{word !== "" && word.toUpperCase()}</div>
+        ) : (
+          otherScoreAndCombo?.word?.toUpperCase()
+        )}
         <ComboText animate={animateCombo}>
-          {comboRef.current === 0 ? null : comboRef.current}
+          {otherScoreAndCombo?.combo ? (
+            otherScoreAndCombo?.combo
+          ) : (
+            <div>{comboRef.current === 0 ? null : comboRef.current}</div>
+          )}
         </ComboText>
-        <div>{currentScore === 0 ? null : currentScore}</div>
+        {otherScoreAndCombo?.score ? (
+          otherScoreAndCombo?.score
+        ) : (
+          <div>{currentScore === 0 ? null : currentScore}</div>
+        )}
       </TextContainer>
       <ColumnsContainer>
         {KEYS.map((key, index) => (

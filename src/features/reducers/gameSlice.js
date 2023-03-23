@@ -10,6 +10,8 @@ const initialState = {
   },
   currentCombo: 0,
   end: false,
+  word: "",
+  roomId: "",
 };
 
 export const gameSlice = createSlice({
@@ -22,7 +24,11 @@ export const gameSlice = createSlice({
     updateCombo: (state, action) => {
       state.currentCombo = action.payload;
     },
+    updateWord: (state, action) => {
+      state.word = action.payload;
+    },
     isSongEnd: (state, action) => {
+      state.roomId = action.payload.roomId;
       state.totalScore = action.payload.currentScore;
       state.combo = action.payload.comboResults;
       state.end = true;
@@ -30,6 +36,6 @@ export const gameSlice = createSlice({
   },
 });
 
-export const { updateScore, updateTotalScore, updateCombo, isSongEnd } =
+export const { updateScore, updateCombo, isSongEnd, updateWord } =
   gameSlice.actions;
 export default gameSlice.reducer;

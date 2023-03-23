@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
@@ -8,6 +8,25 @@ import { auth } from "../../features/api/firebaseApi";
 
 import GameController from "../GameController";
 import AudioVisualizer from "../AudioVisualizer";
+import {
+  DELETE_ROOM,
+  OPPONENT_KEY_PRESS,
+  OPPONENT_KEY_RELEASE,
+  RECEIVE_BATTLES,
+  RECEIVE_DELETE,
+  RECEIVE_OPPONENT_KEY_PRESS,
+  RECEIVE_OPPONENT_KEY_RELEASE,
+  RECEIVE_READY,
+  RECEIVE_START,
+  RECEIVE_USER,
+  ROOM_FULL,
+  SEND_BATTLES,
+  SEND_CONNECT,
+  SEND_READY,
+  SEND_START,
+  SEND_USER,
+  USER_LEFT,
+} from "../../store/constants";
 
 export default function BattleRoom() {
   const navigate = useNavigate();
@@ -23,6 +42,7 @@ export default function BattleRoom() {
   const [ready, setReady] = useState(false);
   const [myReady, setMyReady] = useState(false);
   const [activeKeys, setActiveKeys] = useState([]);
+  const [battleuserScoreAndCombo, setBattleUserScoreAndCombo] = useState({});
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
@@ -31,16 +51,22 @@ export default function BattleRoom() {
   const { roomId } = useParams();
   const score = useSelector((state) => state.game.score);
   const combo = useSelector((state) => state.game.currentCombo);
+  const word = useSelector((state) => state.game.word);
 
   const handleKeyPress = (key) => {
-    socket.emit("opponent-key-press", key);
+    socket.emit(OPPONENT_KEY_PRESS, key);
   };
 
   const handleKeyRelease = (key) => {
-    socket.emit("opponent-key-release", key);
+    socket.emit(OPPONENT_KEY_RELEASE, key);
   };
 
-  const handleOut = async () => {
+  const handleReady = () => {
+    socket.emit(SEND_READY);
+    setMyReady(!myReady);
+  };
+
+  const handleOut = useCallback(async () => {
     if (auth?.currentUser?.uid === room?.uid) {
       try {
         const jwt = localStorage.getItem("jwt");
@@ -55,7 +81,7 @@ export default function BattleRoom() {
         );
 
         if (response.status === 204) {
-          socket.emit("delete-room");
+          socket.emit(DELETE_ROOM);
         }
       } catch (err) {
         navigate("/error", {
@@ -69,10 +95,10 @@ export default function BattleRoom() {
     }
 
     navigate("/");
-  };
+  }, [navigate, room?.uid, roomId, socket]);
 
   const handleStart = () => {
-    socket.emit("send-start");
+    socket.emit(SEND_START);
     setIsCountingDown(true);
     setReady(!ready);
 
@@ -90,11 +116,6 @@ export default function BattleRoom() {
       clearInterval(countdownTimer);
       setIsPlaying(true);
     }, 3000);
-  };
-
-  const handleReady = () => {
-    socket.emit("send-ready");
-    setMyReady(!myReady);
   };
 
   useEffect(() => {
@@ -128,12 +149,19 @@ export default function BattleRoom() {
 
     getSong();
   }, [navigate, roomId]);
-  socket?.emit("send-user");
 
   useEffect(() => {
-    socket?.emit("send-battles", score, combo);
+    socket?.emit(SEND_USER);
+  }, [socket]);
 
-    socket?.on("receive-user", (currentUserArray) => {
+  useEffect(() => {
+    socket?.emit(SEND_BATTLES, score, combo, word);
+
+    socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
+      setBattleUserScoreAndCombo({ score, combo, word });
+    });
+
+    socket?.on(RECEIVE_USER, (currentUserArray) => {
       const battleUser = Object.values(currentUserArray).filter(
         (u) => u.uid !== auth?.currentUser?.uid,
       );
@@ -141,32 +169,32 @@ export default function BattleRoom() {
       setBattleUser(battleUser[0]);
     });
 
-    socket?.emit("send-connect");
+    socket?.emit(SEND_CONNECT);
 
-    socket?.on("user-left", () => {
+    socket?.on(USER_LEFT, () => {
       setBattleUser(null);
     });
 
-    socket?.on("receive-opponent-key-press", (key) => {
+    socket?.on(RECEIVE_OPPONENT_KEY_PRESS, (key) => {
       setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
     });
 
-    socket?.on("receive-opponent-key-release", (key) => {
+    socket?.on(RECEIVE_OPPONENT_KEY_RELEASE, (key) => {
       setActiveKeys((prevActiveKeys) => {
         return prevActiveKeys.filter((activeKey) => activeKey !== key);
       });
     });
 
-    socket?.on("receive-delete", () => {
+    socket?.on(RECEIVE_DELETE, () => {
       navigate("/");
       alert("방을 만든 유저가 나갔습니다.");
     });
 
-    socket?.on("receive-ready", () => {
+    socket?.on(RECEIVE_READY, () => {
       setReady(!ready);
     });
 
-    socket?.on("receive-start", () => {
+    socket?.on(RECEIVE_START, () => {
       setIsCountingDown(true);
       setMyReady(false);
 
@@ -186,11 +214,11 @@ export default function BattleRoom() {
       }, 3000);
     });
 
-    socket?.on("room-full", () => {
+    socket?.on(ROOM_FULL, () => {
       alert("방이 가득 차 있습니다.");
       navigate("/");
     });
-  }, [combo, displayName, navigate, photoURL, ready, score, socket]);
+  }, [combo, displayName, navigate, photoURL, ready, score, socket, word]);
 
   useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
@@ -245,6 +273,7 @@ export default function BattleRoom() {
               isRender={render}
               isCurrentUser={false}
               otherKeys={activeKeys}
+              otherScoreAndCombo={battleuserScoreAndCombo}
             />
           </Controller>
         </BattleUserContainer>
@@ -264,7 +293,7 @@ export default function BattleRoom() {
         <ScoreContainer>
           <Records>
             <ProfileContainer>
-              <div>score: {score}</div>
+              <div>score: {battleuserScoreAndCombo.score}</div>
               {battleUser?.photoURL ? (
                 <Profile>
                   {battleUser?.displayName}
