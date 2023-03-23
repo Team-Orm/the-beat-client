@@ -34,12 +34,13 @@ export default function GameController({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { roomId } = useParams();
+  const maxNotesNumber = [...note].length - 1;
 
   const [activeKeys, setActiveKeys] = useState([]);
-  const [songEnd, setSongEnd] = useState(false);
   const [notes, setNotes] = useState(note);
   const [currentScore, setCurrentScore] = useState(0);
   const [word, setWord] = useState("");
+  const [songHasEnded, setSongHasEnded] = useState(false);
 
   const canvasRef = useRef(null);
   const notesRef = useRef(notes);
@@ -266,7 +267,7 @@ export default function GameController({
         note.positionY += diffTimeBetweenAnimationFrame * SPEED;
       }
 
-      if (note.positionY >= canvas.height) {
+      if (note.positionY >= canvas?.height) {
         if (note.time < timeRef.current - SPEED / DIFFICULTY) {
           comboRef.current = 0;
           comboResults.miss += 1;
@@ -308,8 +309,17 @@ export default function GameController({
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
-      if (timeRef.current >= songDuration + 5) {
-        setSongEnd(true);
+      if (timeRef.current >= songDuration) {
+        navigate(`/battles/results/${roomId}`);
+
+        if (
+          !songHasEnded &&
+          (comboResults.excellent > 0 || comboResults.good > 0)
+        ) {
+          dispatch(isSongEnd({ comboResults, currentScore, maxNotesNumber }));
+        }
+
+        setSongHasEnded(true);
       } else {
         animationFrameId = requestAnimationFrame(updateNotes);
       }
@@ -326,16 +336,24 @@ export default function GameController({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [ctx, canvas, notes, renderNotes, songDuration, currentScore, isPlaying]);
+  }, [
+    ctx,
+    canvas,
+    notes,
+    isPlaying,
+    renderNotes,
+    songDuration,
+    navigate,
+    roomId,
+    comboResults,
+    dispatch,
+    currentScore,
+    maxNotesNumber,
+  ]);
 
   useEffect(() => {
     dispatch(updateScore(currentScore));
-
-    if (songEnd) {
-      dispatch(isSongEnd({ comboResults, currentScore, roomId }));
-      navigate("/battles/results");
-    }
-  }, [comboResults, currentScore, dispatch, navigate, roomId, songEnd]);
+  }, [currentScore, dispatch]);
 
   useEffect(() => {
     notesRef.current = notes;

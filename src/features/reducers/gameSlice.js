@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   score: 0,
   totalScore: 0,
-  combo: {
+  comboResults: {
     excellent: 0,
     good: 0,
     miss: 0,
@@ -11,7 +11,6 @@ const initialState = {
   currentCombo: 0,
   end: false,
   word: "",
-  roomId: "",
 };
 
 export const gameSlice = createSlice({
@@ -28,9 +27,21 @@ export const gameSlice = createSlice({
       state.word = action.payload;
     },
     isSongEnd: (state, action) => {
-      state.roomId = action.payload.roomId;
-      state.totalScore = action.payload.currentScore;
-      state.combo = action.payload.comboResults;
+      const { comboResults, currentScore, maxNotesNumber } = action.payload;
+
+      const missNumber =
+        maxNotesNumber - (comboResults.excellent + comboResults.good);
+
+      console.log(maxNotesNumber);
+
+      const results = {
+        excellent: comboResults.excellent,
+        good: comboResults.good,
+        miss: missNumber,
+      };
+
+      state.totalScore = currentScore;
+      state.comboResults = results;
       state.end = true;
     },
   },
