@@ -39,7 +39,6 @@ export default function BattleRoom() {
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [battleUser, setBattleUser] = useState({});
-  const [render, setRender] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [ready, setReady] = useState(false);
   const [myReady, setMyReady] = useState(false);
@@ -149,9 +148,9 @@ export default function BattleRoom() {
     getSong();
   }, [navigate, roomId]);
 
-  useEffect(() => {
+  if (!isPlaying) {
     socket?.emit(SEND_USER);
-  }, [socket]);
+  }
 
   useEffect(() => {
     socket?.emit(SEND_BATTLES, score, combo, word);
@@ -198,13 +197,7 @@ export default function BattleRoom() {
       setMyReady(false);
 
       const countdownTimer = setInterval(() => {
-        setCountdown((prevCountdown) => {
-          if (prevCountdown === 2) {
-            setRender(true);
-          }
-
-          return prevCountdown - 1;
-        });
+        setCountdown((prevCountdown) => prevCountdown - 1);
       }, 1000);
 
       setTimeout(() => {
@@ -237,9 +230,11 @@ export default function BattleRoom() {
   return (
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
-      <OutButton type="button" onClick={handleOut}>
-        나가기
-      </OutButton>
+      {!isPlaying && (
+        <OutButton type="button" onClick={handleOut}>
+          나가기
+        </OutButton>
+      )}
       {!isCountingDown && room?.uid === auth?.currentUser?.uid && (
         <StartButton onClick={handleStart} disabled={!ready}>
           Start

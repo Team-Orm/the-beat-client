@@ -27,8 +27,6 @@ export const ROOM_FULL = "room-full";
 
 export const DELETE_ROOM = "delete-room";
 
-export const NOTES = {};
-
 export const SPEED = 500;
 export const MILLISECOND = 1000;
 export const DIFFICULTY = 1500;

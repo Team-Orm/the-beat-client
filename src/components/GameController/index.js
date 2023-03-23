@@ -15,7 +15,6 @@ import {
   updateWord,
 } from "../../features/reducers/gameSlice";
 import {
-  NOTES,
   MILLISECOND,
   SPEED,
   KEYS,
@@ -38,12 +37,12 @@ export default function GameController({
 
   const [activeKeys, setActiveKeys] = useState([]);
   const [songEnd, setSongEnd] = useState(false);
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState(note);
   const [currentScore, setCurrentScore] = useState(0);
   const [word, setWord] = useState("");
 
   const canvasRef = useRef(null);
-  const notesRef = useRef(note);
+  const notesRef = useRef(notes);
   const deltaRef = useRef(null);
   const comboRef = useRef(0);
   const timeRef = useRef(0);
@@ -305,7 +304,7 @@ export default function GameController({
 
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
       timeRef.current += (now - deltaRef.current) / MILLISECOND;
-      const visibleNotes = note.filter((note) => note.time <= timeRef.current);
+      const visibleNotes = notes.filter((note) => note.time <= timeRef.current);
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
@@ -327,7 +326,7 @@ export default function GameController({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [ctx, canvas, notes, renderNotes, songDuration, currentScore]);
+  }, [ctx, canvas, notes, renderNotes, songDuration, currentScore, isPlaying]);
 
   useEffect(() => {
     dispatch(updateScore(currentScore));
