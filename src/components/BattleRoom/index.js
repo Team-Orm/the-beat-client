@@ -148,9 +148,7 @@ export default function BattleRoom() {
     getSong();
   }, [navigate, roomId]);
 
-  if (!isPlaying) {
-    socket?.emit(SEND_USER);
-  }
+  socket?.emit(SEND_USER);
 
   useEffect(() => {
     socket?.emit(SEND_BATTLES, score, combo, word);

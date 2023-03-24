@@ -27,7 +27,7 @@ export default function Login() {
   }, [auth.currentUser, navigate]);
 
   return (
-    <LoginContainer>
+    <LoginContainer data-testid="login-container">
       <Title>The Beat</Title>
       <BottomContainer>
         <Message>Press Login Button to Start</Message>
