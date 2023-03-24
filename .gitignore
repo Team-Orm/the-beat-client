@@ -2,6 +2,9 @@
 
 # env
 .env
+cypress.env.json
+
+.eslintignore
 
 # dependencies
 /node_modules

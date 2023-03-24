@@ -309,7 +309,7 @@ export default function GameController({
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
-      if (timeRef.current >= songDuration + 5) {
+      if (timeRef.current >= songDuration) {
         navigate(`/battles/results/${roomId}`);
 
         if (
