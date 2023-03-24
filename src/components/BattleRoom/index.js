@@ -431,8 +431,9 @@ const ProfileContainer = styled.div`
   position: relative;
   align-items: center;
   justify-content: space-between;
+  font-size: 2.5vw;
   width: 100%;
-  height: 100%;
+  height: 80%;
   padding: 10px;
 `;
 

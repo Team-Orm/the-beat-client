@@ -1,33 +1,50 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
+import { RECEIVE_RESULTS, SEND_RESULTS, USER_OUT } from "../../store/constants";
 
 export default function BattleResults() {
-  const combo = useSelector((state) => state.game.combo);
+  const comboResults = useSelector((state) => state.game.comboResults);
   const totalScore = useSelector((state) => state.game.totalScore);
-  const roomId = useSelector((state) => state.game.roomid);
   const [socket, setSocket] = useState();
+  const [battleUserProfile, setBattleUserProfile] = useState({});
+  const [battleUserResults, setBattleUserResults] = useState({});
+  const { resultId } = useParams();
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
     : { displayName: null, photoURL: null, uid: null };
 
+  socket?.emit(SEND_RESULTS, comboResults, totalScore);
+
   useEffect(() => {
-    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/`, {
+    socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
+      setBattleUserResults(comboResults);
+      setBattleUserProfile({ totalScore, user });
+    });
+
+    socket?.on(USER_OUT, () => {
+      console.log("User is out");
+    });
+  }, [comboResults, resultId, socket, totalScore]);
+
+  useEffect(() => {
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
       cors: {
         origin: "*",
         methods: ["GET", "POST"],
       },
-      query: { displayName, photoURL, uid, roomId },
+      query: { displayName, photoURL, uid, resultId },
     });
     setSocket(socketClient);
 
     return () => {
       socketClient.disconnect();
     };
-  }, [displayName, photoURL, roomId, uid]);
+  }, [displayName, photoURL, resultId, uid]);
 
   return (
     <BattleResultsContainer>
@@ -39,10 +56,10 @@ export default function BattleResults() {
             <UserImage src={photoURL} />
             <ResultsBox>{displayName}</ResultsBox>
           </UserContainer>
-          {Object.keys(combo).map((key) => (
+          {Object.keys(comboResults).map((key) => (
             <RecordsContainer key={key}>
               <ResultsBox>{key}</ResultsBox>
-              <Score>{combo[key]}</Score>
+              <Score>{comboResults[key]}</Score>
             </RecordsContainer>
           ))}
           <StyledHr />
@@ -54,19 +71,23 @@ export default function BattleResults() {
         <ResultPanel>
           <Winner>Winner</Winner>
           <UserContainer>
-            <UserImage src={photoURL} />
-            <ResultsBox>{displayName}</ResultsBox>
+            <UserImage
+              src={battleUserProfile && battleUserProfile?.user?.photoURL}
+            />
+            <ResultsBox>
+              {battleUserProfile && battleUserProfile?.user?.displayName}
+            </ResultsBox>
           </UserContainer>
-          {Object.keys(combo).map((key) => (
+          {Object.keys(battleUserResults).map((key) => (
             <RecordsContainer key={key}>
               <ResultsBox>{key}</ResultsBox>
-              <Score>{combo[key]}</Score>
+              <Score>{battleUserResults[key]}</Score>
             </RecordsContainer>
           ))}
           <StyledHr />
           <RecordsContainer>
             <ResultsBox>TotalScore: </ResultsBox>
-            <Score>{totalScore}</Score>
+            <Score>{battleUserProfile && battleUserProfile?.totalScore}</Score>
           </RecordsContainer>
         </ResultPanel>
       </ResultsWrapper>
