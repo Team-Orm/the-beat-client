@@ -5,23 +5,40 @@ describe("template spec", () => {
 });
 
 describe("login page", () => {
-  beforeEach(function () {
-    // cy.loginByGoogleApi();
+  const mockUser = {
+    name: "Test man",
+    email: "testman@example.com",
+    password: "password123",
+  };
+
+  beforeEach(() => {
+    const client = Cypress.env("CLIENT_URL");
+    cy.visit(client);
   });
 
-  it("visis main page", () => {
-    const baseUrl = Cypress.env("baseUrl");
-    cy.visit(baseUrl);
-
-    cy.contains("Press Login Button to Start");
-    cy.url().should("include", "/login");
+  afterEach(() => {
+    cy.request({
+      method: "DELETE",
+      url: `${Cypress.env("SERVER_URL")}/api/users/delete`,
+      body: { email: mockUser.email },
+    });
   });
 
-  // it("logs in with Google OAuth and redirects to /", () => {
-  //   cy.visit("http://localhost:3000/login");
+  it("should register a new user", () => {
+    cy.get("[data-cy=register-button]").click();
+    cy.get("[data-cy=register-name]").type(mockUser.name);
+    cy.get("[data-cy=register-email]").type(mockUser.email);
+    cy.get("[data-cy=register-password]").type(mockUser.password);
+    cy.get("[data-cy=submit-button]").click();
+    cy.get("[data-cy=message]").contains("유저가 등록 되었습니다.");
+  });
 
-  //   cy.get('button[type="button"]').click();
+  it("should login a user", () => {
+    cy.get("[data-cy=login-button]").click();
+    cy.get("[data-cy=login-email]").type(mockUser.email);
+    cy.get("[data-cy=login-password]").type(mockUser.password);
+    cy.get("[data-cy=submit-button]").click();
 
-  //   cy.url().should("eq", "http://localhost:3000");
-  // });
+    // Add any assertion for a successful login here
+  });
 });

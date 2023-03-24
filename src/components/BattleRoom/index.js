@@ -45,11 +45,20 @@ export default function BattleRoom() {
   const [activeKeys, setActiveKeys] = useState([]);
   const [battleuserScoreAndCombo, setBattleUserScoreAndCombo] = useState({});
 
+  const { roomId } = useParams();
+
+  const localStorageUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : null;
+
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
-    : { displayName: null, photoURL: null, uid: null };
+    : {
+        displayName: localStorageUser?.name,
+        photoURL: null,
+        uid: localStorageUser?.uid,
+      };
 
-  const { roomId } = useParams();
   const score = useSelector((state) => state.game.score);
   const combo = useSelector((state) => state.game.currentCombo);
   const word = useSelector((state) => state.game.word);
@@ -159,7 +168,7 @@ export default function BattleRoom() {
 
     socket?.on(RECEIVE_USER, (currentUserArray) => {
       const battleUser = Object.values(currentUserArray).filter(
-        (u) => u.uid !== auth?.currentUser?.uid,
+        (u) => u.uid !== uid,
       );
 
       setBattleUser(battleUser[0]);
@@ -233,21 +242,19 @@ export default function BattleRoom() {
           나가기
         </OutButton>
       )}
-      {!isCountingDown && room?.uid === auth?.currentUser?.uid && (
+      {!isCountingDown && room?.uid === uid && (
         <StartButton onClick={handleStart} disabled={!ready}>
           Start
         </StartButton>
       )}
-      {!isCountingDown && room?.uid !== auth?.currentUser?.uid && !ready && (
+      {!isCountingDown && room?.uid !== uid && !ready && (
         <StartButton onClick={handleReady}>Ready</StartButton>
       )}
       {isCountingDown && countdown > 0 && <Count>{countdown}</Count>}
       <BattleRoomContainer>
         <BattleUserContainer>
           <Controller>
-            {room?.uid !== auth?.currentUser?.uid && myReady && (
-              <Ready>Ready</Ready>
-            )}
+            {room?.uid !== uid && myReady && <Ready>Ready</Ready>}
             <GameController
               isPlaying={isPlaying}
               handleKeyPress={handleKeyPress}
@@ -275,8 +282,8 @@ export default function BattleRoom() {
           <Records>
             <ProfileContainer>
               <Profile>
-                <Photo src={auth?.currentUser?.photoURL} alt="Me" />
-                {auth?.currentUser?.displayName}
+                {photoURL ? <Photo src={photoURL} alt="Me" /> : "🤓"}
+                {displayName}
               </Profile>
               score: {score}
             </ProfileContainer>

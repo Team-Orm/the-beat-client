@@ -1,6 +1,7 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
@@ -13,12 +14,40 @@ export default function BattleResults() {
   const [battleUserProfile, setBattleUserProfile] = useState({});
   const [battleUserResults, setBattleUserResults] = useState({});
   const { resultId } = useParams();
+  const navigate = useNavigate();
+
+  const localStorageUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : null;
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
-    : { displayName: null, photoURL: null, uid: null };
+    : {
+        displayName: localStorageUser?.name,
+        photoURL: null,
+        uid: localStorageUser?.uid,
+      };
+
+  const handleOut = () => {
+    navigate("/");
+  };
 
   socket?.emit(SEND_RESULTS, comboResults, totalScore);
+
+  useEffect(() => {
+    const deleteBattle = async () => {
+      const roomId = resultId;
+      const response = await axios.delete(
+        `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+      );
+
+      if (response.status === 204) {
+        console.log("battleroom is deleted");
+      }
+    };
+
+    deleteBattle();
+  }, [resultId]);
 
   useEffect(() => {
     socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
@@ -51,9 +80,11 @@ export default function BattleResults() {
       <PageTitle>Results</PageTitle>
       <ResultsWrapper>
         <ResultPanel>
-          <Winner>Winner</Winner>
+          <Winner>
+            {totalScore < battleUserProfile?.totalScore ? "Loser" : "Winner"}
+          </Winner>
           <UserContainer>
-            <UserImage src={photoURL} />
+            {photoURL ? <UserImage src={photoURL} /> : <Emoji>🥳</Emoji>}
             <ResultsBox>{displayName}</ResultsBox>
           </UserContainer>
           {Object.keys(comboResults).map((key) => (
@@ -69,11 +100,15 @@ export default function BattleResults() {
           </RecordsContainer>
         </ResultPanel>
         <ResultPanel>
-          <Winner>Winner</Winner>
+          <Winner>
+            {battleUserProfile?.totalScore > totalScore ? "Winner" : "Loser"}
+          </Winner>
           <UserContainer>
-            <UserImage
-              src={battleUserProfile && battleUserProfile?.user?.photoURL}
-            />
+            {battleUserProfile?.user?.photoURL !== "null" ? (
+              <UserImage src={battleUserProfile?.user?.photoURL} />
+            ) : (
+              <Emoji>🥸</Emoji>
+            )}
             <ResultsBox>
               {battleUserProfile && battleUserProfile?.user?.displayName}
             </ResultsBox>
@@ -93,7 +128,9 @@ export default function BattleResults() {
       </ResultsWrapper>
       <ButtonContainer>
         <ActionButton type="button">기록하기</ActionButton>
-        <ActionButton type="button">나가기</ActionButton>
+        <ActionButton type="button" onClick={handleOut}>
+          나가기
+        </ActionButton>
       </ButtonContainer>
     </BattleResultsContainer>
   );
@@ -145,6 +182,11 @@ const Winner = styled.h1`
   width: 100%;
   height: 12.5%;
   margin: 0;
+`;
+
+const Emoji = styled.div`
+  height: 100%;
+  font-size: 5em;
 `;
 
 const UserContainer = styled.div`
