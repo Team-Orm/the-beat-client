@@ -24,9 +24,18 @@ export default function Lobby() {
   const [usersInRooms, setUsersInRooms] = useState({});
 
   const chatListRef = useRef(null);
+  const localStorageUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : null;
+
   const { accessToken, displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
-    : { accessToken: null, displayName: null, photoURL: null, uid: null };
+    : {
+        accessToken: localStorageUser?.token,
+        displayName: localStorageUser?.name,
+        photoURL: null,
+        uid: localStorageUser?.uid,
+      };
 
   const handleChatMessageChange = (e) => {
     setChatMessage(e.target.value);
@@ -82,6 +91,7 @@ export default function Lobby() {
 
       if (response.status === 204) {
         localStorage.removeItem("jwt");
+        localStorage.removeItem("user");
         auth.signOut();
 
         return navigate("/login");
@@ -110,10 +120,12 @@ export default function Lobby() {
   }, [receivedMessages, scrollToBottom]);
 
   useEffect(() => {
-    if (!auth.currentUser) {
+    const jwt = localStorage.getItem("jwt");
+
+    if (!jwt) {
       navigate("/login");
     }
-  }, [auth.currentUser, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
@@ -262,9 +274,14 @@ export default function Lobby() {
         <RightContainer>
           <UserList>
             {currentUserList &&
-              currentUserList?.map(({ photoURL, displayName }) => (
-                <User key={photoURL}>
-                  <ProfilePicture src={photoURL} />
+              currentUserList?.map(({ photoURL, displayName }, index) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <User key={photoURL + index}>
+                  {photoURL !== "null" ? (
+                    <ProfilePicture src={photoURL} alt="😃" />
+                  ) : (
+                    "😃"
+                  )}
                   <ProfileText>{displayName}</ProfileText>
                 </User>
               ))}

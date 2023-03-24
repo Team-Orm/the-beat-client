@@ -16,6 +16,7 @@ module.exports = {
   },
   plugins: ["react", "html", "prettier", "react-hooks"],
   rules: {
+    "import/no-extraneous-dependencies": "off",
     "require-jsdoc": "off",
     "consistent-return": "off",
     "import/prefer-default-export": "off",
