@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import Login from "./index";
 
 describe("Login Component", () => {
-  test("render Login component without crashing", () => {
+  it("render Login component without crashing", () => {
     render(
       <MemoryRouter>
         <Login />
@@ -16,7 +16,7 @@ describe("Login Component", () => {
     expect(loginContainer).toBeInTheDocument();
   });
 
-  test("renders title, message, and login button", () => {
+  it("renders title, message, and login button", () => {
     render(
       <MemoryRouter>
         <Login />
