@@ -8,15 +8,17 @@ const mockUser = {
   password: "password123",
 };
 
-describe("Beat Components", () => {
+describe("Beat", () => {
   let browser;
   let page;
 
   beforeAll(async () => {
     browser = await puppeteer.launch({
+      defaultViewport: null,
       executablePath:
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
       headless: false,
+      args: ["--start-fullscreen"],
     });
     page = await browser.newPage();
     await page.goto(`${CLIENT_URL}/login`);
@@ -183,11 +185,45 @@ describe("Beat Components", () => {
     });
 
     it("should click leave button and test navigation", async () => {
-      // Add your test logic here
+      const createRoomBtn = await page.$("[data-cy=create-room]");
+      await createRoomBtn.click();
+
+      await page.waitForSelector("[data-cy=leave-button]");
+      const leaveButton = await page.$("[data-cy=leave-button]");
+      await leaveButton.click();
+
+      const currentUrl = await page.url();
+      expect(currentUrl).toEqual(`${CLIENT_URL}/`);
     });
 
     it("should click create room button and test navigation", async () => {
-      // Add your test logic here
+      const createRoomBtn = await page.$("[data-cy=create-room]");
+      await createRoomBtn.click();
+
+      await page.waitForSelector("[data-cy=song-container-0]");
+      const songContainerSelector = "[data-cy=song-container-0]";
+      const songContainer = await page.$(songContainerSelector);
+      await songContainer.click();
+
+      await page.waitForSelector("[data-cy=create-button]");
+      const createButtonSelector = "[data-cy=create-button]";
+      const createButton = await page.$(createButtonSelector);
+      await createButton.click();
+
+      await page.waitForNavigation();
+      const url = await page.url();
+      const roomId = url.split("/").pop();
+      expect(url).toContain(`/battles/${roomId}`);
+
+      await page.waitForTimeout(500);
+
+      await page.waitForSelector("[data-cy=exit-button]");
+      const exitButton = await page.$("[data-cy=exit-button]");
+      await exitButton.click();
+
+      await page.waitForNavigation();
+      const currentUrl = await page.url();
+      expect(currentUrl).toEqual(`${CLIENT_URL}/`);
     });
   });
 });

@@ -3,6 +3,7 @@
 #
 .env
 .eslintignore
+screenshot.png
 
 # dependencies
 /node_modules
