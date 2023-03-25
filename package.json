@@ -21,11 +21,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --testPathIgnorePatterns=.*e2e.test.js",
+    "test:e2e": "react-scripts test --testPathPattern=.*e2e.test.js$",
     "eject": "react-scripts eject",
     "prepare": "husky install",
-    "pre-commit": "lint-staged",
-    "e2e": "cypress open"
+    "pre-commit": "lint-staged"
   },
   "eslintConfig": {
     "extends": [
@@ -46,8 +46,6 @@
     ]
   },
   "devDependencies": {
-    "@testing-library/cypress": "^9.0.0",
-    "cypress": "^12.8.1",
     "eslint": "^8.35.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.7.0",
@@ -59,7 +57,10 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.0",
     "lint-staged": "^13.1.2",
-    "prettier": "2.8.4"
+    "pptr-testing-library": "^0.7.0",
+    "prettier": "2.8.4",
+    "puppeteer": "^19.8.0",
+    "puppeteer-core": "^19.8.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,html}": [

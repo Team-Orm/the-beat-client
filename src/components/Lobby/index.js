@@ -145,20 +145,16 @@ export default function Lobby() {
   useEffect(() => {
     const updateRooms = async () => {
       try {
-        if (socket) {
-          const response = await axios.get(
-            `${process.env.REACT_APP_SERVER_URL}/api/rooms`,
-          );
+        const response = await axios.get(
+          `${process.env.REACT_APP_SERVER_URL}/api/rooms`,
+        );
 
-          if (response.status === 200) {
-            const newRooms = await response.data.rooms;
-            return setRoomsList(() => newRooms);
-          }
-
-          throw new Error(response);
+        if (response.status === 200) {
+          const newRooms = await response.data.rooms;
+          return setRoomsList(() => newRooms);
         }
 
-        return true;
+        throw new Error(response);
       } catch (err) {
         return navigate("/error", {
           state: {
@@ -171,7 +167,7 @@ export default function Lobby() {
     };
 
     updateRooms();
-  }, [socket, setRoomsList, navigate]);
+  }, [setRoomsList, navigate]);
 
   useEffect(() => {
     const getTokenAndSetUser = async () => {
@@ -236,19 +232,20 @@ export default function Lobby() {
         <LeftContainer>
           <RoomsContainer>
             <RoomsLists>
-              {roomsList.length &&
-                roomsList.map(({ _id, createdBy, song }) => {
-                  return (
-                    <Room key={_id} onClick={() => handleRoomClick(_id)}>
-                      <RoomName>{`${createdBy} ${
-                        usersInRooms[_id]?.users.length
-                          ? usersInRooms[_id]?.users.length
-                          : 0
-                      } / 2`}</RoomName>
-                      <RoomSong>{song?.title}</RoomSong>
-                    </Room>
-                  );
-                })}
+              {roomsList.length
+                ? roomsList.map(({ _id, createdBy, song }) => {
+                    return (
+                      <Room key={_id} onClick={() => handleRoomClick(_id)}>
+                        <RoomName>{`${createdBy} ${
+                          usersInRooms[_id]?.users.length
+                            ? usersInRooms[_id]?.users.length
+                            : 0
+                        } / 2`}</RoomName>
+                        <RoomSong>{song?.title}</RoomSong>
+                      </Room>
+                    );
+                  })
+                : null}
             </RoomsLists>
           </RoomsContainer>
           <ChatContainer>
@@ -287,7 +284,11 @@ export default function Lobby() {
               ))}
           </UserList>
           <RightBottom>
-            <LogoutButton type="button" onClick={handleMakeRoom}>
+            <LogoutButton
+              type="button"
+              onClick={handleMakeRoom}
+              data-cy="create-room"
+            >
               방 만들기
             </LogoutButton>
             <LogoutButton type="button" onClick={handleLogout}>

@@ -77,7 +77,7 @@ export default function BattleRoom() {
   };
 
   const handleOut = useCallback(async () => {
-    if (auth?.currentUser?.uid === room?.uid) {
+    if (uid === room?.uid) {
       try {
         const jwt = localStorage.getItem("jwt");
 
@@ -105,7 +105,7 @@ export default function BattleRoom() {
     }
 
     navigate("/");
-  }, [navigate, room?.uid, roomId, socket]);
+  }, [navigate, room?.uid, roomId, socket, uid]);
 
   const handleStart = () => {
     socket.emit(SEND_START);
@@ -176,7 +176,10 @@ export default function BattleRoom() {
 
     socket?.emit(SEND_CONNECT);
 
-    socket?.on(USER_LEFT, () => {
+    socket?.on(USER_LEFT, (uid) => {
+      if (uid === room.uid) {
+        handleOut();
+      }
       setBattleUser(null);
     });
 
@@ -217,7 +220,7 @@ export default function BattleRoom() {
       alert("방이 가득 차 있습니다.");
       navigate("/");
     });
-  }, [combo, displayName, navigate, photoURL, ready, score, socket, word]);
+  }, [combo, displayName, navigate, photoURL, ready, score, socket, uid, word]);
 
   useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
@@ -238,7 +241,7 @@ export default function BattleRoom() {
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
       {!isPlaying && (
-        <OutButton type="button" onClick={handleOut}>
+        <OutButton type="button" onClick={handleOut} data-cy="exit-button">
           나가기
         </OutButton>
       )}
@@ -293,10 +296,10 @@ export default function BattleRoom() {
           <Records>
             <ProfileContainer>
               <div>score: {battleuserScoreAndCombo.score}</div>
-              {battleUser?.photoURL ? (
+              {battleUser?.photoURL !== "null" ? (
                 <Profile>
                   {battleUser?.displayName}
-                  <Photo src={battleUser.photoURL} alt="battleUser" />
+                  <Photo src={battleUser?.photoURL} alt="battleUser" />
                 </Profile>
               ) : (
                 "🙅🏼"
