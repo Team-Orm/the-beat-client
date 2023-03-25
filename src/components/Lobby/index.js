@@ -73,13 +73,15 @@ export default function Lobby() {
     try {
       return navigate("/battles/new");
     } catch (err) {
-      return navigate("/error", {
-        state: {
-          status: err.response.status,
-          text: err.response.statusText,
-          message: err.response.data.message,
-        },
-      });
+      if (err.response.status) {
+        return navigate("/error", {
+          state: {
+            status: err.response.status,
+            text: err.response.statusText,
+            message: err.response.data.message,
+          },
+        });
+      }
     }
   };
 
@@ -224,11 +226,11 @@ export default function Lobby() {
 
   return (
     <Background>
-      <HeaderContainer>
+      <HeaderContainer data-testid="header-container">
         <LeftHeader>Room</LeftHeader>
         <RightHeader>User</RightHeader>
       </HeaderContainer>
-      <Container>
+      <Container data-testid="lobby-container">
         <LeftContainer>
           <RoomsContainer>
             <RoomsLists>
