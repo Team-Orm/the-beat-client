@@ -99,6 +99,7 @@ export default function RoomMaker() {
 
   return (
     <RoomMakerContainer
+      data-cy="room-maker-container"
       style={{
         backgroundImage: `url(${hoveredSong?.imageURL || "none"})`,
       }}
@@ -110,12 +111,13 @@ export default function RoomMaker() {
       >
         {isPlaying ? "⏸️ BGM OFF" : "🎵 BGM ON"}
       </PlayButton>
-      {songs.map((song) => (
+      {songs.map((song, index) => (
         <SongContainer
           key={song._id}
           onMouseEnter={() => setHoveredSong(song)}
           onMouseLeave={() => setHoveredSong(null)}
           onClick={() => handleSelect(song._id)}
+          index={index}
         >
           <ProfileImage src={song.imageURL} />
           <SongTitleText>
@@ -125,7 +127,12 @@ export default function RoomMaker() {
         </SongContainer>
       ))}
       <ButtonContainer>
-        <ActionButton type="button" hovered={hoveredSong !== null}>
+        <ActionButton
+          type="button"
+          hovered={hoveredSong !== null}
+          action="leave"
+          onClick={() => navigate("/")}
+        >
           나가기
         </ActionButton>
         <ActionButton
@@ -156,7 +163,9 @@ const AudioContainer = styled.audio`
   display: none;
 `;
 
-const SongContainer = styled.div`
+const SongContainer = styled.div.attrs((props) => ({
+  "data-cy": `song-container-${props.index}`,
+}))`
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -176,7 +185,9 @@ const SongContainer = styled.div`
   }
 `;
 
-const PlayButton = styled.button`
+const PlayButton = styled.button.attrs({
+  "data-cy": "play-button",
+})`
   font-size: 2em;
   padding: 10px 20px;
   background-color: transparent;
@@ -211,7 +222,9 @@ const ButtonContainer = styled.div`
   width: 50%;
 `;
 
-const ActionButton = styled.button`
+const ActionButton = styled.button.attrs((props) => ({
+  "data-cy": props.action === "leave" ? "leave-button" : "create-button",
+}))`
   width: 200px;
   height: 75px;
   background-color: transparent;
