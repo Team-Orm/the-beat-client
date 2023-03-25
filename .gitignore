@@ -2,6 +2,7 @@
 
 #
 .env
+cypress.env.json
 .eslintignore
 
 # dependencies
