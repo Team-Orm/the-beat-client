@@ -277,7 +277,7 @@ export default function Lobby() {
             {currentUserList &&
               currentUserList?.map(({ photoURL, displayName }, index) => (
                 // eslint-disable-next-line react/no-array-index-key
-                <User key={photoURL + index} className="user-container">
+                <User key={photoURL + index}>
                   {photoURL !== "null" ? (
                     <ProfilePicture src={photoURL} alt="😃" />
                   ) : (
