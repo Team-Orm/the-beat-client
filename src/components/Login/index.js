@@ -106,20 +106,20 @@ export default function Login() {
     <LoginContainer data-testid="login-container">
       <Title>The Beat</Title>
       <BottomContainer>
-        <Message data-cy="message">
+        <Message data-pt="message">
           {message || "Press Login Button to Start"}
         </Message>
         <Local>
           <LoginButton type="button" onClick={handleLogin}>
             Google Social Login
           </LoginButton>
-          <LoginButton type="button" onClick={showLogin} data-cy="login-button">
+          <LoginButton type="button" onClick={showLogin} data-pt="login-button">
             User Login
           </LoginButton>
           <LoginButton
             type="button"
             onClick={showRegister}
-            data-cy="register-button"
+            data-pt="register-button"
           >
             User Register
           </LoginButton>
@@ -136,7 +136,7 @@ export default function Login() {
                     name="name"
                     onChange={handleInput}
                     required
-                    data-cy="register-name"
+                    data-pt="register-name"
                   />
                 ) : null}
                 <Input
@@ -146,7 +146,7 @@ export default function Login() {
                   name="email"
                   onChange={handleInput}
                   required
-                  data-cy={register ? "register-email" : "login-email"}
+                  data-pt={register ? "register-email" : "login-email"}
                 />
                 <Input
                   type="password"
@@ -155,9 +155,9 @@ export default function Login() {
                   name="password"
                   onChange={handleInput}
                   required
-                  data-cy={register ? "register-password" : "login-password"}
+                  data-pt={register ? "register-password" : "login-password"}
                 />
-                <Button type="submit" data-cy="submit-button">
+                <Button type="submit" data-pt="submit-button">
                   {register ? "Register" : "Login"}
                 </Button>
               </RegisterForm>
