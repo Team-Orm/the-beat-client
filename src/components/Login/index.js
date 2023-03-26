@@ -39,7 +39,7 @@ export default function Login() {
         setMessage("유저가 등록 되었습니다.");
       }
     } catch (error) {
-      console.error("Error signing in with email and password:", error);
+      alert("Error signing in with email and password:", error);
     }
   };
 
@@ -62,7 +62,7 @@ export default function Login() {
         return navigate("/");
       }
     } catch (error) {
-      console.error("Error signing in with email and password:", error);
+      alert("Error signing in with email and password:", error);
     }
   };
 

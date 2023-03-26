@@ -419,8 +419,9 @@ export default function GameController({
         {KEYS.map((key, index) => (
           <Column
             key={key}
+            data-pt={`column-container-${index}`}
+            data-active={otherKeys.includes(key) ? "true" : "false"}
             index={index}
-            colorIndex={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
             }
@@ -432,7 +433,9 @@ export default function GameController({
         {KEYS.map((key, index) => (
           <Key
             key={key}
-            colorIndex={index}
+            data-pt={`key-container-${index}`}
+            data-active={otherKeys.includes(key) ? "true" : "false"}
+            index={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
             }
@@ -510,8 +513,8 @@ const Column = styled.div`
   height: ${`calc(87.5% - 10px)`};
   border-right: ${({ index }) => (index === 5 ? null : "2px solid gray")};
 
-  ${({ active, colorIndex }) => {
-    const color = getColor(colorIndex);
+  ${({ active, index }) => {
+    const color = getColor(index);
     return (
       active &&
       `
@@ -546,8 +549,8 @@ const Key = styled.div`
   box-shadow: inset 0 0 0 5px white;
   transition: transform 0.1s ease;
 
-  ${({ active, colorIndex }) => {
-    const color = getColor(colorIndex);
+  ${({ active, index }) => {
+    const color = getColor(index);
     return (
       active &&
       `
