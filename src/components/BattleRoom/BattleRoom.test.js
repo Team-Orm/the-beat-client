@@ -11,7 +11,7 @@ import BattleRoom from "./index";
 jest.mock("axios");
 
 describe("BattleRoom component", () => {
-  test("renders BattleRoom component", () => {
+  it("renders BattleRoom component", () => {
     render(
       <Provider store={store}>
         <BrowserRouter>
@@ -35,21 +35,21 @@ describe("BattleRoom component", () => {
       );
     });
 
-    test("renders OutButton component", () => {
+    it("renders OutButton component", () => {
       expect(screen.getByTestId("out-button")).toBeInTheDocument();
     });
 
-    test("renders StartButton component", () => {
+    it("renders StartButton component", () => {
       expect(screen.getByTestId("start-button")).toBeInTheDocument();
     });
 
-    test("renders ScoreContainer components", () => {
+    it("renders ScoreContainer components", () => {
       const scoreContainers = screen.getAllByTestId("score-container");
       expect(scoreContainers.length).toBe(2);
     });
   });
 
-  test("OutButton click event works", async () => {
+  it("OutButton click event works", async () => {
     axios.delete.mockResolvedValue({ status: 204 });
 
     render(
@@ -69,7 +69,7 @@ describe("BattleRoom component", () => {
     expect(axios.delete).toHaveBeenCalled();
   });
 
-  test("Countdown starts when the start button click event occurs", async () => {
+  it("Countdown starts when the start button click event occurs", async () => {
     jest.useFakeTimers();
 
     render(
@@ -101,7 +101,7 @@ describe("BattleRoom component", () => {
     });
   });
 
-  test("Countdown is hidden after it reaches zero", async () => {
+  it("Countdown is hidden after it reaches zero", async () => {
     jest.useFakeTimers();
 
     render(
@@ -134,7 +134,7 @@ describe("BattleRoom component", () => {
       });
     });
 
-    test("Error fetching song redirects to /error route", () => {
+    it("Error fetching song redirects to /error route", () => {
       render(
         <Provider store={store}>
           <BrowserRouter>

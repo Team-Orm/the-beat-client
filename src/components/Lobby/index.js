@@ -225,7 +225,7 @@ export default function Lobby() {
   }, [socket]);
 
   return (
-    <Background>
+    <Background data-pt="element-after-login">
       <HeaderContainer data-testid="header-container">
         <LeftHeader>Room</LeftHeader>
         <RightHeader>User</RightHeader>
@@ -235,10 +235,12 @@ export default function Lobby() {
           <RoomsContainer>
             <RoomsLists>
               {roomsList.length
-                ? roomsList.map(({ _id, createdBy, song }) => {
+                ? roomsList.map(({ _id, createdBy, song }, index) => {
                     return (
                       <Room key={_id} onClick={() => handleRoomClick(_id)}>
-                        <RoomName>{`${createdBy} ${
+                        <RoomName
+                          data-pt={`room-container-${index}`}
+                        >{`${createdBy} ${
                           usersInRooms[_id]?.users.length
                             ? usersInRooms[_id]?.users.length
                             : 0
@@ -281,7 +283,9 @@ export default function Lobby() {
                   ) : (
                     "😃"
                   )}
-                  <ProfileText>{displayName}</ProfileText>
+                  <ProfileText data-pt={`user-container-${index}`}>
+                    {displayName}
+                  </ProfileText>
                 </User>
               ))}
           </UserList>
@@ -289,11 +293,15 @@ export default function Lobby() {
             <LogoutButton
               type="button"
               onClick={handleMakeRoom}
-              data-cy="create-room"
+              data-pt="create-room"
             >
               방 만들기
             </LogoutButton>
-            <LogoutButton type="button" onClick={handleLogout}>
+            <LogoutButton
+              type="button"
+              onClick={handleLogout}
+              data-pt="logout-button"
+            >
               Logout
             </LogoutButton>
           </RightBottom>
