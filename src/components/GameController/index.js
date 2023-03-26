@@ -422,8 +422,6 @@ export default function GameController({
         {KEYS.map((key, index) => (
           <Column
             key={key}
-            data-pt={`column-container-${index}`}
-            data-active={otherKeys?.includes(key) ? "true" : "false"}
             index={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
@@ -437,7 +435,7 @@ export default function GameController({
           <Key
             key={key}
             data-pt={`key-container-${index}`}
-            data-active={otherKeys?.includes(key) ? "true" : "false"}
+            data-active={otherKeys?.length ? "true" : "false"}
             index={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)

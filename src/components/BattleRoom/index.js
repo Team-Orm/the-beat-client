@@ -285,12 +285,12 @@ export default function BattleRoom() {
           <Controller>
             {ready && <Ready data-pt="ready-right-container">Ready</Ready>}
             <GameController
-              data-pt="battle-user-container"
               isPlaying={isPlaying}
               isCurrentUser={false}
               otherKeys={activeKeys}
               otherScoreAndCombo={battleuserScoreAndCombo}
               note={note}
+              data-pt="battle-user"
             />
           </Controller>
         </BattleUserContainer>

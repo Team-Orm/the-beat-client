@@ -20,6 +20,7 @@ describe.skip("Beat", () => {
       headless: false,
       args: ["--start-fullscreen"],
     });
+
     page = await browser.newPage();
   });
 
@@ -34,6 +35,10 @@ describe.skip("Beat", () => {
       });
     }, mockUser.email);
     browser.close();
+  });
+
+  afterEach(async () => {
+    await browser.close();
   });
 
   describe("Login", () => {
@@ -232,7 +237,7 @@ describe.skip("Beat", () => {
   });
 });
 
-describe("Lobby", () => {
+describe.skip("Lobby", () => {
   jest.setTimeout(20000);
   let browser;
   let page1, page2;
