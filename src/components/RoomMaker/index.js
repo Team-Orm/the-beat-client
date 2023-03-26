@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
@@ -12,9 +12,9 @@ export default function RoomMaker() {
   const [selectedSong, setSelectedSong] = useState(null);
   const audioRef = useRef(null);
 
-  const handleSelect = (roomId) => {
+  const handleSelect = useCallback((roomId) => {
     setSelectedSong((prev) => (prev === roomId ? null : roomId));
-  };
+  }, []);
 
   const handleCreateRoom = async () => {
     try {
@@ -83,7 +83,7 @@ export default function RoomMaker() {
     };
 
     getRoomsData();
-  }, [navigate, setSongs]);
+  }, [navigate]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -97,9 +97,28 @@ export default function RoomMaker() {
     }
   }, [hoveredSong, isPlaying]);
 
+  const renderSong = useCallback(
+    (song, index) => (
+      <SongContainer
+        key={song._id}
+        onMouseEnter={() => setHoveredSong(song)}
+        onMouseLeave={() => setHoveredSong(null)}
+        onClick={() => handleSelect(song._id)}
+        index={index}
+      >
+        <ProfileImage src={song.imageURL} />
+        <SongTitleText>
+          {song.title} - {song.artist}
+        </SongTitleText>
+        <CheckBox>{selectedSong === song._id ? "✅" : null}</CheckBox>
+      </SongContainer>
+    ),
+    [handleSelect, selectedSong],
+  );
+
   return (
     <RoomMakerContainer
-      data-cy="room-maker-container"
+      data-pt="room-maker-container"
       style={{
         backgroundImage: `url(${hoveredSong?.imageURL || "none"})`,
       }}
@@ -111,21 +130,7 @@ export default function RoomMaker() {
       >
         {isPlaying ? "⏸️ BGM OFF" : "🎵 BGM ON"}
       </PlayButton>
-      {songs.map((song, index) => (
-        <SongContainer
-          key={song._id}
-          onMouseEnter={() => setHoveredSong(song)}
-          onMouseLeave={() => setHoveredSong(null)}
-          onClick={() => handleSelect(song._id)}
-          index={index}
-        >
-          <ProfileImage src={song.imageURL} />
-          <SongTitleText>
-            {song.title} - {song.artist}
-          </SongTitleText>
-          <CheckBox>{selectedSong === song._id ? "✅" : null}</CheckBox>
-        </SongContainer>
-      ))}
+      {songs?.map(renderSong)}
       <ButtonContainer>
         <ActionButton
           type="button"
@@ -164,7 +169,7 @@ const AudioContainer = styled.audio`
 `;
 
 const SongContainer = styled.div.attrs((props) => ({
-  "data-cy": `song-container-${props.index}`,
+  "data-pt": `song-container-${props.index}`,
 }))`
   display: flex;
   justify-content: flex-start;
@@ -186,7 +191,7 @@ const SongContainer = styled.div.attrs((props) => ({
 `;
 
 const PlayButton = styled.button.attrs({
-  "data-cy": "play-button",
+  "data-pt": "play-button",
 })`
   font-size: 2em;
   padding: 10px 20px;
@@ -223,7 +228,7 @@ const ButtonContainer = styled.div`
 `;
 
 const ActionButton = styled.button.attrs((props) => ({
-  "data-cy": props.action === "leave" ? "leave-button" : "create-button",
+  "data-pt": props.action === "leave" ? "leave-button" : "create-button",
 }))`
   width: 200px;
   height: 75px;

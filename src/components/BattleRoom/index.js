@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-bind */
 import { io } from "socket.io-client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
@@ -47,9 +47,13 @@ export default function BattleRoom() {
 
   const { roomId } = useParams();
 
-  const localStorageUser = localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user"))
-    : null;
+  const localStorageUser = useMemo(
+    () =>
+      localStorage.getItem("user")
+        ? JSON.parse(localStorage.getItem("user"))
+        : null,
+    [],
+  );
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
@@ -241,7 +245,7 @@ export default function BattleRoom() {
     <Container song={song}>
       <AudioVisualizer song={song} isPlaying={isPlaying} />
       {!isPlaying && (
-        <OutButton type="button" onClick={handleOut} data-cy="exit-button">
+        <OutButton type="button" onClick={handleOut} data-pt="exit-button">
           나가기
         </OutButton>
       )}
