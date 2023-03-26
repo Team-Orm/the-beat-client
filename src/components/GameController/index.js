@@ -123,6 +123,7 @@ export default function GameController({
         const minTimeFromNoteToHitBox = Math.abs(
           minNote?.time + timeToHitBoxMiddle - timeRef.current,
         );
+
         const currentTimeFromNoteToHitBox = Math.abs(
           currentNote?.time + timeToHitBoxMiddle - timeRef.current,
         );
@@ -404,9 +405,11 @@ export default function GameController({
         )}
         <ComboText animate={animateCombo}>
           {otherScoreAndCombo?.combo ? (
-            otherScoreAndCombo?.combo
+            <div data-pt="battle-user-combo">{otherScoreAndCombo?.combo}</div>
           ) : (
-            <div>{comboRef.current === 0 ? null : comboRef.current}</div>
+            <div data-pt="current-user-combo">
+              {comboRef.current === 0 ? null : comboRef.current}
+            </div>
           )}
         </ComboText>
         {otherScoreAndCombo?.score ? (
@@ -420,7 +423,7 @@ export default function GameController({
           <Column
             key={key}
             data-pt={`column-container-${index}`}
-            data-active={otherKeys.includes(key) ? "true" : "false"}
+            data-active={otherKeys?.includes(key) ? "true" : "false"}
             index={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
@@ -434,7 +437,7 @@ export default function GameController({
           <Key
             key={key}
             data-pt={`key-container-${index}`}
-            data-active={otherKeys.includes(key) ? "true" : "false"}
+            data-active={otherKeys?.includes(key) ? "true" : "false"}
             index={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)

@@ -307,14 +307,16 @@ export default function BattleRoom() {
                 )}
                 {displayName}
               </Profile>
-              score: {score}
+              <div data-pt="current-user-score">score: {score}</div>
             </ProfileContainer>
           </Records>
         </ScoreContainer>
         <ScoreContainer>
           <Records>
             <ProfileContainer>
-              <div>score: {battleuserScoreAndCombo.score}</div>
+              <div data-pt="battle-user-score">
+                score: {battleuserScoreAndCombo.score}
+              </div>
               <Profile data-pt="battle-user">
                 {battleUser?.displayName}
                 {battleUser?.photoURL !== "null" && battleUser?.photoURL ? (

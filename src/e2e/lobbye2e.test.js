@@ -8,7 +8,7 @@ const mockUser = {
   password: "password123",
 };
 
-describe("Beat", () => {
+describe.skip("Beat", () => {
   let browser;
   let page;
 

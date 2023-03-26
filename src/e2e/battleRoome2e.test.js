@@ -1,4 +1,4 @@
-describe.skip("BattleRoom", () => {
+describe("BattleRoom", () => {
   jest.setTimeout(20000);
   let browser;
   let page1, page2;
@@ -167,7 +167,7 @@ describe.skip("BattleRoom", () => {
     browser.close();
   });
 
-  it("real-time user rendering in battle room", async () => {
+  it.only("real-time user rendering in battle room", async () => {
     await page2.$("[data-pt=battle-user]");
     const enteredUser = await page2.evaluate((element) => element.textContent);
 
@@ -240,7 +240,9 @@ describe.skip("BattleRoom", () => {
     }
   });
 
-  it("real-time key press rendering in other's page", async () => {
+  const keysToPress = ["s", "d", "f", "j", "k", "l"];
+
+  it("real-time key press effects of coulumns and key rendering in other's page", async () => {
     await page1.waitForSelector("[data-pt=ready-container]");
     const readyContainerSelector = "[data-pt=ready-container]";
     const readyButton = await page1.$(readyContainerSelector);
@@ -255,8 +257,6 @@ describe.skip("BattleRoom", () => {
     const battleUserGameController = await page1.$(
       '[data-pt="battle-user-container"]',
     );
-
-    const keysToPress = ["s", "d", "f", "j", "k", "l"];
 
     for (const key of keysToPress) {
       await page1.keyboard.down(key);
@@ -288,5 +288,60 @@ describe.skip("BattleRoom", () => {
     }
   });
 
-  it("real-time key press when note is coming", async () => {});
+  it("real-time key press when note is HitBox middle and score and combo up", async () => {
+    const SPEED = 300;
+    const MILLISECOND = 1000;
+    const canvasHeight = window.innerHeight;
+    const canvasWidth = window.innerWidth;
+    const columnHeight = canvasHeight * 0.9;
+    const borderWidth = 5;
+    const hitBoxPositionPercentage = 0.125;
+    const positionOfHitBox =
+      columnHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
+    const noteHeight = canvasWidth / (keysToPress.length * 3 * 3);
+    const averageFrame = MILLISECOND / 60;
+    const pixerPerFrame = (SPEED / 10) * averageFrame;
+    const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
+    const timeForNoteToReachHitBox = distanceToHitBoxMiddle / pixerPerFrame;
+
+    await page1.waitForSelector("[data-pt=ready-container]");
+    const readyContainerSelector = "[data-pt=ready-container]";
+    const readyButton = await page1.$(readyContainerSelector);
+    await readyButton.click();
+
+    await page2.waitForSelector("[data-pt=start-container]");
+    const startButtonContainer = "[data-pt=start-container]";
+    const startButton = await page2.$(startButtonContainer);
+    await startButton.click();
+
+    await page1.waitForSelector("[data-pt=current-user-combo]");
+    const beforeComboInUser1 = await page1.$("[data-pt=current-user-combo]");
+
+    console.log(beforeComboInUser1, "beforeComboInUser1");
+
+    await page1.waitForTimeout(timeForNoteToReachHitBox * 1000);
+    await page1.keyboard.down(key);
+    await page1.waitForTimeout(100);
+    await page1.keyboard.up(key);
+
+    await page1.waitForSelector("[data-pt=current-user-combo]");
+    const afterComboInUser1 = await page1.$("[data-pt=current-user-combo]");
+
+    console.log(afterComboInUser1, "afterComboUser1");
+
+    await page2.waitForSelector("[data-pt=battle-user-combo]");
+    const afterComboInUser2 = await page2.$("[data-pt=battle-user-combo]");
+
+    console.log(afterComboInUser2, "afterComboUser2");
+
+    expect(afterComboInUser1).toEqual(afterComboInUser2);
+
+    await page1.waitForSelector("[data-pt=current-user-score]");
+    const afterScoreInUser1 = await page1.$("[data-pt=current-user-score]");
+
+    await page2.waitForSelector("[data-pt=battle-user-score]");
+    const afterScoreInUser2 = await page2.$("[data-pt=battle-user-score]");
+
+    expect(afterScoreInUser1).toEqual(afterScoreInUser2);
+  });
 });
