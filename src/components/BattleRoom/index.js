@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-bind */
 import { io } from "socket.io-client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -9,6 +8,7 @@ import { auth } from "../../features/api/firebaseApi";
 
 import GameController from "../GameController";
 import AudioVisualizer from "../AudioVisualizer";
+
 import {
   DELETE_ROOM,
   OPPONENT_KEY_PRESS,
@@ -269,20 +269,27 @@ export default function BattleRoom({
           onClick={handleStart}
           disabled={!ready}
           data-testid="start-button"
+          data-pt="start-container"
         >
           Start
         </StartButton>
       )}
       {!isCountingDown && room?.uid !== uid && !ready && (
-        <StartButton onClick={handleReady}>Ready</StartButton>
+        <StartButton onClick={handleReady} data-pt="ready-container">
+          Ready
+        </StartButton>
       )}
       {isCountingDown && countdown > 0 && (
-        <Count data-testid="countdown">{countdown}</Count>
+        <Count data-pt="count-down" data-testid="countdown">
+          {countdown}
+        </Count>
       )}
       <BattleRoomContainer data-testid="battleRoom-Container">
         <BattleUserContainer>
           <Controller>
-            {room?.uid !== uid && myReady && <Ready>Ready</Ready>}
+            {room?.uid !== uid && myReady && (
+              <Ready data-pt="ready-left-container">Ready</Ready>
+            )}
             <GameController
               isPlaying={isPlaying}
               handleKeyPress={handleKeyPress}
@@ -294,13 +301,14 @@ export default function BattleRoom({
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
-            {ready && <Ready>Ready</Ready>}
+            {ready && <Ready data-pt="ready-right-container">Ready</Ready>}
             <GameController
               isPlaying={isPlaying}
               isCurrentUser={false}
               otherKeys={activeKeys}
               otherScoreAndCombo={battleuserScoreAndCombo}
               note={note}
+              data-pt="battle-user"
             />
           </Controller>
         </BattleUserContainer>
@@ -309,26 +317,32 @@ export default function BattleRoom({
         <ScoreContainer data-testid="score-container">
           <Records>
             <ProfileContainer>
-              <Profile>
-                {photoURL ? <Photo src={photoURL} alt="Me" /> : "🤓"}
+              <Profile data-pt="create-user">
+                {photoURL ? (
+                  <Photo src={photoURL} alt="Me" />
+                ) : (
+                  <Imoge>🤓</Imoge>
+                )}
                 {displayName}
               </Profile>
-              score: {score}
+              <div data-pt="current-user-score">score: {score}</div>
             </ProfileContainer>
           </Records>
         </ScoreContainer>
         <ScoreContainer data-testid="score-container">
           <Records>
             <ProfileContainer>
-              <div>score: {battleuserScoreAndCombo.score}</div>
-              {battleUser?.photoURL !== "null" ? (
-                <Profile>
-                  {battleUser?.displayName}
+              <div data-pt="battle-user-score">
+                score: {battleuserScoreAndCombo.score}
+              </div>
+              <Profile data-pt="battle-user">
+                {battleUser?.displayName}
+                {battleUser?.photoURL !== "null" && battleUser?.photoURL ? (
                   <Photo src={battleUser?.photoURL} alt="battleUser" />
-                </Profile>
-              ) : (
-                "🙅🏼"
-              )}
+                ) : (
+                  <Imoge>🙅🏼</Imoge>
+                )}
+              </Profile>
             </ProfileContainer>
           </Records>
         </ScoreContainer>
@@ -377,6 +391,10 @@ const Photo = styled.img`
   width: 45px;
   border-radius: 50%;
   object-fit: cover;
+`;
+
+const Imoge = styled.div`
+  font-size: 3vw;
 `;
 
 const StartButton = styled.button`
