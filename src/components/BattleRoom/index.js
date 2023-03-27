@@ -29,7 +29,10 @@ import {
   USER_LEFT,
 } from "../../store/constants";
 
-export default function BattleRoom() {
+export default function BattleRoom({
+  initialReady = false,
+  initialCountingDown = false,
+}) {
   const navigate = useNavigate();
 
   const [song, setSong] = useState({});
@@ -39,8 +42,8 @@ export default function BattleRoom() {
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [battleUser, setBattleUser] = useState({});
-  const [isCountingDown, setIsCountingDown] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [isCountingDown, setIsCountingDown] = useState(initialCountingDown);
+  const [ready, setReady] = useState(initialReady);
   const [myReady, setMyReady] = useState(false);
   const [activeKeys, setActiveKeys] = useState([]);
   const [battleuserScoreAndCombo, setBattleUserScoreAndCombo] = useState({});
@@ -148,13 +151,15 @@ export default function BattleRoom() {
           setNote(response.data.note.note);
         }
       } catch (err) {
-        navigate("/error", {
-          state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
-          },
-        });
+        if (err.response?.status) {
+          return navigate("/error", {
+            state: {
+              status: err.response.status,
+              text: err.response.statusText,
+              message: err.response.data.message,
+            },
+          });
+        }
       }
     };
 
@@ -243,22 +248,38 @@ export default function BattleRoom() {
 
   return (
     <Container song={song}>
-      <AudioVisualizer song={song} isPlaying={isPlaying} />
+      <AudioVisualizer
+        song={song}
+        isPlaying={isPlaying}
+        data-testid="audio-visualizer"
+      />
       {!isPlaying && (
-        <OutButton type="button" onClick={handleOut} data-pt="exit-button">
+        <OutButton
+          type="button"
+          onClick={handleOut}
+          data-cy="exit-button"
+          data-testid="out-button"
+          data-pt="exit-button"
+        >
           나가기
         </OutButton>
       )}
       {!isCountingDown && room?.uid === uid && (
-        <StartButton onClick={handleStart} disabled={!ready}>
+        <StartButton
+          onClick={handleStart}
+          disabled={!ready}
+          data-testid="start-button"
+        >
           Start
         </StartButton>
       )}
       {!isCountingDown && room?.uid !== uid && !ready && (
         <StartButton onClick={handleReady}>Ready</StartButton>
       )}
-      {isCountingDown && countdown > 0 && <Count>{countdown}</Count>}
-      <BattleRoomContainer>
+      {isCountingDown && countdown > 0 && (
+        <Count data-testid="countdown">{countdown}</Count>
+      )}
+      <BattleRoomContainer data-testid="battleRoom-Container">
         <BattleUserContainer>
           <Controller>
             {room?.uid !== uid && myReady && <Ready>Ready</Ready>}
@@ -284,8 +305,8 @@ export default function BattleRoom() {
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>
-      <BottomContainer>
-        <ScoreContainer>
+      <BottomContainer data-testid="battleRoom-Container">
+        <ScoreContainer data-testid="score-container">
           <Records>
             <ProfileContainer>
               <Profile>
@@ -296,7 +317,7 @@ export default function BattleRoom() {
             </ProfileContainer>
           </Records>
         </ScoreContainer>
-        <ScoreContainer>
+        <ScoreContainer data-testid="score-container">
           <Records>
             <ProfileContainer>
               <div>score: {battleuserScoreAndCombo.score}</div>

@@ -29,7 +29,12 @@ describe("Login Component", () => {
     const message = screen.getByText("Press Login Button to Start");
     expect(message).toBeInTheDocument();
 
-    const loginButton = screen.getByRole("button", { name: "Login" });
-    expect(loginButton).toBeInTheDocument();
+    const googleLoginButton = screen.getByRole("button", {
+      name: "Google Social Login",
+    });
+    expect(googleLoginButton).toBeInTheDocument();
+
+    const userLoginButton = screen.getByRole("button", { name: "User Login" });
+    expect(userLoginButton).toBeInTheDocument();
   });
 });
