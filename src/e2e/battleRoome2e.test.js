@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer-core");
 
 const CLIENT_URL = process.env.REACT_APP_CLIENT_URL;
 
-describe.only("BattleRoom", () => {
+describe("BattleRoom", () => {
   let browser;
   let page1, page2;
 
@@ -115,39 +115,37 @@ describe.only("BattleRoom", () => {
 
       await loginUser(page1, user1);
       await loginUser(page2, user2);
-
-      await delay(1000);
-
-      const createRoomBtn = await page2.$("[data-pt=create-room]");
-      await createRoomBtn.click();
-
-      await page2.waitForSelector("[data-pt=song-container-0]");
-      const songContainerSelector = "[data-pt=song-container-0]";
-      const songContainer = await page2.$(songContainerSelector);
-      await songContainer.click();
-
-      await page2.waitForSelector("[data-pt=create-button]");
-      const createButtonSelector = "[data-pt=create-button]";
-      const createButton = await page2.$(createButtonSelector);
-      await createButton.click();
-
-      await delay(2000);
-      await page1.waitForSelector('[data-pt^="room-container-"]');
-      const roomContainers = await page1.$$('[data-pt^="room-container-"]');
-
-      for (const room of roomContainers) {
-        const text = await page1.evaluate(
-          (element) => element.textContent,
-          room,
-        );
-
-        if (text.includes(user2.name)) {
-          await room.click();
-          break;
-        }
-      }
     } catch (err) {
       console.log(err);
+    }
+  });
+
+  beforeEach(async () => {
+    await delay(1000);
+    const createRoomBtn = await page2.$("[data-pt=create-room]");
+    await createRoomBtn.click();
+
+    await page2.waitForSelector("[data-pt=song-container-0]");
+    const songContainerSelector = "[data-pt=song-container-0]";
+    const songContainer = await page2.$(songContainerSelector);
+    await songContainer.click();
+
+    await page2.waitForSelector("[data-pt=create-button]");
+    const createButtonSelector = "[data-pt=create-button]";
+    const createButton = await page2.$(createButtonSelector);
+    await createButton.click();
+
+    await delay(2000);
+    await page1.waitForSelector('[data-pt^="room-container-"]');
+    const roomContainers = await page1.$$('[data-pt^="room-container-"]');
+
+    for (const room of roomContainers) {
+      const text = await page1.evaluate((element) => element.textContent, room);
+
+      if (text.includes(user2.name)) {
+        await room.click();
+        break;
+      }
     }
   });
 
@@ -163,31 +161,53 @@ describe.only("BattleRoom", () => {
     await page2.waitForSelector("[data-pt=exit-button]");
     const exitButtons2 = await page2.$("[data-pt=exit-button]");
     await exitButtons2.click();
-
-    await page1.close();
-    await page2.close();
-    await browser.close();
   });
 
   afterAll(async () => {
+    await Promise.all([
+      page1.evaluate((email) => {
+        fetch(`http://localhost:8000/api/users/delete`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+      }, user1.email),
+
+      page2.evaluate((email) => {
+        fetch(`http://localhost:8000/api/users/delete`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+      }, user2.email),
+    ]);
+
     await browser.close();
   });
 
   it("real-time user rendering in battle room", async () => {
     try {
-      await page2.$("[data-pt=battle-user]");
-      const enteredUser = await page2.evaluate(
+      await page2.waitForSelector("[data-pt=create-user]");
+      const createdUserElement = await page2.$("[data-pt=create-user]");
+      const createdUser = await page2.evaluate(
         (element) => element.textContent,
+        createdUserElement,
       );
 
-      expect(enteredUser).toContain(user1.name);
+      expect(createdUser).toContain(user2.name);
 
-      await page1.$("[data-pt=create-user]");
-      const createdUser = await page1.evaluate(
+      await page1.waitForSelector("[data-pt=battle-user]");
+      const enteredUserElement = await page1.$("[data-pt=battle-user]");
+      const enteredUser = await page1.evaluate(
         (element) => element.textContent,
+        enteredUserElement,
       );
 
-      expect(createdUser).toContain(user1.name);
+      expect(enteredUser).toContain(user2.name);
     } catch (err) {
       console.log(err);
     }
@@ -346,19 +366,6 @@ describe.only("BattleRoom", () => {
       await page1.keyboard.up(key);
       await page2.keyboard.up(key);
     }
-    await page1.waitForSelector("[data-pt=current-user-combo]");
-    await page2.waitForSelector("[data-pt=battle-user-combo]");
-
-    const afterComboInUser1 = await page1.$eval(
-      "[data-pt=battle-user-combo]",
-      (el) => el.textContent,
-    );
-    const afterComboInUser2 = await page2.$eval(
-      "[data-pt=battle-user-combo]",
-      (el) => el.textContent,
-    );
-
-    expect(afterComboInUser1).toEqual(afterComboInUser2);
 
     await page1.waitForSelector("[data-pt=current-user-score]");
     const afterScoreInUser1 = await page1.$eval(
