@@ -123,6 +123,7 @@ export default function GameController({
         const minTimeFromNoteToHitBox = Math.abs(
           minNote?.time + timeToHitBoxMiddle - timeRef.current,
         );
+
         const currentTimeFromNoteToHitBox = Math.abs(
           currentNote?.time + timeToHitBoxMiddle - timeRef.current,
         );
@@ -404,9 +405,11 @@ export default function GameController({
         )}
         <ComboText animate={animateCombo}>
           {otherScoreAndCombo?.combo ? (
-            otherScoreAndCombo?.combo
+            <div data-pt="battle-user-combo">{otherScoreAndCombo?.combo}</div>
           ) : (
-            <div>{comboRef.current === 0 ? null : comboRef.current}</div>
+            <div data-pt="current-user-combo">
+              {comboRef.current === 0 ? null : comboRef.current}
+            </div>
           )}
         </ComboText>
         {otherScoreAndCombo?.score ? (
@@ -420,7 +423,6 @@ export default function GameController({
           <Column
             key={key}
             index={index}
-            colorIndex={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
             }
@@ -432,7 +434,9 @@ export default function GameController({
         {KEYS.map((key, index) => (
           <Key
             key={key}
-            colorIndex={index}
+            data-pt={`key-container-${index}`}
+            data-active={otherKeys?.length ? "true" : "false"}
+            index={index}
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
             }
@@ -510,8 +514,8 @@ const Column = styled.div`
   height: ${`calc(87.5% - 10px)`};
   border-right: ${({ index }) => (index === 5 ? null : "2px solid gray")};
 
-  ${({ active, colorIndex }) => {
-    const color = getColor(colorIndex);
+  ${({ active, index }) => {
+    const color = getColor(index);
     return (
       active &&
       `
@@ -546,8 +550,8 @@ const Key = styled.div`
   box-shadow: inset 0 0 0 5px white;
   transition: transform 0.1s ease;
 
-  ${({ active, colorIndex }) => {
-    const color = getColor(colorIndex);
+  ${({ active, index }) => {
+    const color = getColor(index);
     return (
       active &&
       `
