@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "@testing-library/jest-dom/extend-expect";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
@@ -63,8 +63,6 @@ describe("BattleRoom component", () => {
     await act(async () => {
       userEvent.click(screen.getByTestId("out-button"));
     });
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(axios.delete).toHaveBeenCalled();
   });

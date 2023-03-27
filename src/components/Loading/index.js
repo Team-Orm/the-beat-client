@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 export default function Loading({ text = "Loading" }) {
   return (
-    <Container>
+    <Container data-testid="spinner">
       <Spinner />
       {text}
     </Container>
