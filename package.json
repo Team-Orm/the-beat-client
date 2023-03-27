@@ -21,8 +21,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --testPathIgnorePatterns=.*e2e.test.js",
-    "test:e2e": "react-scripts test --testPathPattern=.*e2e.test.js$",
+    "test": "react-scripts test --testPathIgnorePatterns=.*e2e.spec.js",
+    "test:e2e": "react-scripts test --testPathPattern=.*e2e.spec.js$",
     "eject": "react-scripts eject",
     "prepare": "husky install",
     "pre-commit": "lint-staged"

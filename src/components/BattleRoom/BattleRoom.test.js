@@ -11,6 +11,14 @@ import BattleRoom from "./index";
 jest.mock("axios");
 
 describe("BattleRoom component", () => {
+  beforeEach(() => {
+    window.alert = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("renders BattleRoom component", () => {
     render(
       <Provider store={store}>
@@ -52,19 +60,19 @@ describe("BattleRoom component", () => {
   it("OutButton click event works", async () => {
     axios.delete.mockResolvedValue({ status: 204 });
 
-    render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <BattleRoom />
-        </BrowserRouter>
-      </Provider>,
-    );
+    await act(async () => {
+      render(
+        <Provider store={store}>
+          <BrowserRouter>
+            <BattleRoom />
+          </BrowserRouter>
+        </Provider>,
+      );
+    });
 
     await act(async () => {
       userEvent.click(screen.getByTestId("out-button"));
     });
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(axios.delete).toHaveBeenCalled();
   });

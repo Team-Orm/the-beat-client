@@ -396,8 +396,9 @@ export default function GameController({
         ref={canvasRef}
         width={window.innerWidth}
         height={window.innerHeight}
+        data-testid="canvas-container"
       />
-      <TextContainer>
+      <TextContainer data-testid="text-container">
         {isCurrentUser ? (
           <div>{word !== "" && word.toUpperCase()}</div>
         ) : (
@@ -418,7 +419,7 @@ export default function GameController({
           <div>{currentScore === 0 ? null : currentScore}</div>
         )}
       </TextContainer>
-      <ColumnsContainer>
+      <ColumnsContainer data-testid="columns-container">
         {KEYS.map((key, index) => (
           <Column
             key={key}
@@ -429,7 +430,7 @@ export default function GameController({
           />
         ))}
       </ColumnsContainer>
-      <HitBox />
+      <HitBox data-testid="hit-box" />
       <KeyBox>
         {KEYS.map((key, index) => (
           <Key
@@ -440,6 +441,7 @@ export default function GameController({
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
             }
+            data-testid="key-box"
           >
             {key.toUpperCase()}
           </Key>
