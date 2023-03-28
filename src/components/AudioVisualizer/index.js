@@ -139,11 +139,12 @@ export default function AudioVisualizer({ song, isPlaying }) {
         source.buffer = buffer;
       }
     } catch (err) {
+      const errorResponse = err.response || {};
       navigate("/error", {
         state: {
-          status: err.response.status,
-          text: err.response.statusText,
-          message: err.message,
+          status: errorResponse.status || 500,
+          text: errorResponse.statusText || "Unknown Error",
+          message: errorResponse.data?.message || "An unknown error occurred.",
         },
       });
     }
@@ -173,6 +174,7 @@ export default function AudioVisualizer({ song, isPlaying }) {
         id="audio-visualizer"
         width={window.innerWidth}
         height={window.innerHeight}
+        data-testid="audio-visualizer"
       />
     </CanvasWrapper>
   );

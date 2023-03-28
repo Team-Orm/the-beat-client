@@ -1,9 +1,9 @@
 import React from "react";
 import "@testing-library/jest-dom/extend-expect";
 import { Provider } from "react-redux";
+import store from "../../store/configureStore";
 import { BrowserRouter } from "react-router-dom";
 import { render, screen, act } from "@testing-library/react";
-import store from "../../store/configureStore";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import BattleRoom from "./index";
