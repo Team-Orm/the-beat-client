@@ -13,16 +13,6 @@ describe("BattleResults", () => {
         </BrowserRouter>
       </Provider>,
     );
-  });
-
-  it("renders without error", () => {
-    render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <BattleResults />
-        </BrowserRouter>
-      </Provider>,
-    );
 
     expect(screen.getByText("Results")).toBeInTheDocument();
   });
