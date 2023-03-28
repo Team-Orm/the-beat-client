@@ -50,6 +50,7 @@ export default function Lobby() {
           user: displayName,
           chat: chatMessage,
         });
+
         setChatMessage("");
       }
     },

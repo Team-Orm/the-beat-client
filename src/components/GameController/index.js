@@ -22,6 +22,26 @@ import {
   COLUMN_RGB_COLORS,
 } from "../../store/constants";
 
+export const calculateScore = (word) => {
+  let score;
+
+  switch (word) {
+    case "excellent":
+      score = 100;
+      break;
+    case "good":
+      score = 70;
+      break;
+    case "miss":
+      score = 0;
+      break;
+    default:
+      score = 0;
+  }
+
+  return score;
+};
+
 export default function GameController({
   isPlaying,
   isCurrentUser,
@@ -83,26 +103,6 @@ export default function GameController({
       l: { positionX: columnWidth * 5, color: "rgba(255, 36, 0, 1)" },
     };
   }, [columnWidth]);
-
-  const calculateScore = (word) => {
-    let score;
-
-    switch (word) {
-      case "excellent":
-        score = 100;
-        break;
-      case "good":
-        score = 70;
-        break;
-      case "miss":
-        score = 0;
-        break;
-      default:
-        score = 0;
-    }
-
-    return score;
-  };
 
   const [animateCombo, setAnimateCombo] = useState(false);
 
@@ -396,8 +396,9 @@ export default function GameController({
         ref={canvasRef}
         width={window.innerWidth}
         height={window.innerHeight}
+        data-testid="canvas-container"
       />
-      <TextContainer>
+      <TextContainer data-testid="text-container">
         {isCurrentUser ? (
           <div>{word !== "" && word.toUpperCase()}</div>
         ) : (
@@ -407,7 +408,7 @@ export default function GameController({
           {otherScoreAndCombo?.combo ? (
             <div data-pt="battle-user-combo">{otherScoreAndCombo?.combo}</div>
           ) : (
-            <div data-pt="current-user-combo">
+            <div data-pt="current-user-combo" data-testid="combo">
               {comboRef.current === 0 ? null : comboRef.current}
             </div>
           )}
@@ -415,10 +416,12 @@ export default function GameController({
         {otherScoreAndCombo?.score ? (
           otherScoreAndCombo?.score
         ) : (
-          <div>{currentScore === 0 ? null : currentScore}</div>
+          <div data-testid="currentScore">
+            {currentScore === 0 ? null : currentScore}
+          </div>
         )}
       </TextContainer>
-      <ColumnsContainer>
+      <ColumnsContainer data-testid="columns-container">
         {KEYS.map((key, index) => (
           <Column
             key={key}
@@ -429,7 +432,7 @@ export default function GameController({
           />
         ))}
       </ColumnsContainer>
-      <HitBox />
+      <HitBox data-testid="hit-box" />
       <KeyBox>
         {KEYS.map((key, index) => (
           <Key
@@ -440,6 +443,7 @@ export default function GameController({
             active={
               otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
             }
+            data-testid={`key-container-${index}`}
           >
             {key.toUpperCase()}
           </Key>
@@ -449,7 +453,7 @@ export default function GameController({
   );
 }
 
-const getColor = (index) => {
+export const getColor = (index) => {
   switch (index) {
     case 0:
     case 5:
@@ -504,7 +508,9 @@ const ColumnsContainer = styled.div`
   height: 100%;
 `;
 
-const Column = styled.div`
+export const Column = styled.div.attrs((props) => ({
+  "data-testid": `column-container-${props.index}`,
+}))`
   position: absolute;
   top: 5px;
   left: ${({ index }) => `calc(100% / 6 * ${index})`};
@@ -540,7 +546,7 @@ const KeyBox = styled.div`
   height: 100%;
 `;
 
-const Key = styled.div`
+export const Key = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
