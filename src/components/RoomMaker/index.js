@@ -42,11 +42,12 @@ export default function RoomMaker() {
 
       throw new Error(response);
     } catch (err) {
+      const errorResponse = err.response || {};
       navigate("/error", {
         state: {
-          status: err.response.status,
-          text: err.response.statusText,
-          message: err.response.data.message,
+          status: errorResponse.status || 500,
+          text: errorResponse.statusText || "Unknown Error",
+          message: errorResponse.data?.message || "An unknown error occurred.",
         },
       });
     }
@@ -72,11 +73,13 @@ export default function RoomMaker() {
 
         throw new Error(response);
       } catch (err) {
+        const errorResponse = err.response || {};
         navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: errorResponse.status || 500,
+            text: errorResponse.statusText || "Unknown Error",
+            message:
+              errorResponse.data?.message || "An unknown error occurred.",
           },
         });
       }
@@ -101,6 +104,7 @@ export default function RoomMaker() {
     (song, index) => (
       <SongContainer
         key={song._id}
+        data-testid={song._id}
         onMouseEnter={() => setHoveredSong(song)}
         onMouseLeave={() => setHoveredSong(null)}
         onClick={() => handleSelect(song._id)}
@@ -119,6 +123,7 @@ export default function RoomMaker() {
   return (
     <RoomMakerContainer
       data-pt="room-maker-container"
+      data-testid="room-maker-container"
       style={{
         backgroundImage: `url(${hoveredSong?.imageURL || "none"})`,
       }}

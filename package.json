@@ -21,7 +21,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --testPathIgnorePatterns=.*e2e.test.js",
+    "test": "react-scripts test --coverage --watchAll --testPathIgnorePatterns=.*e2e.test.js",
     "test:e2e": "react-scripts test --testPathPattern=.*e2e.test.js$",
     "eject": "react-scripts eject",
     "prepare": "husky install",
@@ -36,6 +36,9 @@
   "jest": {
     "transformIgnorePatterns": [
       "/node_modules/(?!axios)"
+    ],
+    "coveragePathIgnorePatterns": [
+      "e2e"
     ]
   },
   "browserslist": {
