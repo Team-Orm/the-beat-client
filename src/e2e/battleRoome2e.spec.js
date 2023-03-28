@@ -111,6 +111,26 @@ describe("BattleRoom", () => {
             body: JSON.stringify({ email }),
           });
         }, user2.email),
+
+        page1.evaluate((email) => {
+          fetch(`http://localhost:8000/api/rooms/delete`, {
+            method: "DELETE",
+            headers: {
+              "Contetn-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+        }, user1.email),
+
+        page2.evaluate((email) => {
+          fetch(`http://localhost:8000/api/rooms/delete`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+        }, user2.email),
       ]);
 
       await loginUser(page1, user1);
@@ -301,7 +321,7 @@ describe("BattleRoom", () => {
 
       for (const key of keysToPress) {
         await page1.keyboard.down(key);
-        await page1.waitForTimeout(1000);
+        await page1.waitForTimeout(100);
         await page1.keyboard.up(key);
 
         const keyIndex = keysToPress.indexOf(key);
@@ -355,7 +375,12 @@ describe("BattleRoom", () => {
     const startButton = await page2.$(startButtonContainer);
     await startButton.click();
 
-    await page1.waitForTimeout(timeToHitBoxMiddle + 3000 + 300);
+    const afterTimer = 3000;
+    const afterFirstNotesStart = 300;
+
+    await page1.waitForTimeout(
+      timeToHitBoxMiddle + afterTimer + afterFirstNotesStart,
+    );
 
     for (const key of keysToPress) {
       await page1.keyboard.down(key);

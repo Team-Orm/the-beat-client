@@ -257,7 +257,6 @@ export default function BattleRoom({
         <OutButton
           type="button"
           onClick={handleOut}
-          data-cy="exit-button"
           data-testid="out-button"
           data-pt="exit-button"
         >
