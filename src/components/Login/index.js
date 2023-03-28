@@ -103,33 +103,37 @@ export default function Login() {
   }, [auth.currentUser, navigate]);
 
   return (
-    <LoginContainer data-testid="login-container">
+    <Container data-testid="login-container">
       <Title>The Beat</Title>
-      <BottomContainer>
+      <Main>
         <Message data-pt="message">
           {message || "Press Login Button to Start"}
         </Message>
-        <Local>
-          <LoginButton type="button" onClick={handleLogin}>
+        <LoginContainer>
+          <ActionButton type="button" onClick={handleLogin}>
             Google Social Login
-          </LoginButton>
-          <LoginButton type="button" onClick={showLogin} data-pt="login-button">
+          </ActionButton>
+          <ActionButton
+            type="button"
+            onClick={showLogin}
+            data-pt="login-button"
+          >
             User Login
-          </LoginButton>
-          <LoginButton
+          </ActionButton>
+          <ActionButton
             type="button"
             onClick={showRegister}
             data-pt="register-button"
           >
             User Register
-          </LoginButton>
+          </ActionButton>
           {(login || register) && (
             <Modal>
-              <RegisterForm
+              <FormContainer
                 onSubmit={register ? handleRegister : handleLocalLogin}
               >
                 {register ? (
-                  <Input
+                  <FormInput
                     type="text"
                     placeholder="이름"
                     value={name}
@@ -139,7 +143,7 @@ export default function Login() {
                     data-pt="register-name"
                   />
                 ) : null}
-                <Input
+                <FormInput
                   type="email"
                   placeholder="이메일"
                   value={email}
@@ -148,7 +152,7 @@ export default function Login() {
                   required
                   data-pt={register ? "register-email" : "login-email"}
                 />
-                <Input
+                <FormInput
                   type="password"
                   placeholder="비밀번호"
                   value={password}
@@ -157,19 +161,19 @@ export default function Login() {
                   required
                   data-pt={register ? "register-password" : "login-password"}
                 />
-                <Button type="submit" data-pt="submit-button">
+                <SubmitButton type="submit" data-pt="submit-button">
                   {register ? "Register" : "Login"}
-                </Button>
-              </RegisterForm>
+                </SubmitButton>
+              </FormContainer>
             </Modal>
           )}
-        </Local>
-      </BottomContainer>
-    </LoginContainer>
+        </LoginContainer>
+      </Main>
+    </Container>
   );
 }
 
-const LoginContainer = styled.div`
+const Container = styled.div`
   display: flex;
   justify-content: space-evenly;
   flex-direction: column;
@@ -181,41 +185,15 @@ const LoginContainer = styled.div`
   background-position: center;
 `;
 
-const Input = styled.input`
-  background-color: #f0f0f0;
-  border: none;
-  outline: none;
-  padding: 10px;
-  height: 10%;
-  width: 80%;
-  margin-bottom: 20px;
-  border-radius: 5px;
-  box-shadow: inset -3px -3px 7px #d9d9d9,
-    inset 3px 3px 7px rgba(255, 255, 255, 0.5);
-`;
-
-const Button = styled.button`
-  height: 15%;
-  width: 80%;
-  background-color: #f0f0f0;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
-  border-radius: 5px;
-  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3), -3px -3px 7px #ffffff;
-`;
-
-const RegisterForm = styled.form`
+const Title = styled.div`
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
-  flex-direction: column;
-  width: 40vw;
-  height: 70vh;
+  font-size: 5em;
+  color: white;
 `;
 
-const BottomContainer = styled.div`
+const Main = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -224,20 +202,12 @@ const BottomContainer = styled.div`
   align-items: center;
 `;
 
-const Local = styled.div`
+const LoginContainer = styled.div`
   display: flex;
   justify-content: space-between;
   height: 100%;
   width: 50%;
   align-items: center;
-`;
-
-const Title = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 5em;
-  color: white;
 `;
 
 const Message = styled.div`
@@ -255,7 +225,7 @@ const Message = styled.div`
   }
 `;
 
-const LoginButton = styled.button`
+const ActionButton = styled.button`
   width: 15vw;
   height: 10vh;
   background-color: transparent;
@@ -268,4 +238,38 @@ const LoginButton = styled.button`
     color: skyBlue;
     border: 3px solid skyBlue;
   }
+`;
+
+const FormInput = styled.input`
+  background-color: #f0f0f0;
+  border: none;
+  outline: none;
+  padding: 10px;
+  height: 10%;
+  width: 80%;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  box-shadow: inset -3px -3px 7px #d9d9d9,
+    inset 3px 3px 7px rgba(255, 255, 255, 0.5);
+`;
+
+const SubmitButton = styled.button`
+  height: 15%;
+  width: 80%;
+  background-color: #f0f0f0;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3), -3px -3px 7px #ffffff;
+`;
+
+const FormContainer = styled.form`
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-direction: column;
+  width: 40vw;
+  height: 70vh;
 `;

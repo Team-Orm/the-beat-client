@@ -37,8 +37,15 @@ export default function BattleResults() {
   useEffect(() => {
     const deleteBattle = async () => {
       const roomId = resultId;
+      const jwt = localStorage.getItem("jwt");
+
       const response = await axios.delete(
         `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+        {
+          headers: {
+            authorization: `Bearer ${jwt}`,
+          },
+        },
       );
 
       if (response.status === 204) {
