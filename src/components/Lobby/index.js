@@ -131,21 +131,6 @@ export default function Lobby() {
   }, [navigate]);
 
   useEffect(() => {
-    const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-      },
-      query: { displayName, photoURL, uid },
-    });
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, [displayName, photoURL, uid]);
-
-  useEffect(() => {
     const updateRooms = async () => {
       try {
         const response = await axios.get(
@@ -204,12 +189,12 @@ export default function Lobby() {
   useEffect(() => {
     socket?.emit(RECEIVE_LOBBY_USERS);
 
-    socket?.on(LOBBY_ROOMS, (rooms) => {
-      setUsersInRooms(() => rooms);
-    });
-
     socket?.on(UPDATE_USER, (user) => {
       setCurrentUserList(() => user);
+    });
+
+    socket?.on(LOBBY_ROOMS, (rooms) => {
+      setUsersInRooms(() => rooms);
     });
 
     socket?.on(UPDATE_ROOMS, (rooms) => {
@@ -224,6 +209,23 @@ export default function Lobby() {
       setUsersInRooms(() => updatedRooms);
     });
   }, [socket]);
+
+  useEffect(() => {
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}`, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+      query: { displayName, photoURL, uid },
+      reconnection: true,
+      reconnectionDelay: 1000,
+    });
+    setSocket(socketClient);
+
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [displayName, photoURL, uid]);
 
   return (
     <Background data-pt="element-after-login">
@@ -244,7 +246,7 @@ export default function Lobby() {
                         >{`${createdBy} ${
                           usersInRooms[_id]?.users.length
                             ? usersInRooms[_id]?.users.length
-                            : 0
+                            : 1
                         } / 2`}</RoomName>
                         <RoomSong>{song?.title}</RoomSong>
                       </Room>

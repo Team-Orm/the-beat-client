@@ -29,10 +29,6 @@ export const gameSlice = createSlice({
     isSongEnd: (state, action) => {
       const { comboResults, currentScore, maxNotesNumber } = action.payload;
 
-      console.log(comboResults, "comboResults");
-      console.log(currentScore, "currentScore");
-      console.log(maxNotesNumber, "maxNotesNumber");
-
       const missNumber =
         maxNotesNumber - (comboResults.excellent + comboResults.good);
 

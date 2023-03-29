@@ -48,7 +48,8 @@ export default function BattleRoom({
   const [activeKeys, setActiveKeys] = useState([]);
   const [battleuserScoreAndCombo, setBattleUserScoreAndCombo] = useState({});
 
-  const { roomId } = useParams();
+  const { roomId: roomIdFromParams } = useParams();
+  const roomId = roomIdFromParams || localStorage.getItem("roomId");
 
   const localStorageUser = useMemo(
     () =>
@@ -83,7 +84,7 @@ export default function BattleRoom({
     setMyReady(!myReady);
   };
 
-  const handleOut = useCallback(async () => {
+  const handleExit = useCallback(async () => {
     if (uid === room?.uid) {
       try {
         const jwt = localStorage.getItem("jwt");
@@ -188,7 +189,7 @@ export default function BattleRoom({
 
     socket?.on(USER_LEFT, (uid) => {
       if (uid === room.uid) {
-        handleOut();
+        handleExit();
       }
       setBattleUser(null);
     });
@@ -233,17 +234,27 @@ export default function BattleRoom({
   }, [combo, displayName, navigate, photoURL, ready, score, socket, uid, word]);
 
   useEffect(() => {
-    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-      },
-      query: { displayName, photoURL, uid, roomId },
-    });
-    setSocket(socketClient);
+    localStorage.setItem("roomId", roomId);
+  }, [roomId]);
+
+  useEffect(() => {
+    let socketClient;
+
+    if (roomId) {
+      socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
+        cors: {
+          origin: "*",
+          methods: ["GET", "POST"],
+        },
+        query: { displayName, photoURL, uid, roomId },
+      });
+      setSocket(socketClient);
+    }
 
     return () => {
-      socketClient.disconnect();
+      if (socketClient) {
+        socketClient.disconnect();
+      }
     };
   }, [displayName, photoURL, roomId, uid]);
 
@@ -257,7 +268,7 @@ export default function BattleRoom({
       {!isPlaying && (
         <OutButton
           type="button"
-          onClick={handleOut}
+          onClick={handleExit}
           data-testid="out-button"
           data-pt="exit-button"
         >

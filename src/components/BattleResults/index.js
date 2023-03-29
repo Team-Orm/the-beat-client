@@ -28,9 +28,26 @@ export default function BattleResults() {
         uid: localStorageUser?.uid,
       };
 
-  const handleOut = () => {
+  const handleExit = () => {
     navigate("/");
   };
+
+  useEffect(() => {
+    socket?.emit(SEND_RESULTS, comboResults, totalScore);
+  }, [socket, comboResults, totalScore]);
+
+  useEffect(() => {
+    socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
+      if (user && totalScore !== 0) {
+        setBattleUserResults(comboResults);
+        setBattleUserProfile({ totalScore, user });
+      }
+    });
+
+    socket?.on(USER_OUT, () => {
+      console.log("Another user has left.");
+    });
+  }, [socket]);
 
   useEffect(() => {
     const deleteBattle = async () => {
@@ -47,25 +64,12 @@ export default function BattleResults() {
       );
 
       if (response.status === 204) {
-        console.log("battleroom is deleted");
+        console.log("The Battle Room has been deleted.");
       }
     };
 
     deleteBattle();
   }, [resultId]);
-
-  socket?.emit(SEND_RESULTS, comboResults, totalScore);
-
-  useEffect(() => {
-    socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
-      setBattleUserResults(comboResults);
-      setBattleUserProfile({ totalScore, user });
-    });
-
-    socket?.on(USER_OUT, () => {
-      console.log("User is out");
-    });
-  }, [socket]);
 
   useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
@@ -137,7 +141,7 @@ export default function BattleResults() {
       </ResultsWrapper>
       <ButtonContainer>
         <ActionButton type="button">기록하기</ActionButton>
-        <ActionButton type="button" onClick={handleOut}>
+        <ActionButton type="button" onClick={handleExit}>
           나가기
         </ActionButton>
       </ButtonContainer>
