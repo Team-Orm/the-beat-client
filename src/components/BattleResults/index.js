@@ -1,7 +1,7 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
@@ -10,17 +10,18 @@ import { RECEIVE_RESULTS, SEND_RESULTS } from "../../store/constants";
 
 export default function BattleResults() {
   const dispatch = useDispatch();
+  const { resultId } = useParams();
   const comboResults = useSelector((state) => state.game.comboResults);
   const totalScore = useSelector((state) => state.game.totalScore);
   const [socket, setSocket] = useState();
   const [battleUserProfile, setBattleUserProfile] = useState({});
   const [battleUserResults, setBattleUserResults] = useState({});
-  const { resultId } = useParams();
-  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
+  const [shouldNavigate, setShouldNavigate] = useState(false);
 
   const handleExit = () => {
+    setShouldNavigate(true);
     dispatch(resetRecords());
-    navigate("/");
   };
 
   const localStorageUser = localStorage.getItem("user")
@@ -35,16 +36,32 @@ export default function BattleResults() {
         uid: localStorageUser?.uid,
       };
 
-  socket?.emit(SEND_RESULTS, comboResults, totalScore);
-
   useEffect(() => {
-    socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
-      if (totalScore !== 0 && comboResults.excellent !== 0 && user) {
-        setBattleUserResults(comboResults);
-        setBattleUserProfile({ totalScore, user });
-      }
-    });
-  }, [socket]);
+    if (displayName && uid && resultId) {
+      const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
+        cors: {
+          origin: "*",
+          methods: ["GET", "POST"],
+        },
+        query: { displayName, photoURL, uid, resultId },
+      });
+      setSocket(socketClient);
+
+      return () => {
+        socketClient.disconnect();
+      };
+    }
+  }, [resultId, displayName, photoURL, uid]);
+
+  const sendResults = useCallback(() => {
+    if (resultId && totalScore && comboResults && socket) {
+      socket?.emit(SEND_RESULTS, comboResults, totalScore);
+    }
+  }, [comboResults, resultId, socket, totalScore]);
+
+  setInterval(() => {
+    sendResults();
+  }, 500);
 
   useEffect(() => {
     const deleteBattle = async () => {
@@ -61,7 +78,7 @@ export default function BattleResults() {
       );
 
       if (response.status === 204) {
-        console.log("The Battle Room has been deleted.");
+        setReady(true);
       }
     };
 
@@ -69,24 +86,25 @@ export default function BattleResults() {
   }, [resultId]);
 
   useEffect(() => {
-    if (displayName && uid) {
-      const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
-        cors: {
-          origin: "*",
-          methods: ["GET", "POST"],
-        },
-        query: { displayName, photoURL, uid, resultId },
-      });
-      setSocket(socketClient);
+    if (socket) {
+      const receiveResultsListener = (comboResults, totalScore, user) => {
+        if (totalScore !== 0 && comboResults.excellent !== 0 && user) {
+          setBattleUserResults(comboResults);
+          setBattleUserProfile({ totalScore, user });
+        }
+      };
+
+      socket.on(RECEIVE_RESULTS, receiveResultsListener);
 
       return () => {
-        socketClient.disconnect();
+        socket.off(RECEIVE_RESULTS, receiveResultsListener);
       };
     }
-  }, [displayName, photoURL, resultId, uid]);
+  }, [socket]);
 
   return (
     <BattleResultsContainer>
+      {shouldNavigate && ready && <Navigate to="/" />}
       <PageTitle>Results</PageTitle>
       <ResultsWrapper>
         <ResultPanel>
@@ -140,7 +158,7 @@ export default function BattleResults() {
       </ResultsWrapper>
       <ButtonContainer>
         <ActionButton type="button">기록하기</ActionButton>
-        <ActionButton type="button" onClick={handleExit}>
+        <ActionButton type="button" onClick={() => handleExit()}>
           나가기
         </ActionButton>
       </ButtonContainer>

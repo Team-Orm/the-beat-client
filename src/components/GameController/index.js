@@ -285,8 +285,6 @@ export default function GameController({
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
       if (timeRef.current >= songDuration + 3) {
-        navigate(`/battles/results/${roomId}`);
-
         setSongHasEnded(true);
 
         if (
@@ -295,6 +293,7 @@ export default function GameController({
           comboResults.good > 0
         ) {
           dispatch(endSong({ comboResults, currentScore, maxNotesNumber }));
+          return navigate(`/battles/results/${roomId}`);
         }
       } else {
         animationFrameId = requestAnimationFrame(updateNotes);

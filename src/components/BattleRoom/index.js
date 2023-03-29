@@ -164,7 +164,9 @@ export default function BattleRoom({
     getSong();
   }, [navigate, roomId]);
 
-  socket?.emit(SEND_USER);
+  setInterval(() => {
+    socket?.emit(SEND_USER);
+  }, 500);
 
   useEffect(() => {
     socket?.emit(SEND_CONNECT);
