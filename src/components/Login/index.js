@@ -20,6 +20,18 @@ export default function Login() {
 
   const { name, email, password } = user;
 
+  const handleGoogleLogin = () => {
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    signInWithRedirect(auth, provider);
+
+    if (auth) {
+      navigate("/");
+    }
+
+    return true;
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -38,8 +50,16 @@ export default function Login() {
         setRegister(false);
         setMessage("유저가 등록 되었습니다.");
       }
-    } catch (error) {
-      alert("Error signing in with email and password:", error);
+    } catch (err) {
+      const error = err.reponse || {};
+
+      navigate("/error", {
+        state: {
+          status: error.status,
+          text: error.statusText,
+          message: error.data.message,
+        },
+      });
     }
   };
 
@@ -66,26 +86,14 @@ export default function Login() {
     }
   };
 
-  const showRegister = async (e) => {
+  const showRegister = (e) => {
     e.preventDefault();
     setRegister(true);
   };
 
-  const showLogin = async (e) => {
+  const showLogin = (e) => {
     e.preventDefault();
     setLogin(true);
-  };
-
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    const auth = getAuth();
-    signInWithRedirect(auth, provider);
-
-    if (auth) {
-      navigate("/");
-    }
-
-    return true;
   };
 
   const handleInput = (e) => {
@@ -110,7 +118,7 @@ export default function Login() {
           {message || "Press Login Button to Start"}
         </Message>
         <LoginContainer>
-          <ActionButton type="button" onClick={handleLogin}>
+          <ActionButton type="button" onClick={handleGoogleLogin}>
             Google Social Login
           </ActionButton>
           <ActionButton
@@ -163,6 +171,14 @@ export default function Login() {
                 />
                 <SubmitButton type="submit" data-pt="submit-button">
                   {register ? "Register" : "Login"}
+                </SubmitButton>
+                <SubmitButton
+                  type="button"
+                  onClick={() =>
+                    register ? setRegister(false) : setLogin(false)
+                  }
+                >
+                  나가기
                 </SubmitButton>
               </FormContainer>
             </Modal>

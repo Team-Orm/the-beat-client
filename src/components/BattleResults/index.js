@@ -32,8 +32,6 @@ export default function BattleResults() {
     navigate("/");
   };
 
-  socket?.emit(SEND_RESULTS, comboResults, totalScore);
-
   useEffect(() => {
     const deleteBattle = async () => {
       const roomId = resultId;
@@ -56,6 +54,8 @@ export default function BattleResults() {
     deleteBattle();
   }, [resultId]);
 
+  socket?.emit(SEND_RESULTS, comboResults, totalScore);
+
   useEffect(() => {
     socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
       setBattleUserResults(comboResults);
@@ -65,7 +65,7 @@ export default function BattleResults() {
     socket?.on(USER_OUT, () => {
       console.log("User is out");
     });
-  }, [comboResults, resultId, socket, totalScore]);
+  }, [socket]);
 
   useEffect(() => {
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
@@ -117,15 +117,17 @@ export default function BattleResults() {
               <Emoji>🥸</Emoji>
             )}
             <ResultsBox>
-              {battleUserProfile && battleUserProfile?.user?.displayName}
+              {battleUserProfile.user?.displayName !== null &&
+                battleUserProfile?.user?.displayName}
             </ResultsBox>
           </UserContainer>
-          {Object.keys(battleUserResults).map((key) => (
-            <RecordsContainer key={key}>
-              <ResultsBox>{key}</ResultsBox>
-              <Score>{battleUserResults[key]}</Score>
-            </RecordsContainer>
-          ))}
+          {battleUserResults.excellent !== 0 &&
+            Object.keys(battleUserResults).map((key) => (
+              <RecordsContainer key={key}>
+                <ResultsBox>{key}</ResultsBox>
+                <Score>{battleUserResults[key]}</Score>
+              </RecordsContainer>
+            ))}
           <StyledHr />
           <RecordsContainer>
             <ResultsBox>TotalScore: </ResultsBox>

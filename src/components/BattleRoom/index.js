@@ -169,12 +169,7 @@ export default function BattleRoom({
   socket?.emit(SEND_USER);
 
   useEffect(() => {
-    socket?.emit(SEND_BATTLES, score, combo, word);
-
-    socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
-      setBattleUserScoreAndCombo({ score, combo, word });
-    });
-
+    socket?.emit(SEND_CONNECT);
     socket?.on(RECEIVE_USER, (currentUserArray) => {
       const battleUser = Object.values(currentUserArray).filter(
         (u) => u.uid !== uid,
@@ -182,8 +177,14 @@ export default function BattleRoom({
 
       setBattleUser(battleUser[0]);
     });
+  }, [socket]);
 
-    socket?.emit(SEND_CONNECT);
+  useEffect(() => {
+    socket?.emit(SEND_BATTLES, score, combo, word);
+
+    socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
+      setBattleUserScoreAndCombo({ score, combo, word });
+    });
 
     socket?.on(USER_LEFT, (uid) => {
       if (uid === room.uid) {
