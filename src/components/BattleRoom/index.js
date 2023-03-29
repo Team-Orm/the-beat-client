@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
@@ -34,6 +34,7 @@ export default function BattleRoom({
   initialCountingDown = false,
 }) {
   const navigate = useNavigate();
+  const { roomId } = useParams();
 
   const [room, setRoom] = useState({
     song: {},
@@ -46,22 +47,16 @@ export default function BattleRoom({
   const [battleUser, setBattleUser] = useState({});
   const [battleUserReady, setBattleUserReady] = useState(initialReady);
   const [battleUserResults, setbattleUserResults] = useState({});
-  const [myReady, setMyReady] = useState(false);
+  const [currentUserReady, setCurrentUserReady] = useState(false);
   const [activeKeys, setActiveKeys] = useState([]);
-
-  const { roomId } = useParams();
 
   const score = useSelector((state) => state.game.score);
   const combo = useSelector((state) => state.game.currentCombo);
   const word = useSelector((state) => state.game.word);
 
-  const localStorageUser = useMemo(
-    () =>
-      localStorage.getItem("user")
-        ? JSON.parse(localStorage.getItem("user"))
-        : null,
-    [],
-  );
+  const localStorageUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : null;
 
   const { displayName, photoURL, uid } = auth.currentUser
     ? auth.currentUser
@@ -79,9 +74,30 @@ export default function BattleRoom({
     socket.emit(OPPONENT_KEY_RELEASE, key);
   };
 
+  const handleTimerAndCount = useCallback(() => {
+    setIsCountingDown(true);
+
+    const countdownTimer = setInterval(() => {
+      setCountdown((prevCountdown) => prevCountdown - 1);
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(countdownTimer);
+      setIsPlaying(true);
+    }, 3000);
+  }, []);
+
+  const handleStart = () => {
+    socket.emit(SEND_START);
+    setBattleUserReady(!battleUserReady);
+    setIsCountingDown(true);
+
+    handleTimerAndCount();
+  };
+
   const handleReady = () => {
     socket.emit(SEND_READY);
-    setMyReady(!myReady);
+    setCurrentUserReady(!currentUserReady);
   };
 
   const handleExit = useCallback(async () => {
@@ -114,23 +130,6 @@ export default function BattleRoom({
 
     navigate("/");
   }, [navigate, room?.uid, roomId, socket, uid]);
-
-  const handleStart = () => {
-    socket.emit(SEND_START);
-    setIsCountingDown(true);
-    setBattleUserReady(!battleUserReady);
-
-    const countdownTimer = setInterval(() => {
-      setCountdown((prevCountdown) => {
-        return prevCountdown - 1;
-      });
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(countdownTimer);
-      setIsPlaying(true);
-    }, 3000);
-  };
 
   useEffect(() => {
     const getSong = async () => {
@@ -176,11 +175,8 @@ export default function BattleRoom({
 
       setBattleUser(battleUser[0]);
     });
-  }, [socket]);
 
-  useEffect(() => {
     socket?.emit(SEND_BATTLES, score, combo, word);
-
     socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
       setbattleUserResults({ score, combo, word });
     });
@@ -195,16 +191,10 @@ export default function BattleRoom({
     socket?.on(RECEIVE_OPPONENT_KEY_PRESS, (key) => {
       setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
     });
-
     socket?.on(RECEIVE_OPPONENT_KEY_RELEASE, (key) => {
       setActiveKeys((prevActiveKeys) => {
         return prevActiveKeys.filter((activeKey) => activeKey !== key);
       });
-    });
-
-    socket?.on(RECEIVE_DELETE, () => {
-      navigate("/");
-      alert("방을 만든 유저가 나갔습니다.");
     });
 
     socket?.on(RECEIVE_READY, () => {
@@ -212,17 +202,13 @@ export default function BattleRoom({
     });
 
     socket?.on(RECEIVE_START, () => {
-      setIsCountingDown(true);
-      setMyReady(false);
+      setCurrentUserReady(false);
+      handleTimerAndCount();
+    });
 
-      const countdownTimer = setInterval(() => {
-        setCountdown((prevCountdown) => prevCountdown - 1);
-      }, 1000);
-
-      setTimeout(() => {
-        clearInterval(countdownTimer);
-        setIsPlaying(true);
-      }, 3000);
+    socket?.on(RECEIVE_DELETE, () => {
+      navigate("/");
+      alert("방을 만든 유저가 나갔습니다.");
     });
 
     socket?.on(ROOM_FULL, () => {
@@ -232,13 +218,16 @@ export default function BattleRoom({
   }, [
     combo,
     displayName,
-    navigate,
     photoURL,
     battleUserReady,
     score,
     socket,
     uid,
     word,
+    room.uid,
+    navigate,
+    handleExit,
+    handleTimerAndCount,
   ]);
 
   useEffect(() => {
@@ -298,15 +287,15 @@ export default function BattleRoom({
       <BattleRoomContainer data-testid="battleRoom-Container">
         <BattleUserContainer>
           <Controller>
-            {room?.uid !== uid && myReady && (
+            {room?.uid !== uid && currentUserReady && (
               <Ready data-pt="ready-left-container">Ready</Ready>
             )}
             <GameController
+              isCurrentUser
               isPlaying={isPlaying}
               sendKeyPressToOpponents={sendKeyPressToOpponents}
               sendKeyReleaseToOpponents={sendKeyReleaseToOpponents}
-              isCurrentUser
-              note={room?.notes}
+              initialNotes={room?.notes}
             />
           </Controller>
         </BattleUserContainer>
@@ -316,11 +305,11 @@ export default function BattleRoom({
               <Ready data-pt="ready-right-container">Ready</Ready>
             )}
             <GameController
-              isPlaying={isPlaying}
               isCurrentUser={false}
-              otherKeys={activeKeys}
-              otherScoreAndCombo={battleUserResults}
-              note={room?.notes}
+              isPlaying={isPlaying}
+              battleUserKeys={activeKeys}
+              battleUserResults={battleUserResults}
+              initialNotes={room?.notes}
               data-pt="battle-user"
             />
           </Controller>
@@ -346,7 +335,7 @@ export default function BattleRoom({
           <Records>
             <ProfileContainer>
               <div data-pt="battle-user-score">
-                score: {battleUserResults.score}
+                score: {battleUserResults?.score ? battleUserResults.score : 0}
               </div>
               <Profile data-pt="battle-user">
                 {battleUser?.displayName}

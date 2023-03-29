@@ -1,7 +1,7 @@
 import gameReducer, {
   updateScore,
   updateCombo,
-  isSongEnd,
+  endSong,
   updateWord,
 } from "./gameSlice";
 
@@ -54,9 +54,7 @@ describe("gameSlice", () => {
       end: true,
     };
 
-    expect(gameReducer(initialState, isSongEnd(payload))).toEqual(
-      expectedState,
-    );
+    expect(gameReducer(initialState, endSong(payload))).toEqual(expectedState);
   });
 
   it("should update word", () => {

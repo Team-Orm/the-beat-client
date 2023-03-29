@@ -1,13 +1,15 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
-import { RECEIVE_RESULTS, SEND_RESULTS, USER_OUT } from "../../store/constants";
+import { resetRecords } from "../../features/reducers/gameSlice";
+import { RECEIVE_RESULTS, SEND_RESULTS } from "../../store/constants";
 
 export default function BattleResults() {
+  const dispatch = useDispatch();
   const comboResults = useSelector((state) => state.game.comboResults);
   const totalScore = useSelector((state) => state.game.totalScore);
   const [socket, setSocket] = useState();
@@ -15,6 +17,11 @@ export default function BattleResults() {
   const [battleUserResults, setBattleUserResults] = useState({});
   const { resultId } = useParams();
   const navigate = useNavigate();
+
+  const handleExit = () => {
+    dispatch(resetRecords());
+    navigate("/");
+  };
 
   const localStorageUser = localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user"))
@@ -28,17 +35,11 @@ export default function BattleResults() {
         uid: localStorageUser?.uid,
       };
 
-  const handleExit = () => {
-    navigate("/");
-  };
-
-  useEffect(() => {
-    socket?.emit(SEND_RESULTS, comboResults, totalScore);
-  }, [socket, comboResults, totalScore]);
+  socket?.emit(SEND_RESULTS, comboResults, totalScore);
 
   useEffect(() => {
     socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
-      if (user && totalScore !== 0) {
+      if (totalScore !== 0 && comboResults.excellent !== 0 && user) {
         setBattleUserResults(comboResults);
         setBattleUserProfile({ totalScore, user });
       }
@@ -68,18 +69,20 @@ export default function BattleResults() {
   }, [resultId]);
 
   useEffect(() => {
-    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-      },
-      query: { displayName, photoURL, uid, resultId },
-    });
-    setSocket(socketClient);
+    if (displayName && uid) {
+      const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
+        cors: {
+          origin: "*",
+          methods: ["GET", "POST"],
+        },
+        query: { displayName, photoURL, uid, resultId },
+      });
+      setSocket(socketClient);
 
-    return () => {
-      socketClient.disconnect();
-    };
+      return () => {
+        socketClient.disconnect();
+      };
+    }
   }, [displayName, photoURL, resultId, uid]);
 
   return (

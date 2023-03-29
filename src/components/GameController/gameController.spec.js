@@ -4,10 +4,11 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
 import { BrowserRouter } from "react-router-dom";
 import store from "../../store/configureStore";
-import GameController, { calculateScore, Column, getColor, Key } from "./index";
+import GameController, { Column, Key } from "./index";
 import "jest-styled-components";
 import userEvent from "@testing-library/user-event";
 import { COLUMN_RGB_COLORS } from "../../store/constants";
+import { calculateScore, getColor } from "../../features/utils";
 
 describe("GameController Component", () => {
   const dummyNote = [{ key: "s", time: 0 }];
@@ -31,7 +32,7 @@ describe("GameController Component", () => {
             isCurrentUser={true}
             sendKeyPressToOpponents={jest.fn()}
             sendKeyReleaseToOpponents={jest.fn()}
-            note={[...dummyNote]}
+            initialNotes={[...dummyNote]}
           />
         </BrowserRouter>
       </Provider>,
@@ -70,7 +71,7 @@ describe("GameController Component", () => {
             isCurrentUser={true}
             sendKeyPressToOpponents={sendKeyPressToOpponentsMock}
             sendKeyReleaseToOpponents={sendKeyReleaseToOpponentsMock}
-            note={[...dummyNote]}
+            initialNotes={[...dummyNote]}
           />
         </BrowserRouter>
       </Provider>,
@@ -110,7 +111,7 @@ describe("GameController Component", () => {
             isCurrentUser={false}
             sendKeyPressToOpponents={sendKeyPressToOpponentsMock}
             sendKeyReleaseToOpponents={sendKeyReleaseToOpponentsMock}
-            note={[...dummyNote]}
+            initialNotes={[...dummyNote]}
           />
         </BrowserRouter>
       </Provider>,

@@ -10,63 +10,39 @@ import { useNavigate, useParams } from "react-router-dom";
 import styled, { css, keyframes } from "styled-components";
 import {
   updateScore,
-  isSongEnd,
+  endSong,
   updateCombo,
   updateWord,
 } from "../../features/reducers/gameSlice";
-import {
-  MILLISECOND,
-  SPEED,
-  KEYS,
-  DIFFICULTY,
-  COLUMN_RGB_COLORS,
-} from "../../store/constants";
-
-export const calculateScore = (word) => {
-  let score;
-
-  switch (word) {
-    case "excellent":
-      score = 100;
-      break;
-    case "good":
-      score = 70;
-      break;
-    case "miss":
-      score = 0;
-      break;
-    default:
-      score = 0;
-  }
-
-  return score;
-};
+import { calculateScore, getColor } from "../../features/utils";
+import { MILLISECOND, SPEED, KEYS, DIFFICULTY } from "../../store/constants";
 
 export default function GameController({
   isPlaying,
   isCurrentUser,
   sendKeyPressToOpponents,
   sendKeyReleaseToOpponents,
-  otherKeys,
-  otherScoreAndCombo,
-  note,
+  battleUserKeys,
+  battleUserResults,
+  initialNotes,
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { roomId } = useParams();
-  const maxNotesNumber = [...note].length - 1;
+  const maxNotesNumber = [...initialNotes].length - 1;
 
-  const [activeKeys, setActiveKeys] = useState([]);
-  const [notes, setNotes] = useState(note);
-  const [currentScore, setCurrentScore] = useState(0);
   const [word, setWord] = useState("");
+  const [notes, setNotes] = useState(initialNotes);
+  const [activeKeys, setActiveKeys] = useState([]);
+  const [currentScore, setCurrentScore] = useState(0);
   const [songHasEnded, setSongHasEnded] = useState(false);
+  const [animateCombo, setAnimateCombo] = useState(false);
 
-  const canvasRef = useRef(null);
-  const notesRef = useRef(notes);
-  const deltaRef = useRef(null);
-  const comboRef = useRef(0);
   const timeRef = useRef(0);
+  const comboRef = useRef(0);
+  const deltaRef = useRef(null);
+  const notesRef = useRef(notes);
+  const canvasRef = useRef(null);
 
   const canvas = canvasRef?.current;
   const ctx = canvas?.getContext("2d");
@@ -103,8 +79,6 @@ export default function GameController({
       l: { positionX: columnWidth * 5, color: "rgba(255, 36, 0, 1)" },
     };
   }, [columnWidth]);
-
-  const [animateCombo, setAnimateCombo] = useState(false);
 
   const onPressKey = useCallback(
     (key) => {
@@ -181,7 +155,7 @@ export default function GameController({
     [comboResults, dispatch, noteHeight, positionOfHitBox, timeToHitBoxMiddle],
   );
 
-  const activate = useCallback(
+  const activateKeys = useCallback(
     (event) => {
       if (!isCurrentUser) return;
 
@@ -195,7 +169,7 @@ export default function GameController({
     [sendKeyPressToOpponents, isCurrentUser, keyMappings, onPressKey],
   );
 
-  const deActivate = useCallback(
+  const deActivateKeys = useCallback(
     (event) => {
       if (!isCurrentUser) return;
 
@@ -210,7 +184,7 @@ export default function GameController({
     [sendKeyReleaseToOpponents, isCurrentUser, keyMappings],
   );
 
-  const render = useCallback(
+  const renderRoundNotes = useCallback(
     (ctx, { positionX, positionY, key, color }) => {
       const cornerRadius = 5;
 
@@ -277,10 +251,10 @@ export default function GameController({
           setWord(() => "miss");
         }
       } else {
-        return render(ctx, note);
+        return renderRoundNotes(ctx, note);
       }
     },
-    [canvas?.height, comboResults, render],
+    [canvas?.height, comboResults, renderRoundNotes],
   );
 
   const renderNotes = useCallback(
@@ -311,15 +285,17 @@ export default function GameController({
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
       if (timeRef.current >= songDuration + 3) {
-        if (
-          !songHasEnded &&
-          (comboResults.excellent > 0 || comboResults.good > 0)
-        ) {
-          dispatch(isSongEnd({ comboResults, currentScore, maxNotesNumber }));
-        }
         navigate(`/battles/results/${roomId}`);
 
         setSongHasEnded(true);
+
+        if (
+          !songHasEnded &&
+          comboResults.excellent > 0 &&
+          comboResults.good > 0
+        ) {
+          dispatch(endSong({ comboResults, currentScore, maxNotesNumber }));
+        }
       } else {
         animationFrameId = requestAnimationFrame(updateNotes);
       }
@@ -341,14 +317,14 @@ export default function GameController({
     canvas,
     notes,
     isPlaying,
-    renderNotes,
     songDuration,
-    navigate,
     roomId,
     comboResults,
-    dispatch,
     currentScore,
     maxNotesNumber,
+    navigate,
+    dispatch,
+    renderNotes,
   ]);
 
   useEffect(() => {
@@ -361,24 +337,24 @@ export default function GameController({
   }, [notes, word]);
 
   useEffect(() => {
-    window.addEventListener("keydown", activate);
+    window.addEventListener("keydown", activateKeys);
     return () => {
-      window.removeEventListener("keydown", activate);
+      window.removeEventListener("keydown", activateKeys);
     };
-  }, [activate]);
+  }, [activateKeys]);
 
   useEffect(() => {
-    window.addEventListener("keyup", deActivate);
+    window.addEventListener("keyup", deActivateKeys);
     return () => {
-      window.removeEventListener("keyup", deActivate);
+      window.removeEventListener("keyup", deActivateKeys);
     };
-  }, [deActivate]);
+  }, [deActivateKeys]);
 
   useEffect(() => {
-    if (note.length) {
-      setNotes(note);
+    if (initialNotes.length) {
+      setNotes(initialNotes);
     }
-  }, [note]);
+  }, [initialNotes]);
 
   useEffect(() => {
     if (animateCombo) {
@@ -401,19 +377,19 @@ export default function GameController({
         {isCurrentUser ? (
           <div>{word !== "" && word.toUpperCase()}</div>
         ) : (
-          otherScoreAndCombo?.word?.toUpperCase()
+          battleUserResults?.word?.toUpperCase()
         )}
         <ComboText animate={animateCombo}>
-          {otherScoreAndCombo?.combo ? (
-            <div data-pt="battle-user-combo">{otherScoreAndCombo?.combo}</div>
+          {battleUserResults?.combo ? (
+            <div data-pt="battle-user-combo">{battleUserResults?.combo}</div>
           ) : (
             <div data-pt="current-user-combo" data-testid="combo">
               {comboRef.current === 0 ? null : comboRef.current}
             </div>
           )}
         </ComboText>
-        {otherScoreAndCombo?.score ? (
-          otherScoreAndCombo?.score
+        {battleUserResults?.score ? (
+          battleUserResults?.score
         ) : (
           <div data-testid="currentScore">
             {currentScore === 0 ? null : currentScore}
@@ -426,7 +402,9 @@ export default function GameController({
             key={key}
             index={index}
             active={
-              otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
+              battleUserKeys
+                ? battleUserKeys.includes(key)
+                : activeKeys.includes(key)
             }
           />
         ))}
@@ -437,10 +415,12 @@ export default function GameController({
           <Key
             key={key}
             data-pt={`key-container-${index}`}
-            data-active={otherKeys?.length ? "true" : "false"}
+            data-active={battleUserKeys?.length ? "true" : "false"}
             index={index}
             active={
-              otherKeys ? otherKeys.includes(key) : activeKeys.includes(key)
+              battleUserKeys
+                ? battleUserKeys.includes(key)
+                : activeKeys.includes(key)
             }
             data-testid={`key-container-${index}`}
           >
@@ -452,18 +432,6 @@ export default function GameController({
   );
 }
 
-export const getColor = (index) => {
-  switch (index) {
-    case 0:
-    case 5:
-      return COLUMN_RGB_COLORS[0];
-    case 1:
-    case 4:
-      return COLUMN_RGB_COLORS[1];
-    default:
-      return COLUMN_RGB_COLORS[2];
-  }
-};
 const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -478,6 +446,20 @@ const CanvasContainer = styled.canvas`
   box-shadow: inset 0 0 0 5px white;
   width: 100%;
   height: 100%;
+`;
+
+const TextContainer = styled.div`
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  position: absolute;
+  width: 100%;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 3em;
+  z-index: 1;
 `;
 
 const growAndShrink = keyframes`
@@ -565,18 +547,4 @@ export const Key = styled.div`
     `
     );
   }}
-`;
-
-const TextContainer = styled.div`
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  position: absolute;
-  width: 100%;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 3em;
-  z-index: 1;
 `;
