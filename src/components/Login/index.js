@@ -28,8 +28,6 @@ export default function Login() {
     if (auth) {
       navigate("/");
     }
-
-    return true;
   };
 
   const handleRegister = async (e) => {
@@ -77,6 +75,7 @@ export default function Login() {
         setLogin(false);
         localStorage.setItem("user", JSON.stringify(response.data.user));
         localStorage.setItem("jwt", response.data.user.token);
+
         return navigate("/");
       }
     } catch (error) {
@@ -89,7 +88,7 @@ export default function Login() {
     setRegister(true);
   };
 
-  const showLogin = (e) => {
+  const showLocalLogin = (e) => {
     e.preventDefault();
     setLogin(true);
   };
@@ -121,7 +120,7 @@ export default function Login() {
           </ActionButton>
           <ActionButton
             type="button"
-            onClick={showLogin}
+            onClick={showLocalLogin}
             data-pt="login-button"
           >
             User Login
@@ -190,8 +189,8 @@ export default function Login() {
 const Container = styled.div`
   display: flex;
   justify-content: space-evenly;
-  flex-direction: column;
   align-items: center;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
   background-image: url("login.png");
@@ -209,18 +208,10 @@ const Title = styled.div`
 
 const Main = styled.div`
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
+  flex-direction: column;
   height: 25%;
   width: 100%;
-  align-items: center;
-`;
-
-const LoginContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  height: 100%;
-  width: 50%;
   align-items: center;
 `;
 
@@ -239,6 +230,14 @@ const Message = styled.div`
   }
 `;
 
+const LoginContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+  width: 50%;
+  align-items: center;
+`;
+
 const ActionButton = styled.button`
   width: 15vw;
   height: 10vh;
@@ -254,31 +253,6 @@ const ActionButton = styled.button`
   }
 `;
 
-const FormInput = styled.input`
-  background-color: #f0f0f0;
-  border: none;
-  outline: none;
-  padding: 10px;
-  height: 10%;
-  width: 80%;
-  margin-bottom: 20px;
-  border-radius: 5px;
-  box-shadow: inset -3px -3px 7px #d9d9d9,
-    inset 3px 3px 7px rgba(255, 255, 255, 0.5);
-`;
-
-const SubmitButton = styled.button`
-  height: 15%;
-  width: 80%;
-  background-color: #f0f0f0;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
-  border-radius: 5px;
-  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3), -3px -3px 7px #ffffff;
-`;
-
 const FormContainer = styled.form`
   display: flex;
   justify-content: space-evenly;
@@ -286,4 +260,28 @@ const FormContainer = styled.form`
   flex-direction: column;
   width: 40vw;
   height: 70vh;
+`;
+
+const FormInput = styled.input`
+  margin: 0 0 20px 0;
+  padding: 10px;
+  width: 80%;
+  height: 10%;
+  background-color: #f0f0f0;
+  border-style: hidden;
+  border-radius: 5px;
+  box-shadow: inset -3px -3px 7px #d9d9d9,
+    inset 3px 3px 7px rgba(255, 255, 255, 0.5);
+`;
+
+const SubmitButton = styled.button`
+  padding: 10px 20px;
+  width: 80%;
+  height: 15%;
+  background-color: #f0f0f0;
+  border-style: hidden;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3), -3px -3px 7px #ffffff;
 `;

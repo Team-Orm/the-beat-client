@@ -1,16 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const comboResults = {
+  excellent: 0,
+  good: 0,
+  miss: 0,
+};
+
 const initialState = {
   score: 0,
   totalScore: 0,
-  comboResults: {
-    excellent: 0,
-    good: 0,
-    miss: 0,
-  },
   currentCombo: 0,
   end: false,
   word: "",
+  comboResults,
 };
 
 export const gameSlice = createSlice({
