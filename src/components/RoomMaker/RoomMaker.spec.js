@@ -43,12 +43,9 @@ const mockedSongs = [
 ];
 
 describe("RoomMaker", () => {
-  let mockPlay, mockPause;
-
   beforeAll(() => {
     window.HTMLMediaElement.prototype.play = jest.fn();
     window.HTMLMediaElement.prototype.pause = jest.fn();
-    mockPlay = jest.spyOn(window.HTMLMediaElement.prototype, "play");
   });
 
   beforeEach(async () => {
@@ -100,6 +97,7 @@ describe("RoomMaker", () => {
 
   it("toggles play button and BGM", async () => {
     const playButton = screen.getByText(/BGM ON/i);
+    const mockPlay = jest.spyOn(window.HTMLMediaElement.prototype, "play");
     const selectedSongId = "2";
 
     await act(async () => {
