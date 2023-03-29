@@ -35,6 +35,7 @@ describe("AudioVisualizer", () => {
     });
 
     const canvasElement = screen.getByTestId("audio-visualizer");
+
     expect(canvasElement).toBeInTheDocument();
     expect(canvasElement.tagName).toBe("CANVAS");
     expect(canvasElement).toHaveAttribute("width", `${window.innerWidth}`);
