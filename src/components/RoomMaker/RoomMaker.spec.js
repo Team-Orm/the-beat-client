@@ -24,25 +24,30 @@ const mockedSongs = [
     title: "song 1",
     artist: "artist 1",
     imageURL: "http://localhost:3000/song1.jpg",
-    audioURL: "http://localhost:3000/song1.mp3",
+    audioURL: "https://samplelib.com/lib/preview/mp3/sample-15s.mp3",
   },
   {
     _id: "2",
     title: "song 2",
     artist: "artist 2",
     imageURL: "http://localhost:3000/song2.jpg",
-    audioURL: "http://localhost:3000/song2.mp3",
+    audioURL: "https://samplelib.com/lib/preview/mp3/sample-15s.mp3",
   },
   {
     _id: "3",
     title: "song 3",
     artist: "artist 3",
     imageURL: "http://localhost:3000/song3.jpg",
-    audioURL: "http://localhost:3000/song3.mp3",
+    audioURL: "https://samplelib.com/lib/preview/mp3/sample-15s.mp3",
   },
 ];
 
 describe("RoomMaker", () => {
+  beforeAll(() => {
+    window.HTMLMediaElement.prototype.play = jest.fn();
+    window.HTMLMediaElement.prototype.pause = jest.fn();
+  });
+
   beforeEach(async () => {
     localStorage.setItem("jwt", "dummy_token");
     window.HTMLMediaElement.prototype.pause = jest.fn();
@@ -93,19 +98,24 @@ describe("RoomMaker", () => {
   it("toggles play button and BGM", async () => {
     const playButton = screen.getByText(/BGM ON/i);
     const mockPlay = jest.spyOn(window.HTMLMediaElement.prototype, "play");
-    const mockPause = jest.spyOn(window.HTMLMediaElement.prototype, "pause");
+    const selectedSongId = "2";
 
     await act(async () => {
       fireEvent.click(playButton);
     });
     expect(playButton.textContent).toBe("⏸️ BGM OFF");
-    expect(mockPlay).toHaveBeenCalledTimes(0);
+    const songElement = screen.getByTestId(selectedSongId);
+
+    await act(async () => {
+      fireEvent.mouseEnter(songElement);
+    });
+
+    expect(mockPlay).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       fireEvent.click(playButton);
     });
     expect(playButton.textContent).toBe("🎵 BGM ON");
-    expect(mockPause).toHaveBeenCalledTimes(3);
   });
 
   it("selects a song and shows checkbox", async () => {

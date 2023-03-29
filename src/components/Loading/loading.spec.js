@@ -9,6 +9,7 @@ describe("Loading Component", () => {
 
     const spinner = screen.getByTestId("spinner");
     const loadingText = screen.getByText(text);
+
     expect(spinner).toBeInTheDocument();
     expect(loadingText).toBeInTheDocument();
   });
