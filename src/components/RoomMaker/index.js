@@ -42,12 +42,11 @@ export default function RoomMaker() {
 
       throw new Error(response);
     } catch (err) {
-      const errorResponse = err.response || {};
       navigate("/error", {
         state: {
-          status: errorResponse.status || 500,
-          text: errorResponse.statusText || "Unknown Error",
-          message: errorResponse.data?.message || "An unknown error occurred.",
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
         },
       });
     }
@@ -73,13 +72,11 @@ export default function RoomMaker() {
 
         throw new Error(response);
       } catch (err) {
-        const errorResponse = err.response || {};
         navigate("/error", {
           state: {
-            status: errorResponse.status || 500,
-            text: errorResponse.statusText || "Unknown Error",
-            message:
-              errorResponse.data?.message || "An unknown error occurred.",
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }

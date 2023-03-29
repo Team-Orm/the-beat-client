@@ -43,10 +43,6 @@ export default function BattleResults() {
         setBattleUserProfile({ totalScore, user });
       }
     });
-
-    socket?.on(USER_OUT, () => {
-      console.log("Another user has left.");
-    });
   }, [socket]);
 
   useEffect(() => {

@@ -51,13 +51,11 @@ export default function Login() {
         setMessage("유저가 등록 되었습니다.");
       }
     } catch (err) {
-      const error = err.reponse || {};
-
       navigate("/error", {
         state: {
-          status: error.status,
-          text: error.statusText,
-          message: error.data.message,
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
         },
       });
     }

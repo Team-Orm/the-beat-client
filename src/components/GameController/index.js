@@ -45,8 +45,8 @@ export const calculateScore = (word) => {
 export default function GameController({
   isPlaying,
   isCurrentUser,
-  handleKeyPress,
-  handleKeyRelease,
+  sendKeyPressToOpponents,
+  sendKeyReleaseToOpponents,
   otherKeys,
   otherScoreAndCombo,
   note,
@@ -189,10 +189,10 @@ export default function GameController({
       if (keyMappings[key]) {
         setActiveKeys((prevActiveKeys) => [...prevActiveKeys, key]);
         onPressKey(key);
-        handleKeyPress(key);
+        sendKeyPressToOpponents(key);
       }
     },
-    [handleKeyPress, isCurrentUser, keyMappings, onPressKey],
+    [sendKeyPressToOpponents, isCurrentUser, keyMappings, onPressKey],
   );
 
   const deActivate = useCallback(
@@ -204,10 +204,10 @@ export default function GameController({
         setActiveKeys((prevActiveKeys) => {
           return prevActiveKeys.filter((activeKey) => activeKey !== key);
         });
-        handleKeyRelease(key);
+        sendKeyReleaseToOpponents(key);
       }
     },
-    [handleKeyRelease, isCurrentUser, keyMappings],
+    [sendKeyReleaseToOpponents, isCurrentUser, keyMappings],
   );
 
   const render = useCallback(

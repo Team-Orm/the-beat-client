@@ -35,21 +35,25 @@ export default function BattleRoom({
 }) {
   const navigate = useNavigate();
 
-  const [song, setSong] = useState({});
-  const [room, setRoom] = useState({});
-  const [note, setNote] = useState([]);
+  const [room, setRoom] = useState({
+    song: {},
+    notes: [],
+  });
   const [socket, setSocket] = useState();
   const [countdown, setCountdown] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [battleUser, setBattleUser] = useState({});
   const [isCountingDown, setIsCountingDown] = useState(initialCountingDown);
-  const [ready, setReady] = useState(initialReady);
+  const [battleUser, setBattleUser] = useState({});
+  const [battleUserReady, setBattleUserReady] = useState(initialReady);
+  const [battleUserResults, setbattleUserResults] = useState({});
   const [myReady, setMyReady] = useState(false);
   const [activeKeys, setActiveKeys] = useState([]);
-  const [battleuserScoreAndCombo, setBattleUserScoreAndCombo] = useState({});
 
-  const { roomId: roomIdFromParams } = useParams();
-  const roomId = roomIdFromParams || localStorage.getItem("roomId");
+  const { roomId } = useParams();
+
+  const score = useSelector((state) => state.game.score);
+  const combo = useSelector((state) => state.game.currentCombo);
+  const word = useSelector((state) => state.game.word);
 
   const localStorageUser = useMemo(
     () =>
@@ -67,15 +71,11 @@ export default function BattleRoom({
         uid: localStorageUser?.uid,
       };
 
-  const score = useSelector((state) => state.game.score);
-  const combo = useSelector((state) => state.game.currentCombo);
-  const word = useSelector((state) => state.game.word);
-
-  const handleKeyPress = (key) => {
+  const sendKeyPressToOpponents = (key) => {
     socket.emit(OPPONENT_KEY_PRESS, key);
   };
 
-  const handleKeyRelease = (key) => {
+  const sendKeyReleaseToOpponents = (key) => {
     socket.emit(OPPONENT_KEY_RELEASE, key);
   };
 
@@ -104,9 +104,9 @@ export default function BattleRoom({
       } catch (err) {
         navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.resopnse?.data?.message,
           },
         });
       }
@@ -118,7 +118,7 @@ export default function BattleRoom({
   const handleStart = () => {
     socket.emit(SEND_START);
     setIsCountingDown(true);
-    setReady(!ready);
+    setBattleUserReady(!battleUserReady);
 
     const countdownTimer = setInterval(() => {
       setCountdown((prevCountdown) => {
@@ -147,20 +147,18 @@ export default function BattleRoom({
         );
 
         if (response.status === 200) {
-          setRoom(response.data.room);
-          setSong(response.data.song);
-          setNote(response.data.note.note);
+          const { room, song, note } = response.data;
+
+          setRoom({ ...room, song, notes: note.note });
         }
       } catch (err) {
-        if (err.response?.status) {
-          return navigate("/error", {
-            state: {
-              status: err.response.status,
-              text: err.response.statusText,
-              message: err.response.data.message,
-            },
-          });
-        }
+        navigate("/error", {
+          state: {
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
+          },
+        });
       }
     };
 
@@ -184,7 +182,7 @@ export default function BattleRoom({
     socket?.emit(SEND_BATTLES, score, combo, word);
 
     socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
-      setBattleUserScoreAndCombo({ score, combo, word });
+      setbattleUserResults({ score, combo, word });
     });
 
     socket?.on(USER_LEFT, (uid) => {
@@ -210,7 +208,7 @@ export default function BattleRoom({
     });
 
     socket?.on(RECEIVE_READY, () => {
-      setReady(!ready);
+      setBattleUserReady(!battleUserReady);
     });
 
     socket?.on(RECEIVE_START, () => {
@@ -231,25 +229,27 @@ export default function BattleRoom({
       alert("방이 가득 차 있습니다.");
       navigate("/");
     });
-  }, [combo, displayName, navigate, photoURL, ready, score, socket, uid, word]);
+  }, [
+    combo,
+    displayName,
+    navigate,
+    photoURL,
+    battleUserReady,
+    score,
+    socket,
+    uid,
+    word,
+  ]);
 
   useEffect(() => {
-    localStorage.setItem("roomId", roomId);
-  }, [roomId]);
-
-  useEffect(() => {
-    let socketClient;
-
-    if (roomId) {
-      socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
-        cors: {
-          origin: "*",
-          methods: ["GET", "POST"],
-        },
-        query: { displayName, photoURL, uid, roomId },
-      });
-      setSocket(socketClient);
-    }
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+      query: { displayName, photoURL, uid, roomId },
+    });
+    setSocket(socketClient);
 
     return () => {
       if (socketClient) {
@@ -259,9 +259,9 @@ export default function BattleRoom({
   }, [displayName, photoURL, roomId, uid]);
 
   return (
-    <Container song={song}>
+    <Container song={room?.song}>
       <AudioVisualizer
-        song={song}
+        song={room?.song}
         isPlaying={isPlaying}
         data-testid="audio-visualizer"
       />
@@ -269,7 +269,7 @@ export default function BattleRoom({
         <OutButton
           type="button"
           onClick={handleExit}
-          data-testid="out-button"
+          data-testid="exit-button"
           data-pt="exit-button"
         >
           나가기
@@ -278,14 +278,14 @@ export default function BattleRoom({
       {!isCountingDown && room?.uid === uid && (
         <StartButton
           onClick={handleStart}
-          disabled={!ready}
+          disabled={!battleUserReady}
           data-testid="start-button"
           data-pt="start-container"
         >
           Start
         </StartButton>
       )}
-      {!isCountingDown && room?.uid !== uid && !ready && (
+      {!isCountingDown && room?.uid !== uid && !battleUserReady && (
         <StartButton onClick={handleReady} data-pt="ready-container">
           Ready
         </StartButton>
@@ -303,22 +303,24 @@ export default function BattleRoom({
             )}
             <GameController
               isPlaying={isPlaying}
-              handleKeyPress={handleKeyPress}
-              handleKeyRelease={handleKeyRelease}
+              sendKeyPressToOpponents={sendKeyPressToOpponents}
+              sendKeyReleaseToOpponents={sendKeyReleaseToOpponents}
               isCurrentUser
-              note={note}
+              note={room?.notes}
             />
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
           <Controller>
-            {ready && <Ready data-pt="ready-right-container">Ready</Ready>}
+            {battleUserReady && (
+              <Ready data-pt="ready-right-container">Ready</Ready>
+            )}
             <GameController
               isPlaying={isPlaying}
               isCurrentUser={false}
               otherKeys={activeKeys}
-              otherScoreAndCombo={battleuserScoreAndCombo}
-              note={note}
+              otherScoreAndCombo={battleUserResults}
+              note={room?.notes}
               data-pt="battle-user"
             />
           </Controller>
@@ -344,7 +346,7 @@ export default function BattleRoom({
           <Records>
             <ProfileContainer>
               <div data-pt="battle-user-score">
-                score: {battleuserScoreAndCombo.score}
+                score: {battleUserResults.score}
               </div>
               <Profile data-pt="battle-user">
                 {battleUser?.displayName}

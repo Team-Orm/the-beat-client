@@ -29,8 +29,8 @@ describe("GameController Component", () => {
         <BrowserRouter>
           <GameController
             isCurrentUser={true}
-            handleKeyPress={jest.fn()}
-            handleKeyRelease={jest.fn()}
+            sendKeyPressToOpponents={jest.fn()}
+            sendKeyReleaseToOpponents={jest.fn()}
             note={[...dummyNote]}
           />
         </BrowserRouter>
@@ -60,16 +60,16 @@ describe("GameController Component", () => {
   });
 
   it("key events when key pressed", async () => {
-    const handleKeyPressMock = jest.fn();
-    const handleKeyReleaseMock = jest.fn();
+    const sendKeyPressToOpponentsMock = jest.fn();
+    const sendKeyReleaseToOpponentsMock = jest.fn();
 
     render(
       <Provider store={store}>
         <BrowserRouter>
           <GameController
             isCurrentUser={true}
-            handleKeyPress={handleKeyPressMock}
-            handleKeyRelease={handleKeyReleaseMock}
+            sendKeyPressToOpponents={sendKeyPressToOpponentsMock}
+            sendKeyReleaseToOpponents={sendKeyReleaseToOpponentsMock}
             note={[...dummyNote]}
           />
         </BrowserRouter>
@@ -81,10 +81,10 @@ describe("GameController Component", () => {
     });
 
     await waitFor(() => {
-      expect(handleKeyPressMock).toHaveBeenCalledTimes(1);
-      expect(handleKeyPressMock).toHaveBeenCalledWith("s");
-      expect(handleKeyReleaseMock).toHaveBeenCalledTimes(1);
-      expect(handleKeyReleaseMock).toHaveBeenCalledWith("s");
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledTimes(1);
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledWith("s");
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledTimes(1);
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledWith("s");
     });
 
     await act(async () => {
@@ -92,24 +92,24 @@ describe("GameController Component", () => {
     });
 
     await waitFor(() => {
-      expect(handleKeyPressMock).toHaveBeenCalledTimes(2);
-      expect(handleKeyPressMock).toHaveBeenCalledWith("d");
-      expect(handleKeyReleaseMock).toHaveBeenCalledTimes(2);
-      expect(handleKeyReleaseMock).toHaveBeenCalledWith("d");
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledTimes(2);
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledWith("d");
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledTimes(2);
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledWith("d");
     });
   });
 
-  it("does not call handleKeyPress and handleKeyRelease when isCurrentUser is false", async () => {
-    const handleKeyPressMock = jest.fn();
-    const handleKeyReleaseMock = jest.fn();
+  it("does not call sendKeyPressToOpponents and sendKeyReleaseToOpponents when isCurrentUser is false", async () => {
+    const sendKeyPressToOpponentsMock = jest.fn();
+    const sendKeyReleaseToOpponentsMock = jest.fn();
 
     render(
       <Provider store={store}>
         <BrowserRouter>
           <GameController
             isCurrentUser={false}
-            handleKeyPress={handleKeyPressMock}
-            handleKeyRelease={handleKeyReleaseMock}
+            sendKeyPressToOpponents={sendKeyPressToOpponentsMock}
+            sendKeyReleaseToOpponents={sendKeyReleaseToOpponentsMock}
             note={[...dummyNote]}
           />
         </BrowserRouter>
@@ -121,8 +121,8 @@ describe("GameController Component", () => {
     });
 
     await waitFor(() => {
-      expect(handleKeyPressMock).toHaveBeenCalledTimes(0);
-      expect(handleKeyReleaseMock).toHaveBeenCalledTimes(0);
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledTimes(0);
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledTimes(0);
     });
   });
 

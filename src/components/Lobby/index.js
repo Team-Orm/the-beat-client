@@ -62,24 +62,24 @@ export default function Lobby() {
       const targetUser = usersInRooms[roomId];
 
       if (targetUser && Object.keys(targetUser).length === 2) {
-        return alert("방이 가득 차 있습니다.?");
+        alert("방이 가득 차 있습니다.?");
       }
 
-      return navigate(`/battles/${roomId}`);
+      navigate(`/battles/${roomId}`);
     },
     [usersInRooms, navigate],
   );
 
   const handleMakeRoom = () => {
     try {
-      return navigate("/battles/new");
+      navigate("/battles/new");
     } catch (err) {
       if (err.response.status) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
@@ -102,11 +102,11 @@ export default function Lobby() {
 
       throw new Error(response);
     } catch (err) {
-      return navigate("/error", {
+      navigate("/error", {
         state: {
-          status: err.response.status,
-          text: err.response.statusText,
-          message: err.response.data.message,
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
         },
       });
     }
@@ -144,11 +144,11 @@ export default function Lobby() {
 
         throw new Error(response);
       } catch (err) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
@@ -173,11 +173,11 @@ export default function Lobby() {
           throw new Error(response);
         }
       } catch (err) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
