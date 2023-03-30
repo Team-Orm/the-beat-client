@@ -5,23 +5,25 @@ import styled from "styled-components";
 
 export default function Records() {
   const navigate = useNavigate();
-  const [results, setResults] = useState({});
+  const [record, setRecord] = useState({});
   const [songs, setSongs] = useState([]);
   const [selectedSong, setSelectedSong] = useState("");
 
-  const filteredResults = Object.values(results).filter(
+  const filteredRecord = Object.values(record).filter(
     (result) => result.title === selectedSong,
   );
 
-  useEffect(() => {
-    if (results) return;
+  const sortedData = [...filteredRecord].sort(
+    (a, b) => b.totalScore - a.totalScore,
+  );
 
+  useEffect(() => {
     const getRecordsData = async () => {
       try {
         const jwt = localStorage.getItem("jwt");
 
         const response = await axios.get(
-          `${process.env.REACT_APP_SERVER_URL}/api/results/`,
+          `${process.env.REACT_APP_SERVER_URL}/api/records/`,
           {
             headers: {
               authorization: `Bearer ${jwt}`,
@@ -30,7 +32,8 @@ export default function Records() {
         );
 
         if (response.status === 200) {
-          return setResults(response.data.results);
+          console.log(response);
+          return setRecord(response.data.record);
         }
       } catch (err) {
         navigate("/error", {
@@ -44,11 +47,9 @@ export default function Records() {
     };
 
     getRecordsData();
-  }, [navigate, results]);
+  }, [navigate]);
 
   useEffect(() => {
-    if (results) return;
-
     const getSongs = async () => {
       try {
         const jwt = localStorage.getItem("jwt");
@@ -98,13 +99,16 @@ export default function Records() {
         </TitleContainer>
       </HeaderContainer>
       <RecordsContainer>
-        {filteredResults?.map((result) => (
-          <Record key={result.id}>
-            <Ranking>{result.rank}</Ranking>
-            <Name>{result.name}</Name>
-            <Score>{result.score}</Score>
-          </Record>
-        ))}
+        {!selectedSong
+          ? "결과를 보고 싶은 노래를 선택해 주세요."
+          : sortedData.map((record, index) => (
+              <Record key={record._id}>
+                <Ranking>{index + 1}</Ranking>
+                <Name>{record.name}</Name>
+                <Score>{record.totalScore}</Score>
+                <Score>{record.title}</Score>
+              </Record>
+            ))}
       </RecordsContainer>
       <ActionButton onClick={() => navigate("/")}>나가기</ActionButton>
     </Container>
@@ -150,7 +154,16 @@ const TitleContainer = styled.div`
 const RecordsTitle = styled.div`
   display: flex;
   justify-content: center;
+  padding: 10px 20px;
   font-size: 2vw;
+  border-radius: 20px;
+
+  box-shadow: inset -3px -3px 7px #d9d9d9,
+    inset 3px 3px 7px rgba(255, 255, 255, 0.5);
+
+  :hover {
+    color: rgba(255, 36, 0, 1);
+  }
 `;
 
 const RecordsContainer = styled.div`
@@ -171,7 +184,7 @@ const RecordsContainer = styled.div`
 
 const Record = styled.div`
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
   align-items: center;
   width: 95%;
   height: 10vh;
@@ -182,21 +195,18 @@ const Record = styled.div`
 `;
 
 const Ranking = styled.div`
-  flex: 1;
   display: flex;
   justify-content: center;
   font-size: 2vw;
 `;
 
 const Name = styled.div`
-  flex: 1;
   display: flex;
   justify-content: center;
   font-size: 2vw;
 `;
 
 const Score = styled.div`
-  flex: 3;
   display: flex;
   justify-content: center;
   font-size: 2vw;
