@@ -19,10 +19,10 @@ export default function BattleResults() {
   const [ready, setReady] = useState(false);
   const [shouldNavigate, setShouldNavigate] = useState(false);
 
-  const handleExit = () => {
+  const handleExit = useCallback(() => {
     setShouldNavigate(true);
     dispatch(resetRecords());
-  };
+  }, [dispatch]);
 
   const localStorageUser = localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user"))

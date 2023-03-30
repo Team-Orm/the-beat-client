@@ -46,20 +46,12 @@ export default function GameController({
 
   const canvas = canvasRef?.current;
   const ctx = canvas?.getContext("2d");
-
-  const songDuration = Math.max(...notes.map((note) => note.time));
-
   const columnHeight = canvas?.height * 0.9;
   const columnWidth = canvas?.width / KEYS.length;
   const noteHeight = canvas?.width / (KEYS.length * 3 * 3);
   const borderWidth = 5;
-  const hitBoxPositionPercentage = 0.125;
-  const positionOfHitBox =
-    columnHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
-  const averageFrame = MILLISECOND / 60;
-  const pixerPerFrame = (SPEED / 10) * averageFrame;
-  const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
-  const timeToHitBoxMiddle = distanceToHitBoxMiddle / pixerPerFrame; // time = distance / speed;
+
+  const songDuration = Math.max(...notes.map((note) => note.time));
 
   const comboResults = useMemo(() => {
     return {
@@ -82,6 +74,14 @@ export default function GameController({
 
   const onPressKey = useCallback(
     (key) => {
+      const hitBoxPositionPercentage = 0.125;
+      const positionOfHitBox =
+        columnHeight * (1 - hitBoxPositionPercentage) - borderWidth * 2;
+      const averageFrame = MILLISECOND / 60;
+      const pixerPerFrame = (SPEED / 10) * averageFrame;
+      const distanceToHitBoxMiddle = positionOfHitBox - noteHeight;
+      const timeToHitBoxMiddle = distanceToHitBoxMiddle / pixerPerFrame; // time = distance / speed;
+
       const notesCloseToHitBox = notesRef.current.filter(
         (note) =>
           note.key === key && note.positionY >= positionOfHitBox - noteHeight,
@@ -111,7 +111,7 @@ export default function GameController({
         targetNote?.time + timeToHitBoxMiddle - timeRef.current,
       );
 
-      const maximumTiming = SPEED / DIFFICULTY; // 0.33
+      const maximumTiming = SPEED / DIFFICULTY; // 0.3
       const withinTimingThreshold = timeFromNoteToHitBox < maximumTiming;
 
       if (!withinTimingThreshold) {
@@ -152,7 +152,7 @@ export default function GameController({
       notesRef.current = notesRef.current.filter((note) => note !== targetNote);
       setNotes((prev) => prev.filter((note) => note !== targetNote));
     },
-    [comboResults, dispatch, noteHeight, positionOfHitBox, timeToHitBoxMiddle],
+    [columnHeight, comboResults, dispatch, noteHeight],
   );
 
   const activateKeys = useCallback(
@@ -321,8 +321,6 @@ export default function GameController({
     comboResults,
     currentScore,
     maxNotesNumber,
-    navigate,
-    dispatch,
     renderNotes,
   ]);
 
