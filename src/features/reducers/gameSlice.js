@@ -11,12 +11,6 @@ const user = {
   photoURL: "",
 };
 
-const battleUserResults = {
-  comboResults,
-  score: 0,
-  user,
-};
-
 const initialState = {
   score: 0,
   totalScore: 0,
@@ -24,7 +18,6 @@ const initialState = {
   end: false,
   word: "",
   comboResults,
-  battleUserResults,
 };
 
 export const gameSlice = createSlice({
@@ -69,22 +62,9 @@ export const gameSlice = createSlice({
       state.end = false;
       state.word = "";
     },
-    getBattleUserResults: (state, action) => {
-      const { score, comboResults, user } = action.payload;
-
-      state.battleUserResults.comboResults = comboResults;
-      state.battleUserResults.user = user;
-      state.battleUserResults.score = score;
-    },
   },
 });
 
-export const {
-  updateScore,
-  updateCombo,
-  endSong,
-  updateWord,
-  resetRecords,
-  getBattleUserResults,
-} = gameSlice.actions;
+export const { updateScore, updateCombo, endSong, updateWord, resetRecords } =
+  gameSlice.actions;
 export default gameSlice.reducer;

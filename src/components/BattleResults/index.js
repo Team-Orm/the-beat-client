@@ -165,7 +165,6 @@ export default function BattleResults() {
           </Winner>
           {battleUserProfile ? (
             <>
-              {" "}
               <UserContainer>
                 {battleUserProfile?.user?.photoURL !== "null" ? (
                   <UserImage src={battleUserProfile?.user?.photoURL} />
