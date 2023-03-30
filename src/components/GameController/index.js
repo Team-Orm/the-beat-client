@@ -35,7 +35,6 @@ export default function GameController({
   const [notes, setNotes] = useState(initialNotes);
   const [activeKeys, setActiveKeys] = useState([]);
   const [currentScore, setCurrentScore] = useState(0);
-  const [songHasEnded, setSongHasEnded] = useState(false);
   const [animateCombo, setAnimateCombo] = useState(false);
 
   const timeRef = useRef(0);
@@ -43,6 +42,7 @@ export default function GameController({
   const deltaRef = useRef(null);
   const notesRef = useRef(notes);
   const canvasRef = useRef(null);
+  const songEndRef = useRef(false);
 
   const canvas = canvasRef?.current;
   const ctx = canvas?.getContext("2d");
@@ -285,13 +285,12 @@ export default function GameController({
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
       if (timeRef.current >= songDuration + 3) {
-        setSongHasEnded(true);
-
         if (
-          !songHasEnded &&
+          !songEndRef.current &&
           comboResults.excellent > 0 &&
           comboResults.good > 0
         ) {
+          songEndRef.current = true;
           dispatch(endSong({ comboResults, currentScore, maxNotesNumber }));
           return navigate(`/battles/results/${roomId}`);
         }
