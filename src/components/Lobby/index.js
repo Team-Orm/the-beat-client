@@ -238,18 +238,20 @@ export default function Lobby() {
           <RoomsContainer>
             <RoomsLists>
               {roomsList.length
-                ? roomsList.map(({ _id, createdBy, song }, index) => {
+                ? roomsList.map(({ _id, createdBy, song, mode }, index) => {
                     return (
-                      <Room key={_id} onClick={() => handleRoomClick(_id)}>
-                        <RoomName
-                          data-pt={`room-container-${index}`}
-                        >{`${createdBy} ${
-                          usersInRooms[_id]?.users.length
-                            ? usersInRooms[_id]?.users.length
-                            : 1
-                        } / 2`}</RoomName>
-                        <RoomSong>{song?.title}</RoomSong>
-                      </Room>
+                      mode !== "single" && (
+                        <Room key={_id} onClick={() => handleRoomClick(_id)}>
+                          <RoomName
+                            data-pt={`room-container-${index}`}
+                          >{`${createdBy} ${
+                            usersInRooms[_id]?.users.length
+                              ? usersInRooms[_id]?.users.length
+                              : 1
+                          } / 2`}</RoomName>
+                          <RoomSong>{song?.title}</RoomSong>
+                        </Room>
+                      )
                     );
                   })
                 : null}

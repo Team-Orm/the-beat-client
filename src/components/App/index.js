@@ -24,6 +24,10 @@ export default function App() {
         <Route path="/" element={<Lobby />} />
         <Route path="/battles/new" element={<RoomMaker />} />
         <Route
+          path="/battles/single/:roomId"
+          element={loading ? <Loading /> : <BattleRoom />}
+        />
+        <Route
           path="/battles/:roomId"
           element={loading ? <Loading /> : <BattleRoom />}
         />

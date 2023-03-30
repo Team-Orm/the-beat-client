@@ -61,7 +61,7 @@ export default function BattleResults() {
 
   setInterval(() => {
     sendResults();
-  }, 500);
+  }, 250);
 
   useEffect(() => {
     const deleteBattle = async () => {
@@ -131,29 +131,38 @@ export default function BattleResults() {
           <Winner>
             {battleUserProfile?.totalScore > totalScore ? "Winner" : "Loser"}
           </Winner>
-          <UserContainer>
-            {battleUserProfile?.user?.photoURL !== "null" ? (
-              <UserImage src={battleUserProfile?.user?.photoURL} />
-            ) : (
-              <Emoji>🥸</Emoji>
-            )}
-            <ResultsBox>
-              {battleUserProfile.user?.displayName !== null &&
-                battleUserProfile?.user?.displayName}
-            </ResultsBox>
-          </UserContainer>
-          {battleUserResults.excellent !== 0 &&
-            Object.keys(battleUserResults).map((key) => (
-              <RecordsContainer key={key}>
-                <ResultsBox>{key}</ResultsBox>
-                <Score>{battleUserResults[key]}</Score>
+          {battleUserProfile ? (
+            <>
+              {" "}
+              <UserContainer>
+                {battleUserProfile?.user?.photoURL !== "null" ? (
+                  <UserImage src={battleUserProfile?.user?.photoURL} />
+                ) : (
+                  <Emoji>🥸</Emoji>
+                )}
+                <ResultsBox>
+                  {battleUserProfile.user?.displayName !== null &&
+                    battleUserProfile?.user?.displayName}
+                </ResultsBox>
+              </UserContainer>
+              {battleUserResults.excellent !== 0 &&
+                Object.keys(battleUserResults).map((key) => (
+                  <RecordsContainer key={key}>
+                    <ResultsBox>{key}</ResultsBox>
+                    <Score>{battleUserResults[key]}</Score>
+                  </RecordsContainer>
+                ))}
+              {battleUserProfile?.totalScore ? <StyledHr /> : null}
+              <RecordsContainer>
+                {battleUserProfile?.totalScore ? (
+                  <ResultsBox>TotalScore: </ResultsBox>
+                ) : null}
+                <Score>
+                  {battleUserProfile && battleUserProfile?.totalScore}
+                </Score>
               </RecordsContainer>
-            ))}
-          <StyledHr />
-          <RecordsContainer>
-            <ResultsBox>TotalScore: </ResultsBox>
-            <Score>{battleUserProfile && battleUserProfile?.totalScore}</Score>
-          </RecordsContainer>
+            </>
+          ) : null}
         </ResultPanel>
       </ResultsWrapper>
       <ButtonContainer>

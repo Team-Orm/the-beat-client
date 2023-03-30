@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import { useSelector } from "react-redux";
@@ -49,6 +49,10 @@ export default function BattleRoom({
   const [battleUserResults, setbattleUserResults] = useState({});
   const [currentUserReady, setCurrentUserReady] = useState(false);
   const [activeKeys, setActiveKeys] = useState([]);
+  const [isSinglePlayer, setIsSinglePlayer] = useState(false);
+  const location = useLocation();
+
+  console.log(location.pathname.includes("single"));
 
   const score = useSelector((state) => state.game.score);
   const combo = useSelector((state) => state.game.currentCombo);
@@ -141,6 +145,7 @@ export default function BattleRoom({
           {
             headers: {
               authorization: `Bearer ${jwt}`,
+              modes: location?.pathname,
             },
           },
         );
@@ -164,12 +169,24 @@ export default function BattleRoom({
     getSong();
   }, [navigate, roomId]);
 
-  setInterval(() => {
-    socket?.emit(SEND_USER);
-  }, 500);
+  useEffect(() => {
+    if (isSinglePlayer) return;
+
+    const interval = setInterval(() => {
+      if (!isPlaying) {
+        socket?.emit(SEND_USER);
+        socket?.emit(SEND_CONNECT);
+      }
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isPlaying, isSinglePlayer, socket]);
 
   useEffect(() => {
-    socket?.emit(SEND_CONNECT);
+    if (isSinglePlayer) return;
+
     socket?.on(RECEIVE_USER, (currentUserArray) => {
       const battleUser = Object.values(currentUserArray).filter(
         (u) => u.uid !== uid,
@@ -230,9 +247,12 @@ export default function BattleRoom({
     navigate,
     handleExit,
     handleTimerAndCount,
+    isSinglePlayer,
   ]);
 
   useEffect(() => {
+    if (isSinglePlayer) return;
+
     const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/battles/`, {
       cors: {
         origin: "*",
@@ -247,7 +267,13 @@ export default function BattleRoom({
         socketClient.disconnect();
       }
     };
-  }, [displayName, photoURL, roomId, uid]);
+  }, [displayName, isSinglePlayer, photoURL, roomId, uid]);
+
+  useEffect(() => {
+    if (location.pathname.includes("single")) {
+      setIsSinglePlayer(true);
+    }
+  }, [location?.pathname]);
 
   return (
     <Container song={room?.song}>
@@ -269,7 +295,7 @@ export default function BattleRoom({
       {!isCountingDown && room?.uid === uid && (
         <StartButton
           onClick={handleStart}
-          disabled={!battleUserReady}
+          disabled={!isSinglePlayer && !battleUserReady}
           data-testid="start-button"
           data-pt="start-container"
         >
@@ -302,7 +328,7 @@ export default function BattleRoom({
           </Controller>
         </BattleUserContainer>
         <BattleUserContainer>
-          <Controller>
+          <Controller hidden={isSinglePlayer}>
             {battleUserReady && (
               <Ready data-pt="ready-right-container">Ready</Ready>
             )}
@@ -317,6 +343,7 @@ export default function BattleRoom({
           </Controller>
         </BattleUserContainer>
       </BattleRoomContainer>
+      (
       <BottomContainer data-testid="battleRoom-Container">
         <ScoreContainer data-testid="score-container">
           <Records>
@@ -334,23 +361,27 @@ export default function BattleRoom({
           </Records>
         </ScoreContainer>
         <ScoreContainer data-testid="score-container">
-          <Records>
-            <ProfileContainer>
-              <div data-pt="battle-user-score">
-                score: {battleUserResults?.score ? battleUserResults.score : 0}
-              </div>
-              <Profile data-pt="battle-user">
-                {battleUser?.displayName}
-                {battleUser?.photoURL !== "null" && battleUser?.photoURL ? (
-                  <Photo src={battleUser?.photoURL} alt="battleUser" />
-                ) : (
-                  <Imoge>🙅🏼</Imoge>
-                )}
-              </Profile>
-            </ProfileContainer>
-          </Records>
+          {!isSinglePlayer && (
+            <Records>
+              <ProfileContainer>
+                <div data-pt="battle-user-score">
+                  score:{" "}
+                  {battleUserResults?.score ? battleUserResults.score : 0}
+                </div>
+                <Profile data-pt="battle-user">
+                  {battleUser?.displayName}
+                  {battleUser?.photoURL !== "null" && battleUser?.photoURL ? (
+                    <Photo src={battleUser?.photoURL} alt="battleUser" />
+                  ) : (
+                    <Imoge>🙅🏼</Imoge>
+                  )}
+                </Profile>
+              </ProfileContainer>
+            </Records>
+          )}
         </ScoreContainer>
       </BottomContainer>
+      )
     </Container>
   );
 }
@@ -374,6 +405,8 @@ const Controller = styled.div`
   height: 100%;
   margin: 0;
   padding: 0;
+
+  visibility: ${({ hidden }) => (hidden ? "hidden" : "visible")};
 `;
 
 const Count = styled.div`
