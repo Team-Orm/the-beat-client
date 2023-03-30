@@ -32,7 +32,6 @@ export default function Records() {
         );
 
         if (response.status === 200) {
-          console.log(response);
           return setRecord(response.data.record);
         }
       } catch (err) {

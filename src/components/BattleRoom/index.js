@@ -52,8 +52,6 @@ export default function BattleRoom({
   const [isSinglePlayer, setIsSinglePlayer] = useState(false);
   const location = useLocation();
 
-  console.log(location.pathname.includes("single"));
-
   const score = useSelector((state) => state.game.score);
   const combo = useSelector((state) => state.game.currentCombo);
   const word = useSelector((state) => state.game.word);

@@ -296,20 +296,20 @@ export default function Lobby() {
               ))}
           </UserList>
           <RightBottom>
-            <LogoutButton
+            <ActionButton
               type="button"
               onClick={handleMakeRoom}
               data-pt="create-room"
             >
               방 만들기
-            </LogoutButton>
-            <LogoutButton
+            </ActionButton>
+            <ActionButton
               type="button"
               onClick={handleLogout}
               data-pt="logout-button"
             >
               Logout
-            </LogoutButton>
+            </ActionButton>
           </RightBottom>
         </RightContainer>
       </Container>
@@ -566,9 +566,9 @@ const RightBottom = styled.div`
   justify-content: space-around;
 `;
 
-const LogoutButton = styled.button`
-  width: 200px;
-  height: 75px;
+const ActionButton = styled.button`
+  width: 10vw;
+  height: 7.5vh;
   background-color: transparent;
   border-radius: 10px;
   border: 3px solid rgba(0, 0, 0, 0.5);
