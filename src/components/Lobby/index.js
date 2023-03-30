@@ -256,6 +256,7 @@ export default function Lobby() {
                   })
                 : null}
             </RoomsLists>
+            <RoomButton onClick={() => navigate("/records")}>기록실</RoomButton>
           </RoomsContainer>
           <ChatContainer>
             <ChatsHead>Chats</ChatsHead>
@@ -371,6 +372,7 @@ const LeftContainer = styled.div`
 `;
 
 const RoomsContainer = styled.div`
+  position: relative;
   flex: 5;
   display: flex;
   justify-content: flex-start;
@@ -423,6 +425,27 @@ const RoomSong = styled.div`
   border-bottom-right-radius: 30px;
   background-color: white;
   color: black;
+`;
+
+const RoomButton = styled.button`
+  position: absolute;
+  bottom: -12.5%;
+  right: 5%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 10vw;
+  height: 6vh;
+  background-color: transparent;
+  border-radius: 10px;
+  border: 3px solid rgba(0, 0, 0, 0.5);
+  font-size: 2em;
+  color: gray;
+
+  :hover {
+    color: skyBlue;
+    border: 3px solid skyBlue;
+  }
 `;
 
 const ChatContainer = styled.div`

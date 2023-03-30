@@ -12,6 +12,7 @@ import BattleRoom from "../BattleRoom";
 import BattleResults from "../BattleResults";
 import NotFound from "../Error/NotFound";
 import Error from "../Error";
+import Records from "../Records";
 
 export default function App() {
   const [, loading] = useAuthState(auth);
@@ -22,16 +23,19 @@ export default function App() {
       <Routes>
         <Route path="/login" element={loading ? <Loading /> : <Login />} />
         <Route path="/" element={<Lobby />} />
-        <Route path="/battles/new" element={<RoomMaker />} />
-        <Route
-          path="/battles/single/:roomId"
-          element={loading ? <Loading /> : <BattleRoom />}
-        />
-        <Route
-          path="/battles/:roomId"
-          element={loading ? <Loading /> : <BattleRoom />}
-        />
-        <Route path="/battles/results/:resultId" element={<BattleResults />} />
+        <Route path="/records" element={<Records />} />
+        <Route path="/battles">
+          <Route path="new" element={<RoomMaker />} />
+          <Route
+            path="single/:roomId"
+            element={loading ? <Loading /> : <BattleRoom />}
+          />
+          <Route
+            path=":roomId"
+            element={loading ? <Loading /> : <BattleRoom />}
+          />
+          <Route path="results/:resultId" element={<BattleResults />} />
+        </Route>
         <Route path="/error" element={<Error />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

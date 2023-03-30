@@ -78,7 +78,7 @@ export default function RoomMaker() {
   );
 
   useEffect(() => {
-    const getRoomsData = async () => {
+    const getSongs = async () => {
       try {
         const jwt = localStorage.getItem("jwt");
 
@@ -107,7 +107,7 @@ export default function RoomMaker() {
       }
     };
 
-    getRoomsData();
+    getSongs();
   }, [navigate]);
 
   useEffect(() => {
