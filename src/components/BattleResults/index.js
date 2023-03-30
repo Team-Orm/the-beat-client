@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
@@ -9,6 +9,7 @@ import { resetRecords } from "../../features/reducers/gameSlice";
 import { RECEIVE_RESULTS, SEND_RESULTS } from "../../store/constants";
 
 export default function BattleResults() {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { resultId } = useParams();
   const comboResults = useSelector((state) => state.game.comboResults);
@@ -54,6 +55,40 @@ export default function BattleResults() {
         photoURL: null,
         uid: localStorageUser?.uid,
       };
+
+  const saveRecord = useCallback(async () => {
+    const jwt = localStorage.getItem("jwt");
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_SERVER_URL}/api/records/new`,
+        {
+          uid,
+          displayName,
+          photoURL,
+          totalScore,
+          resultId,
+        },
+        {
+          headers: {
+            authorization: `Bearer ${jwt}`,
+          },
+        },
+      );
+
+      if (response.status === 201) {
+        alert("성공적으로 저장 되었습니다.");
+      }
+    } catch (err) {
+      navigate("/error", {
+        state: {
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
+        },
+      });
+    }
+  }, [displayName, navigate, photoURL, resultId, totalScore, uid]);
 
   useEffect(() => {
     if (displayName && uid && resultId) {
@@ -154,7 +189,9 @@ export default function BattleResults() {
         </ResultPanel>
       </ResultsWrapper>
       <ButtonContainer>
-        <ActionButton type="button">기록하기</ActionButton>
+        <ActionButton type="button" onClick={() => saveRecord()}>
+          기록하기
+        </ActionButton>
         <ActionButton type="button" onClick={() => handleExit()}>
           나가기
         </ActionButton>
