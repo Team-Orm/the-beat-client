@@ -62,24 +62,24 @@ export default function Lobby() {
       const targetUser = usersInRooms[roomId];
 
       if (targetUser && Object.keys(targetUser).length === 2) {
-        return alert("방이 가득 차 있습니다.?");
+        alert("방이 가득 차 있습니다.?");
       }
 
-      return navigate(`/battles/${roomId}`);
+      navigate(`/battles/${roomId}`);
     },
     [usersInRooms, navigate],
   );
 
   const handleMakeRoom = () => {
     try {
-      return navigate("/battles/new");
+      navigate("/battles/new");
     } catch (err) {
       if (err.response.status) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
@@ -102,11 +102,11 @@ export default function Lobby() {
 
       throw new Error(response);
     } catch (err) {
-      return navigate("/error", {
+      navigate("/error", {
         state: {
-          status: err.response.status,
-          text: err.response.statusText,
-          message: err.response.data.message,
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
         },
       });
     }
@@ -131,21 +131,6 @@ export default function Lobby() {
   }, [navigate]);
 
   useEffect(() => {
-    const socketClient = io(process.env.REACT_APP_SOCKET_URL, {
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-      },
-      query: { displayName, photoURL, uid },
-    });
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, [displayName, photoURL, uid]);
-
-  useEffect(() => {
     const updateRooms = async () => {
       try {
         const response = await axios.get(
@@ -159,11 +144,11 @@ export default function Lobby() {
 
         throw new Error(response);
       } catch (err) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
@@ -188,11 +173,11 @@ export default function Lobby() {
           throw new Error(response);
         }
       } catch (err) {
-        return navigate("/error", {
+        navigate("/error", {
           state: {
-            status: err.response.status,
-            text: err.response.statusText,
-            message: err.response.data.message,
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
@@ -204,12 +189,12 @@ export default function Lobby() {
   useEffect(() => {
     socket?.emit(RECEIVE_LOBBY_USERS);
 
-    socket?.on(LOBBY_ROOMS, (rooms) => {
-      setUsersInRooms(() => rooms);
-    });
-
     socket?.on(UPDATE_USER, (user) => {
       setCurrentUserList(() => user);
+    });
+
+    socket?.on(LOBBY_ROOMS, (rooms) => {
+      setUsersInRooms(() => rooms);
     });
 
     socket?.on(UPDATE_ROOMS, (rooms) => {
@@ -224,6 +209,23 @@ export default function Lobby() {
       setUsersInRooms(() => updatedRooms);
     });
   }, [socket]);
+
+  useEffect(() => {
+    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}`, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+      query: { displayName, photoURL, uid },
+      reconnection: true,
+      reconnectionDelay: 1000,
+    });
+    setSocket(socketClient);
+
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [displayName, photoURL, uid]);
 
   return (
     <Background data-pt="element-after-login">
@@ -244,7 +246,7 @@ export default function Lobby() {
                         >{`${createdBy} ${
                           usersInRooms[_id]?.users.length
                             ? usersInRooms[_id]?.users.length
-                            : 0
+                            : 1
                         } / 2`}</RoomName>
                         <RoomSong>{song?.title}</RoomSong>
                       </Room>

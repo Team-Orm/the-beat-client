@@ -1,16 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const comboResults = {
+  excellent: 0,
+  good: 0,
+  miss: 0,
+};
+
 const initialState = {
   score: 0,
   totalScore: 0,
-  comboResults: {
-    excellent: 0,
-    good: 0,
-    miss: 0,
-  },
   currentCombo: 0,
   end: false,
   word: "",
+  comboResults,
 };
 
 export const gameSlice = createSlice({
@@ -26,7 +28,7 @@ export const gameSlice = createSlice({
     updateWord: (state, action) => {
       state.word = action.payload;
     },
-    isSongEnd: (state, action) => {
+    endSong: (state, action) => {
       const { comboResults, currentScore, maxNotesNumber } = action.payload;
 
       const missNumber =
@@ -42,9 +44,22 @@ export const gameSlice = createSlice({
       state.comboResults = results;
       state.end = true;
     },
+    resetRecords: (state) => {
+      const initialResults = {
+        excellent: 0,
+        good: 0,
+        miss: 0,
+      };
+
+      state.comboResults = initialResults;
+      state.currentCombo = 0;
+      state.totalScore = 0;
+      state.end = false;
+      state.word = "";
+    },
   },
 });
 
-export const { updateScore, updateCombo, isSongEnd, updateWord } =
+export const { updateScore, updateCombo, endSong, updateWord, resetRecords } =
   gameSlice.actions;
 export default gameSlice.reducer;

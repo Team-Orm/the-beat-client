@@ -1,20 +1,28 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Navigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
-import { RECEIVE_RESULTS, SEND_RESULTS, USER_OUT } from "../../store/constants";
+import { resetRecords } from "../../features/reducers/gameSlice";
+import { RECEIVE_RESULTS, SEND_RESULTS } from "../../store/constants";
 
 export default function BattleResults() {
+  const dispatch = useDispatch();
+  const { resultId } = useParams();
   const comboResults = useSelector((state) => state.game.comboResults);
   const totalScore = useSelector((state) => state.game.totalScore);
   const [socket, setSocket] = useState();
   const [battleUserProfile, setBattleUserProfile] = useState({});
   const [battleUserResults, setBattleUserResults] = useState({});
-  const { resultId } = useParams();
-  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
+  const [shouldNavigate, setShouldNavigate] = useState(false);
+
+  const handleExit = useCallback(() => {
+    setShouldNavigate(true);
+    dispatch(resetRecords());
+  }, [dispatch]);
 
   const localStorageUser = localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user"))
@@ -28,21 +36,49 @@ export default function BattleResults() {
         uid: localStorageUser?.uid,
       };
 
-  const handleOut = () => {
-    navigate("/");
-  };
+  useEffect(() => {
+    if (displayName && uid && resultId) {
+      const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
+        cors: {
+          origin: "*",
+          methods: ["GET", "POST"],
+        },
+        query: { displayName, photoURL, uid, resultId },
+      });
+      setSocket(socketClient);
 
-  socket?.emit(SEND_RESULTS, comboResults, totalScore);
+      return () => {
+        socketClient.disconnect();
+      };
+    }
+  }, [resultId, displayName, photoURL, uid]);
+
+  const sendResults = useCallback(() => {
+    if (resultId && totalScore && comboResults && socket) {
+      socket?.emit(SEND_RESULTS, comboResults, totalScore);
+    }
+  }, [comboResults, resultId, socket, totalScore]);
+
+  setInterval(() => {
+    sendResults();
+  }, 500);
 
   useEffect(() => {
     const deleteBattle = async () => {
       const roomId = resultId;
+      const jwt = localStorage.getItem("jwt");
+
       const response = await axios.delete(
         `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+        {
+          headers: {
+            authorization: `Bearer ${jwt}`,
+          },
+        },
       );
 
       if (response.status === 204) {
-        console.log("battleroom is deleted");
+        setReady(true);
       }
     };
 
@@ -50,33 +86,25 @@ export default function BattleResults() {
   }, [resultId]);
 
   useEffect(() => {
-    socket?.on(RECEIVE_RESULTS, (comboResults, totalScore, user) => {
-      setBattleUserResults(comboResults);
-      setBattleUserProfile({ totalScore, user });
-    });
+    if (socket) {
+      const receiveResultsListener = (comboResults, totalScore, user) => {
+        if (totalScore !== 0 && comboResults.excellent !== 0 && user) {
+          setBattleUserResults(comboResults);
+          setBattleUserProfile({ totalScore, user });
+        }
+      };
 
-    socket?.on(USER_OUT, () => {
-      console.log("User is out");
-    });
-  }, [comboResults, resultId, socket, totalScore]);
+      socket.on(RECEIVE_RESULTS, receiveResultsListener);
 
-  useEffect(() => {
-    const socketClient = io(`${process.env.REACT_APP_SOCKET_URL}/results/`, {
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-      },
-      query: { displayName, photoURL, uid, resultId },
-    });
-    setSocket(socketClient);
-
-    return () => {
-      socketClient.disconnect();
-    };
-  }, [displayName, photoURL, resultId, uid]);
+      return () => {
+        socket.off(RECEIVE_RESULTS, receiveResultsListener);
+      };
+    }
+  }, [socket]);
 
   return (
     <BattleResultsContainer>
+      {shouldNavigate && ready && <Navigate to="/" />}
       <PageTitle>Results</PageTitle>
       <ResultsWrapper>
         <ResultPanel>
@@ -110,15 +138,17 @@ export default function BattleResults() {
               <Emoji>🥸</Emoji>
             )}
             <ResultsBox>
-              {battleUserProfile && battleUserProfile?.user?.displayName}
+              {battleUserProfile.user?.displayName !== null &&
+                battleUserProfile?.user?.displayName}
             </ResultsBox>
           </UserContainer>
-          {Object.keys(battleUserResults).map((key) => (
-            <RecordsContainer key={key}>
-              <ResultsBox>{key}</ResultsBox>
-              <Score>{battleUserResults[key]}</Score>
-            </RecordsContainer>
-          ))}
+          {battleUserResults.excellent !== 0 &&
+            Object.keys(battleUserResults).map((key) => (
+              <RecordsContainer key={key}>
+                <ResultsBox>{key}</ResultsBox>
+                <Score>{battleUserResults[key]}</Score>
+              </RecordsContainer>
+            ))}
           <StyledHr />
           <RecordsContainer>
             <ResultsBox>TotalScore: </ResultsBox>
@@ -128,7 +158,7 @@ export default function BattleResults() {
       </ResultsWrapper>
       <ButtonContainer>
         <ActionButton type="button">기록하기</ActionButton>
-        <ActionButton type="button" onClick={handleOut}>
+        <ActionButton type="button" onClick={() => handleExit()}>
           나가기
         </ActionButton>
       </ButtonContainer>

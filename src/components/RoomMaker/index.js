@@ -7,8 +7,8 @@ import { auth } from "../../features/api/firebaseApi";
 export default function RoomMaker() {
   const navigate = useNavigate();
   const [songs, setSongs] = useState([]);
-  const [hoveredSong, setHoveredSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hoveredSong, setHoveredSong] = useState(null);
   const [selectedSong, setSelectedSong] = useState(null);
   const audioRef = useRef(null);
 
@@ -42,16 +42,35 @@ export default function RoomMaker() {
 
       throw new Error(response);
     } catch (err) {
-      const errorResponse = err.response || {};
       navigate("/error", {
         state: {
-          status: errorResponse.status || 500,
-          text: errorResponse.statusText || "Unknown Error",
-          message: errorResponse.data?.message || "An unknown error occurred.",
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
         },
       });
     }
   };
+
+  const renderSong = useCallback(
+    (song, index) => (
+      <SongContainer
+        key={song._id}
+        data-testid={song._id}
+        onMouseEnter={() => setHoveredSong(song)}
+        onMouseLeave={() => setHoveredSong(null)}
+        onClick={() => handleSelect(song._id)}
+        index={index}
+      >
+        <ProfileImage src={song.imageURL} />
+        <SongTitleText>
+          {song.title} - {song.artist}
+        </SongTitleText>
+        <CheckBox>{selectedSong === song._id ? "✅" : null}</CheckBox>
+      </SongContainer>
+    ),
+    [handleSelect, selectedSong],
+  );
 
   useEffect(() => {
     const getRoomsData = async () => {
@@ -73,13 +92,11 @@ export default function RoomMaker() {
 
         throw new Error(response);
       } catch (err) {
-        const errorResponse = err.response || {};
         navigate("/error", {
           state: {
-            status: errorResponse.status || 500,
-            text: errorResponse.statusText || "Unknown Error",
-            message:
-              errorResponse.data?.message || "An unknown error occurred.",
+            status: err.response?.status,
+            text: err.response?.statusText,
+            message: err.response?.data?.message,
           },
         });
       }
@@ -99,26 +116,6 @@ export default function RoomMaker() {
       }
     }
   }, [hoveredSong, isPlaying]);
-
-  const renderSong = useCallback(
-    (song, index) => (
-      <SongContainer
-        key={song._id}
-        data-testid={song._id}
-        onMouseEnter={() => setHoveredSong(song)}
-        onMouseLeave={() => setHoveredSong(null)}
-        onClick={() => handleSelect(song._id)}
-        index={index}
-      >
-        <ProfileImage src={song.imageURL} />
-        <SongTitleText>
-          {song.title} - {song.artist}
-        </SongTitleText>
-        <CheckBox>{selectedSong === song._id ? "✅" : null}</CheckBox>
-      </SongContainer>
-    ),
-    [handleSelect, selectedSong],
-  );
 
   return (
     <RoomMakerContainer
