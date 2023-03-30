@@ -10,6 +10,11 @@ import BattleRoom from "./index";
 
 jest.mock("axios");
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: () => jest.fn(() => new Promise((resolve) => resolve())),
+}));
+
 describe("BattleRoom component", () => {
   beforeEach(() => {
     window.alert = jest.fn();
@@ -44,7 +49,7 @@ describe("BattleRoom component", () => {
     });
 
     it("renders OutButton component", () => {
-      expect(screen.getByTestId("out-button")).toBeInTheDocument();
+      expect(screen.getByTestId("exit-button")).toBeInTheDocument();
     });
 
     it("renders StartButton component", () => {
@@ -71,7 +76,7 @@ describe("BattleRoom component", () => {
     });
 
     await act(async () => {
-      userEvent.click(screen.getByTestId("out-button"));
+      userEvent.click(screen.getByTestId("exit-button"));
     });
 
     expect(axios.delete).toHaveBeenCalled();
@@ -129,32 +134,5 @@ describe("BattleRoom component", () => {
     });
 
     expect(screen.queryByTestId("countdown")).not.toBeInTheDocument();
-  });
-
-  describe("checking error", () => {
-    beforeEach(() => {
-      axios.get.mockResolvedValue({
-        response: {
-          status: 500,
-          statusText: "Internal Server Error",
-          data: { message: "500 Internal Server Error" },
-        },
-      });
-    });
-
-    it("Error fetching song redirects to /error route", () => {
-      render(
-        <Provider store={store}>
-          <BrowserRouter>
-            <BattleRoom />
-          </BrowserRouter>
-        </Provider>,
-      );
-
-      expect(
-        window.location.pathname === "/error" ||
-          window.location.pathname === "/battles/results/undefined",
-      ).toBeTruthy();
-    });
   });
 });

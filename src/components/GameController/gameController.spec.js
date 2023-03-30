@@ -4,10 +4,11 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
 import { BrowserRouter } from "react-router-dom";
 import store from "../../store/configureStore";
-import GameController, { calculateScore, Column, getColor, Key } from "./index";
+import GameController, { Column, Key } from "./index";
 import "jest-styled-components";
 import userEvent from "@testing-library/user-event";
 import { COLUMN_RGB_COLORS } from "../../store/constants";
+import { calculateScore, getColor } from "../../features/utils";
 
 describe("GameController Component", () => {
   const dummyNote = [{ key: "s", time: 0 }];
@@ -29,9 +30,9 @@ describe("GameController Component", () => {
         <BrowserRouter>
           <GameController
             isCurrentUser={true}
-            handleKeyPress={jest.fn()}
-            handleKeyRelease={jest.fn()}
-            note={[...dummyNote]}
+            sendKeyPressToOpponents={jest.fn()}
+            sendKeyReleaseToOpponents={jest.fn()}
+            initialNotes={[...dummyNote]}
           />
         </BrowserRouter>
       </Provider>,
@@ -60,17 +61,17 @@ describe("GameController Component", () => {
   });
 
   it("key events when key pressed", async () => {
-    const handleKeyPressMock = jest.fn();
-    const handleKeyReleaseMock = jest.fn();
+    const sendKeyPressToOpponentsMock = jest.fn();
+    const sendKeyReleaseToOpponentsMock = jest.fn();
 
     render(
       <Provider store={store}>
         <BrowserRouter>
           <GameController
             isCurrentUser={true}
-            handleKeyPress={handleKeyPressMock}
-            handleKeyRelease={handleKeyReleaseMock}
-            note={[...dummyNote]}
+            sendKeyPressToOpponents={sendKeyPressToOpponentsMock}
+            sendKeyReleaseToOpponents={sendKeyReleaseToOpponentsMock}
+            initialNotes={[...dummyNote]}
           />
         </BrowserRouter>
       </Provider>,
@@ -81,10 +82,10 @@ describe("GameController Component", () => {
     });
 
     await waitFor(() => {
-      expect(handleKeyPressMock).toHaveBeenCalledTimes(1);
-      expect(handleKeyPressMock).toHaveBeenCalledWith("s");
-      expect(handleKeyReleaseMock).toHaveBeenCalledTimes(1);
-      expect(handleKeyReleaseMock).toHaveBeenCalledWith("s");
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledTimes(1);
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledWith("s");
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledTimes(1);
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledWith("s");
     });
 
     await act(async () => {
@@ -92,25 +93,25 @@ describe("GameController Component", () => {
     });
 
     await waitFor(() => {
-      expect(handleKeyPressMock).toHaveBeenCalledTimes(2);
-      expect(handleKeyPressMock).toHaveBeenCalledWith("d");
-      expect(handleKeyReleaseMock).toHaveBeenCalledTimes(2);
-      expect(handleKeyReleaseMock).toHaveBeenCalledWith("d");
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledTimes(2);
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledWith("d");
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledTimes(2);
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledWith("d");
     });
   });
 
-  it("does not call handleKeyPress and handleKeyRelease when isCurrentUser is false", async () => {
-    const handleKeyPressMock = jest.fn();
-    const handleKeyReleaseMock = jest.fn();
+  it("does not call sendKeyPressToOpponents and sendKeyReleaseToOpponents when isCurrentUser is false", async () => {
+    const sendKeyPressToOpponentsMock = jest.fn();
+    const sendKeyReleaseToOpponentsMock = jest.fn();
 
     render(
       <Provider store={store}>
         <BrowserRouter>
           <GameController
             isCurrentUser={false}
-            handleKeyPress={handleKeyPressMock}
-            handleKeyRelease={handleKeyReleaseMock}
-            note={[...dummyNote]}
+            sendKeyPressToOpponents={sendKeyPressToOpponentsMock}
+            sendKeyReleaseToOpponents={sendKeyReleaseToOpponentsMock}
+            initialNotes={[...dummyNote]}
           />
         </BrowserRouter>
       </Provider>,
@@ -121,8 +122,8 @@ describe("GameController Component", () => {
     });
 
     await waitFor(() => {
-      expect(handleKeyPressMock).toHaveBeenCalledTimes(0);
-      expect(handleKeyReleaseMock).toHaveBeenCalledTimes(0);
+      expect(sendKeyPressToOpponentsMock).toHaveBeenCalledTimes(0);
+      expect(sendKeyReleaseToOpponentsMock).toHaveBeenCalledTimes(0);
     });
   });
 
