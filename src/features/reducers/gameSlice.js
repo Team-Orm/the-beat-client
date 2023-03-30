@@ -6,6 +6,11 @@ const comboResults = {
   miss: 0,
 };
 
+const user = {
+  displayName: "",
+  photoURL: "",
+};
+
 const initialState = {
   score: 0,
   totalScore: 0,

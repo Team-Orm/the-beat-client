@@ -238,22 +238,25 @@ export default function Lobby() {
           <RoomsContainer>
             <RoomsLists>
               {roomsList.length
-                ? roomsList.map(({ _id, createdBy, song }, index) => {
+                ? roomsList.map(({ _id, createdBy, song, mode }, index) => {
                     return (
-                      <Room key={_id} onClick={() => handleRoomClick(_id)}>
-                        <RoomName
-                          data-pt={`room-container-${index}`}
-                        >{`${createdBy} ${
-                          usersInRooms[_id]?.users.length
-                            ? usersInRooms[_id]?.users.length
-                            : 1
-                        } / 2`}</RoomName>
-                        <RoomSong>{song?.title}</RoomSong>
-                      </Room>
+                      mode !== "single" && (
+                        <Room key={_id} onClick={() => handleRoomClick(_id)}>
+                          <RoomName
+                            data-pt={`room-container-${index}`}
+                          >{`${createdBy} ${
+                            usersInRooms[_id]?.users.length
+                              ? usersInRooms[_id]?.users.length
+                              : 1
+                          } / 2`}</RoomName>
+                          <RoomSong>{song?.title}</RoomSong>
+                        </Room>
+                      )
                     );
                   })
                 : null}
             </RoomsLists>
+            <RoomButton onClick={() => navigate("/records")}>기록실</RoomButton>
           </RoomsContainer>
           <ChatContainer>
             <ChatsHead>Chats</ChatsHead>
@@ -293,20 +296,20 @@ export default function Lobby() {
               ))}
           </UserList>
           <RightBottom>
-            <LogoutButton
+            <ActionButton
               type="button"
               onClick={handleMakeRoom}
               data-pt="create-room"
             >
               방 만들기
-            </LogoutButton>
-            <LogoutButton
+            </ActionButton>
+            <ActionButton
               type="button"
               onClick={handleLogout}
               data-pt="logout-button"
             >
               Logout
-            </LogoutButton>
+            </ActionButton>
           </RightBottom>
         </RightContainer>
       </Container>
@@ -369,6 +372,7 @@ const LeftContainer = styled.div`
 `;
 
 const RoomsContainer = styled.div`
+  position: relative;
   flex: 5;
   display: flex;
   justify-content: flex-start;
@@ -421,6 +425,27 @@ const RoomSong = styled.div`
   border-bottom-right-radius: 30px;
   background-color: white;
   color: black;
+`;
+
+const RoomButton = styled.button`
+  position: absolute;
+  bottom: -12.5%;
+  right: 5%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 10vw;
+  height: 6vh;
+  background-color: transparent;
+  border-radius: 10px;
+  border: 3px solid rgba(0, 0, 0, 0.5);
+  font-size: 2em;
+  color: gray;
+
+  :hover {
+    color: skyBlue;
+    border: 3px solid skyBlue;
+  }
 `;
 
 const ChatContainer = styled.div`
@@ -541,9 +566,9 @@ const RightBottom = styled.div`
   justify-content: space-around;
 `;
 
-const LogoutButton = styled.button`
-  width: 200px;
-  height: 75px;
+const ActionButton = styled.button`
+  width: 10vw;
+  height: 7.5vh;
   background-color: transparent;
   border-radius: 10px;
   border: 3px solid rgba(0, 0, 0, 0.5);

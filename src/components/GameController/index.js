@@ -284,7 +284,7 @@ export default function GameController({
 
       renderNotes(now, deltaRef.current, ctx, visibleNotes);
 
-      if (timeRef.current >= songDuration + 3) {
+      if (timeRef.current >= songDuration) {
         if (
           !songEndRef.current &&
           comboResults.excellent > 0 &&
