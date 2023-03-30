@@ -19,7 +19,26 @@ export default function BattleResults() {
   const [ready, setReady] = useState(false);
   const [shouldNavigate, setShouldNavigate] = useState(false);
 
+  const deleteBattle = useCallback(async () => {
+    const roomId = resultId;
+    const jwt = localStorage.getItem("jwt");
+
+    const response = await axios.delete(
+      `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+      {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+      },
+    );
+
+    if (response.status === 204) {
+      setReady(true);
+    }
+  }, [resultId]);
+
   const handleExit = useCallback(() => {
+    deleteBattle();
     setShouldNavigate(true);
     dispatch(resetRecords());
   }, [dispatch]);
@@ -62,28 +81,6 @@ export default function BattleResults() {
   setInterval(() => {
     sendResults();
   }, 500);
-
-  useEffect(() => {
-    const deleteBattle = async () => {
-      const roomId = resultId;
-      const jwt = localStorage.getItem("jwt");
-
-      const response = await axios.delete(
-        `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
-        {
-          headers: {
-            authorization: `Bearer ${jwt}`,
-          },
-        },
-      );
-
-      if (response.status === 204) {
-        setReady(true);
-      }
-    };
-
-    deleteBattle();
-  }, [resultId]);
 
   useEffect(() => {
     if (socket) {
