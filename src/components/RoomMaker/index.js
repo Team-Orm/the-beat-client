@@ -16,7 +16,7 @@ export default function RoomMaker() {
     setSelectedSong((prev) => (prev === roomId ? null : roomId));
   }, []);
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = async (mode) => {
     try {
       const selected = songs.find((song) => song._id === selectedSong);
       const jwt = localStorage.getItem("jwt");
@@ -28,6 +28,7 @@ export default function RoomMaker() {
           song: selected,
           createdBy: user ? user.name : auth.currentUser.displayName,
           uid: user ? user.uid : auth.currentUser.uid,
+          mode,
         },
         {
           headers: {
@@ -37,6 +38,10 @@ export default function RoomMaker() {
       );
 
       if (response.status === 201) {
+        if (mode === "single") {
+          return navigate(`/battles/single/${response.data.room._id}`);
+        }
+
         return navigate(`/battles/${response.data.room._id}`);
       }
 
@@ -73,7 +78,7 @@ export default function RoomMaker() {
   );
 
   useEffect(() => {
-    const getRoomsData = async () => {
+    const getSongs = async () => {
       try {
         const jwt = localStorage.getItem("jwt");
 
@@ -102,7 +107,7 @@ export default function RoomMaker() {
       }
     };
 
-    getRoomsData();
+    getSongs();
   }, [navigate]);
 
   useEffect(() => {
@@ -144,10 +149,17 @@ export default function RoomMaker() {
         </ActionButton>
         <ActionButton
           type="button"
-          onClick={handleCreateRoom}
+          onClick={() => handleCreateRoom("battle")}
           hovered={hoveredSong !== null}
         >
           만들기
+        </ActionButton>
+        <ActionButton
+          type="button"
+          onClick={() => handleCreateRoom("single")}
+          hovered={hoveredSong !== null}
+        >
+          싱글플레이
         </ActionButton>
       </ButtonContainer>
     </RoomMakerContainer>

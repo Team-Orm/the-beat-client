@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import styled from "styled-components";
 import { auth } from "../../features/api/firebaseApi";
@@ -9,6 +9,7 @@ import { resetRecords } from "../../features/reducers/gameSlice";
 import { RECEIVE_RESULTS, SEND_RESULTS } from "../../store/constants";
 
 export default function BattleResults() {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { resultId } = useParams();
   const comboResults = useSelector((state) => state.game.comboResults);
@@ -19,7 +20,26 @@ export default function BattleResults() {
   const [ready, setReady] = useState(false);
   const [shouldNavigate, setShouldNavigate] = useState(false);
 
+  const deleteBattle = useCallback(async () => {
+    const roomId = resultId;
+    const jwt = localStorage.getItem("jwt");
+
+    const response = await axios.delete(
+      `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
+      {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+      },
+    );
+
+    if (response.status === 204) {
+      setReady(true);
+    }
+  }, [resultId]);
+
   const handleExit = useCallback(() => {
+    deleteBattle();
     setShouldNavigate(true);
     dispatch(resetRecords());
   }, [dispatch]);
@@ -35,6 +55,40 @@ export default function BattleResults() {
         photoURL: null,
         uid: localStorageUser?.uid,
       };
+
+  const saveRecord = useCallback(async () => {
+    const jwt = localStorage.getItem("jwt");
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_SERVER_URL}/api/records/new`,
+        {
+          uid,
+          displayName,
+          photoURL,
+          totalScore,
+          resultId,
+        },
+        {
+          headers: {
+            authorization: `Bearer ${jwt}`,
+          },
+        },
+      );
+
+      if (response.status === 201) {
+        alert("성공적으로 저장 되었습니다.");
+      }
+    } catch (err) {
+      navigate("/error", {
+        state: {
+          status: err.response?.status,
+          text: err.response?.statusText,
+          message: err.response?.data?.message,
+        },
+      });
+    }
+  }, [displayName, navigate, photoURL, resultId, totalScore, uid]);
 
   useEffect(() => {
     if (displayName && uid && resultId) {
@@ -61,29 +115,7 @@ export default function BattleResults() {
 
   setInterval(() => {
     sendResults();
-  }, 500);
-
-  useEffect(() => {
-    const deleteBattle = async () => {
-      const roomId = resultId;
-      const jwt = localStorage.getItem("jwt");
-
-      const response = await axios.delete(
-        `${process.env.REACT_APP_SERVER_URL}/api/rooms/${roomId}`,
-        {
-          headers: {
-            authorization: `Bearer ${jwt}`,
-          },
-        },
-      );
-
-      if (response.status === 204) {
-        setReady(true);
-      }
-    };
-
-    deleteBattle();
-  }, [resultId]);
+  }, 250);
 
   useEffect(() => {
     if (socket) {
@@ -131,33 +163,43 @@ export default function BattleResults() {
           <Winner>
             {battleUserProfile?.totalScore > totalScore ? "Winner" : "Loser"}
           </Winner>
-          <UserContainer>
-            {battleUserProfile?.user?.photoURL !== "null" ? (
-              <UserImage src={battleUserProfile?.user?.photoURL} />
-            ) : (
-              <Emoji>🥸</Emoji>
-            )}
-            <ResultsBox>
-              {battleUserProfile.user?.displayName !== null &&
-                battleUserProfile?.user?.displayName}
-            </ResultsBox>
-          </UserContainer>
-          {battleUserResults.excellent !== 0 &&
-            Object.keys(battleUserResults).map((key) => (
-              <RecordsContainer key={key}>
-                <ResultsBox>{key}</ResultsBox>
-                <Score>{battleUserResults[key]}</Score>
+          {battleUserProfile ? (
+            <>
+              <UserContainer>
+                {battleUserProfile?.user?.photoURL !== "null" ? (
+                  <UserImage src={battleUserProfile?.user?.photoURL} />
+                ) : (
+                  <Emoji>🥸</Emoji>
+                )}
+                <ResultsBox>
+                  {battleUserProfile.user?.displayName !== null &&
+                    battleUserProfile?.user?.displayName}
+                </ResultsBox>
+              </UserContainer>
+              {battleUserResults.excellent !== 0 &&
+                Object.keys(battleUserResults).map((key) => (
+                  <RecordsContainer key={key}>
+                    <ResultsBox>{key}</ResultsBox>
+                    <Score>{battleUserResults[key]}</Score>
+                  </RecordsContainer>
+                ))}
+              {battleUserProfile?.totalScore ? <StyledHr /> : null}
+              <RecordsContainer>
+                {battleUserProfile?.totalScore ? (
+                  <ResultsBox>TotalScore: </ResultsBox>
+                ) : null}
+                <Score>
+                  {battleUserProfile && battleUserProfile?.totalScore}
+                </Score>
               </RecordsContainer>
-            ))}
-          <StyledHr />
-          <RecordsContainer>
-            <ResultsBox>TotalScore: </ResultsBox>
-            <Score>{battleUserProfile && battleUserProfile?.totalScore}</Score>
-          </RecordsContainer>
+            </>
+          ) : null}
         </ResultPanel>
       </ResultsWrapper>
       <ButtonContainer>
-        <ActionButton type="button">기록하기</ActionButton>
+        <ActionButton type="button" onClick={() => saveRecord()}>
+          기록하기
+        </ActionButton>
         <ActionButton type="button" onClick={() => handleExit()}>
           나가기
         </ActionButton>
