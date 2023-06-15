@@ -2,7 +2,7 @@
 
 # Introduction
 
-The Beat는 실시간 통신을 이용한 웹브라우저 기반 리듬게임입니다.
+The Beat는 실시간 통신을 이용한 배틀형 리듬게임 웹 어플리케이션입니다.
 
 # 📖 Table of Contents
 
