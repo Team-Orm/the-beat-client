@@ -228,92 +228,103 @@ export default function Lobby() {
   }, [displayName, photoURL, uid]);
 
   return (
-    <Background data-pt="element-after-login">
-      <HeaderContainer data-testid="header-container">
-        <LeftHeader>Room</LeftHeader>
-        <RightHeader>User</RightHeader>
-      </HeaderContainer>
-      <Container data-testid="lobby-container">
-        <LeftContainer>
-          <RoomsContainer>
-            <RoomsLists>
-              {roomsList.length
-                ? roomsList.map(({ _id, createdBy, song, mode }, index) => {
-                    return (
-                      mode !== "single" && (
-                        <Room key={_id} onClick={() => handleRoomClick(_id)}>
-                          <RoomName
-                            data-pt={`room-container-${index}`}
-                          >{`${createdBy} ${
-                            usersInRooms[_id]?.users.length
-                              ? usersInRooms[_id]?.users.length
-                              : 1
-                          } / 2`}</RoomName>
-                          <RoomSong>{song?.title}</RoomSong>
-                        </Room>
-                      )
-                    );
-                  })
-                : null}
-            </RoomsLists>
-            <RoomButton onClick={() => navigate("/records")}>기록실</RoomButton>
-          </RoomsContainer>
-          <ChatContainer>
-            <ChatsHead>Chats</ChatsHead>
-            <ChatList ref={chatListRef}>
-              {receivedMessages.map(({ user, chat }, index) => (
-                // eslint-disable-next-line react/no-array-index-key
-                <Chats key={user + chat + index}>
-                  {user}: {chat}
-                </Chats>
-              ))}
-            </ChatList>
-          </ChatContainer>
-          <ChatInputContainer onSubmit={handleSendMessage}>
-            <ChatMessageInput
-              type="text"
-              value={chatMessage}
-              onChange={handleChatMessageChange}
-            />
-            <ChatSubmitButton>Send</ChatSubmitButton>
-          </ChatInputContainer>
-        </LeftContainer>
-        <RightContainer>
-          <UserList>
-            {currentUserList &&
-              currentUserList?.map(({ photoURL, displayName }, index) => (
-                // eslint-disable-next-line react/no-array-index-key
-                <User key={photoURL + index}>
-                  {photoURL !== "null" ? (
-                    <ProfilePicture src={photoURL} alt="😃" />
-                  ) : (
-                    "😃"
-                  )}
-                  <ProfileText data-pt={`user-container-${index}`}>
-                    {displayName}
-                  </ProfileText>
-                </User>
-              ))}
-          </UserList>
-          <RightBottom>
-            <ActionButton
-              type="button"
-              onClick={handleMakeRoom}
-              data-pt="create-room"
-            >
-              방 만들기
-            </ActionButton>
-            <ActionButton
-              type="button"
-              onClick={handleLogout}
-              data-pt="logout-button"
-            >
-              Logout
-            </ActionButton>
-          </RightBottom>
-        </RightContainer>
-      </Container>
-    </Background>
+    <>
+      <Background data-pt="element-after-login">
+        <HeaderContainer data-testid="header-container">
+          <LeftHeader>Room</LeftHeader>
+          <RightHeader>User</RightHeader>
+        </HeaderContainer>
+        <Container data-testid="lobby-container">
+          <LeftContainer>
+            <RoomsContainer>
+              <RoomsLists>
+                {roomsList.length
+                  ? roomsList.map(({ _id, createdBy, song, mode }, index) => {
+                      return (
+                        mode !== "single" && (
+                          <Room key={_id} onClick={() => handleRoomClick(_id)}>
+                            <RoomName
+                              data-pt={`room-container-${index}`}
+                            >{`${createdBy} ${
+                              usersInRooms[_id]?.users.length
+                                ? usersInRooms[_id]?.users.length
+                                : 1
+                            } / 2`}</RoomName>
+                            <RoomSong>{song?.title}</RoomSong>
+                          </Room>
+                        )
+                      );
+                    })
+                  : null}
+              </RoomsLists>
+              <RoomButton onClick={() => navigate("/records")}>
+                기록실
+              </RoomButton>
+            </RoomsContainer>
+            <ChatContainer>
+              <ChatsHead>Chats</ChatsHead>
+              <ChatList ref={chatListRef}>
+                {receivedMessages.map(({ user, chat }, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <Chats key={user + chat + index}>
+                    {user}: {chat}
+                  </Chats>
+                ))}
+              </ChatList>
+            </ChatContainer>
+            <ChatInputContainer onSubmit={handleSendMessage}>
+              <ChatMessageInput
+                type="text"
+                value={chatMessage}
+                onChange={handleChatMessageChange}
+              />
+              <ChatSubmitButton>Send</ChatSubmitButton>
+            </ChatInputContainer>
+          </LeftContainer>
+          <RightContainer>
+            <UserList>
+              {currentUserList &&
+                currentUserList?.map(({ photoURL, displayName }, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <User key={photoURL + index}>
+                    {photoURL !== "null" ? (
+                      <ProfilePicture src={photoURL} alt="😃" />
+                    ) : (
+                      "😃"
+                    )}
+                    <ProfileText data-pt={`user-container-${index}`}>
+                      {displayName}
+                    </ProfileText>
+                  </User>
+                ))}
+            </UserList>
+            <RightBottom>
+              <ActionButton
+                type="button"
+                onClick={handleMakeRoom}
+                data-pt="create-room"
+              >
+                방 만들기
+              </ActionButton>
+              <ActionButton
+                type="button"
+                onClick={handleLogout}
+                data-pt="logout-button"
+              >
+                Logout
+              </ActionButton>
+            </RightBottom>
+          </RightContainer>
+        </Container>
+      </Background>
+      <MobileBackground>
+        <MobileMessage>
+          <div>Sorry, We don&apos;t support our service</div>
+          <div>on Mobile or Tablet.</div>
+          <div>Try on Chrome please.</div>
+        </MobileMessage>
+      </MobileBackground>
+    </>
   );
 }
 
@@ -326,6 +337,10 @@ const Background = styled.div`
   background-image: url("/lobby.png");
   background-size: cover;
   background-position: center;
+
+  @media screen and (max-width: 1023px) {
+    display: none;
+  }
 `;
 
 const Container = styled.div`
@@ -578,5 +593,34 @@ const ActionButton = styled.button`
   :hover {
     color: skyBlue;
     border: 3px solid skyBlue;
+  }
+`;
+
+const MobileBackground = styled.div`
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-image: linear-gradient(to bottom, rgb(4, 11, 23), rgb(51, 15, 46));
+
+  @media screen and (max-width: 1023px) {
+    display: block;
+  }
+`;
+
+const MobileMessage = styled.div`
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  z-index: 10;
+  color: black;
+
+  @media screen and (max-width: 1023px) {
+    display: block;
   }
 `;

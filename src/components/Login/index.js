@@ -108,81 +108,90 @@ export default function Login() {
   }, [auth.currentUser, navigate]);
 
   return (
-    <Container data-testid="login-container">
-      <Title>The Beat</Title>
-      <Main>
-        <Message data-pt="message">
-          {message || "Press Login Button to Start"}
-        </Message>
-        <LoginContainer>
-          <ActionButton type="button" onClick={handleGoogleLogin}>
-            Google Social Login
-          </ActionButton>
-          <ActionButton
-            type="button"
-            onClick={showLocalLogin}
-            data-pt="login-button"
-          >
-            User Login
-          </ActionButton>
-          <ActionButton
-            type="button"
-            onClick={showRegister}
-            data-pt="register-button"
-          >
-            User Register
-          </ActionButton>
-          {(login || register) && (
-            <Modal>
-              <FormContainer
-                onSubmit={register ? handleRegister : handleLocalLogin}
-              >
-                {register ? (
+    <>
+      <Container data-testid="login-container">
+        <Title>The Beat</Title>
+        <Main>
+          <Message data-pt="message">
+            {message || "Press Login Button to Start"}
+          </Message>
+          <LoginContainer>
+            <ActionButton type="button" onClick={handleGoogleLogin}>
+              Google Social Login
+            </ActionButton>
+            <ActionButton
+              type="button"
+              onClick={showLocalLogin}
+              data-pt="login-button"
+            >
+              User Login
+            </ActionButton>
+            <ActionButton
+              type="button"
+              onClick={showRegister}
+              data-pt="register-button"
+            >
+              User Register
+            </ActionButton>
+            {(login || register) && (
+              <Modal>
+                <FormContainer
+                  onSubmit={register ? handleRegister : handleLocalLogin}
+                >
+                  {register ? (
+                    <FormInput
+                      type="text"
+                      placeholder="이름"
+                      value={name}
+                      name="name"
+                      onChange={handleInput}
+                      required
+                      data-pt="register-name"
+                    />
+                  ) : null}
                   <FormInput
-                    type="text"
-                    placeholder="이름"
-                    value={name}
-                    name="name"
+                    type="email"
+                    placeholder="이메일"
+                    value={email}
+                    name="email"
                     onChange={handleInput}
                     required
-                    data-pt="register-name"
+                    data-pt={register ? "register-email" : "login-email"}
                   />
-                ) : null}
-                <FormInput
-                  type="email"
-                  placeholder="이메일"
-                  value={email}
-                  name="email"
-                  onChange={handleInput}
-                  required
-                  data-pt={register ? "register-email" : "login-email"}
-                />
-                <FormInput
-                  type="password"
-                  placeholder="비밀번호"
-                  value={password}
-                  name="password"
-                  onChange={handleInput}
-                  required
-                  data-pt={register ? "register-password" : "login-password"}
-                />
-                <SubmitButton type="submit" data-pt="submit-button">
-                  {register ? "Register" : "Login"}
-                </SubmitButton>
-                <SubmitButton
-                  type="button"
-                  onClick={() =>
-                    register ? setRegister(false) : setLogin(false)
-                  }
-                >
-                  나가기
-                </SubmitButton>
-              </FormContainer>
-            </Modal>
-          )}
-        </LoginContainer>
-      </Main>
-    </Container>
+                  <FormInput
+                    type="password"
+                    placeholder="비밀번호"
+                    value={password}
+                    name="password"
+                    onChange={handleInput}
+                    required
+                    data-pt={register ? "register-password" : "login-password"}
+                  />
+                  <SubmitButton type="submit" data-pt="submit-button">
+                    {register ? "Register" : "Login"}
+                  </SubmitButton>
+                  <SubmitButton
+                    type="button"
+                    onClick={() =>
+                      register ? setRegister(false) : setLogin(false)
+                    }
+                  >
+                    나가기
+                  </SubmitButton>
+                </FormContainer>
+              </Modal>
+            )}
+          </LoginContainer>
+        </Main>
+      </Container>
+      <MobileBackground>
+        <MobileMessage>
+          <div>Sorry, We don&apos;t support our service</div>
+          <div>on Mobile or Tablet.</div>
+          <div>Try on Chrome please.</div>
+        </MobileMessage>
+      </MobileBackground>
+    </>
   );
 }
 
@@ -196,6 +205,10 @@ const Container = styled.div`
   background-image: url("login.png");
   background-size: cover;
   background-position: center;
+
+  @media screen and (max-width: 1023px) {
+    display: none;
+  }
 `;
 
 const Title = styled.div`
@@ -284,4 +297,33 @@ const SubmitButton = styled.button`
   font-size: 16px;
   border-radius: 5px;
   box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3), -3px -3px 7px #ffffff;
+`;
+
+const MobileBackground = styled.div`
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-image: linear-gradient(to bottom, rgb(4, 11, 23), rgb(51, 15, 46));
+
+  @media screen and (max-width: 1023px) {
+    display: block;
+  }
+`;
+
+const MobileMessage = styled.div`
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  color: white;
+  gap: 10px;
+
+  @media screen and (max-width: 1023px) {
+    display: block;
+  }
 `;

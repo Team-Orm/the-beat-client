@@ -2,13 +2,14 @@
 
 # Introduction
 
-The Beat는 실시간 통신을 이용한 웹브라우저 기반 리듬게임입니다.
+The Beat는 실시간 통신을 이용한 배틀형 리듬게임 웹 어플리케이션입니다.
 
 # 📖 Table of Contents
 
 - [🎶 The beat](#🎶-the-beat)
 - [💪 Motivation](#💪-motivation)
-- [🔥 Challenges](#🔥-challenges)
+- [🎥시연 화면](#🎥-시연-화면)
+- [🔥 Issue Points](#🔥-issue-points)
 
 * [Canvas API를 통해 리듬게임을 어떻게 구현할까?](#1-canvas-api를-통해-리듬게임을-어떻게-구현할까)
   - [1) Canvas API를 선택한 이유](#1-canvas-api를-선택한-이유)
@@ -50,6 +51,10 @@ The Beat는 실시간 통신을 이용한 웹브라우저 기반 리듬게임입
 부트캠프에서 8주간 학습했던 기술스택들을 이번 프로젝트에서 심층적으로 사용하고 싶었습니다. 실시간 통신을 이용하고, 시각적으로 재미있는 프로젝트를 고민해보다 리듬게임이라는 아이디어를 생각하였습니다.
 
 기존에 만들어진 리듬게임을 확인해보며 웹으로 직접 리듬 게임을 직접 구현해보고 실시간으로 통신도 하면 팀원들과 재미있게 만들수 있겠다! 라는 생각으로 The Beat 프로젝트를 시작하게 되었습니다.
+
+# 🎥 시연 화면
+
+Video
 
 # 🔥 Issue Points
 
