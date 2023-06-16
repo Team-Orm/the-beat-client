@@ -434,8 +434,10 @@ const RoomSong = styled.div`
   bottom: 0;
   right: 0;
   display: flex;
-  justify-content: flex-end;
-  padding: 20px 40px;
+  justify-content: center;
+  align-items: center;
+  width: 30%;
+  height: 100%;
   border-top-right-radius: 30px;
   border-bottom-right-radius: 30px;
   background-color: white;
