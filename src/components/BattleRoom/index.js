@@ -188,14 +188,14 @@ export default function BattleRoom({
     socket?.on(RECEIVE_USER, (currentUserArray) => {
       const battleUser = Object.values(currentUserArray).filter(
         (u) => u.uid !== uid,
-      );
+      ); // BattleRoom안에 User의 정보와 다른 user를 battleUser로 상태 저장
 
       setBattleUser(battleUser[0]);
     });
 
-    socket?.emit(SEND_BATTLES, score, combo, word);
+    socket?.emit(SEND_BATTLES, score, combo, word); // 내가 친 score, combo로 보냄.
     socket?.on(RECEIVE_BATTLES, (score, combo, word) => {
-      setbattleUserResults({ score, combo, word });
+      setbattleUserResults({ score, combo, word }); // 내가 보낸 정보를 상대방은 BattleUser의 score와, combo로 받음.
     });
 
     socket?.on(USER_LEFT, (uid) => {

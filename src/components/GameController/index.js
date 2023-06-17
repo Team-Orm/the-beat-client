@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -87,12 +88,12 @@ export default function GameController({
           note.key === key && note.positionY >= positionOfHitBox - noteHeight,
       );
 
-      // If there are no notes close to the hitbox, do nothing
+      // 히트박스에 가까운 노트가 없다면 early return;
       if (notesCloseToHitBox.length === 0) {
         return;
       }
 
-      // Find the note with the minimum timeFromNoteToHitBox
+      // 노트가 히트박스까지 가는 시간을 할당.
       const targetNote = notesCloseToHitBox.reduce((minNote, currentNote) => {
         const minTimeFromNoteToHitBox = Math.abs(
           minNote?.time + timeToHitBoxMiddle - timeRef.current,
@@ -268,7 +269,7 @@ export default function GameController({
     [update],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let animationFrameId;
 
     const updateNotes = () => {

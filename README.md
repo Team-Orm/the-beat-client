@@ -23,20 +23,15 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
   - [델타 타임의 적용](#델타-타임의-적용)
   - [다음 프레임 호출은 `setTimeout`과 `requestAnimationFrame`중 무엇을 써야 할 까?](#다음-프레임-호출은-settimeout과-requestanimationframe중-무엇을-써야-할-까)
   - [`Miss` 처리](#miss-처리)
-* [Web Audio API를 이용해 오디오를 어떻게 시각화할까?](#web-audio-api를-이용해-오디오를-어떻게-시각화할까)
-  - [1) Web Audio API를 선택한 이유](#1-web-audio-api를-선택한-이유)
-  - [2) Web Audio API 기본 원리](#2-web-audio-api-기본-원리)
-  - [3) Audio Buffer와 Audio Context](#3-audio-buffer와-audio-context)
-* [CORS 문제 해결을 위해 어떻게 프록시 서버를 생성할 수 있을까?](#3-cors-문제-해결을-위해-어떻게-프록시-서버를-생성할-수-있을까)
-  - [1) 프록시 서버 생성](#1-프록시-서버-생성)
-  - [2) 프록시 서버란?](#2-프록시-서버란)
-  - [3) 프록시 서버 생성 방법](#3-프록시-서버-생성-방법)
-* [React Hooks 사용하며 예기치 않은 비동기적인 동작을 예측이 가능하게 처리 할 수 있을까?](#4-react-hooks-사용하며-예기치-않은-비동기적인-동작을-예측이-가능하게-처리-할-수-있을까)
-  - [1) React Hooks이란?](#1-react-hooks이란)
-  - [2) React Hooks의 기본적인 규칙과 염두에 두어야 할 점](#2-react-hooks의-기본적인-규칙과-염두에-두어야-할-점)
-  - [3) React Hooks를 사용할 때 예기치 않은 비동기적 동작을 처리하기 위한 방법](#3-react-hooks를-사용할-때-예기치-않은-비동기적-동작을-처리하기-위한-방법)
-* [socketio를 어떻게 최적화를 해줄까?](#5-socketio를-통한-실시간-배틀에서-어떻게-최적화를-해줄-수-있을까)
-  - [1) Socket.IO를 선택한 이유](#1-socketio를-선택한-이유)
+* [`Web Audio API`와 `Canvas API`의 싱크를 어떻게 맞출 수 있을까?](#web-audio-api와-canvas-api의-싱크를-어떻게-맞출-수-있을까)
+  - [`Web Audio API`를 선택한 이유](#web-audio-api를-선택한-이유)
+  - [`Web Audio API` 기본 원리](#web-audio-api-기본-원리)
+  - [`Web Audio API`와 `Canvas API` 연결하기](#web-audio-api와-canvas-api-연결하기)
+* [실시간 콤보, 이펙트, 결과창의 구현](#실시간-콤보-이펙트-결과창의-구현)
+  - [`Redux`를 선택한 이유](#1-프록시-서버-생성)
+  - [`useLayoutEffect`의 적용](#uselayouteffect의-적용)
+* [Latency를 어떻게 줄일 수 있을까?](#5-socketio를-통한-실시간-배틀에서-어떻게-최적화를-해줄-수-있을까)
+  - [`Socket.IO`를 선택한 이유](#1-socketio를-선택한-이유)
   - [2) Socket.IO로 실시간 기능을 구축하는 경우 염두에 두어야 할 점](#2-socketio로-실시간-기능을-구축하는-경우-염두에-두어야-할-점)
   - [3) socket.IO 최적화의 중요성](#2-socketio-최적화의-중요성)
   - [4) Socket.IO 최적화에 대한 몇 가지 규칙과 모범 사례](#3-socketio-최적화에-대한-몇-가지-규칙과-모범-사례)
@@ -55,9 +50,11 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 
 # **💪 Motivation**
 
-싱글 스레드 `JavaScript`를 이용해 게임을 만들어 보고 싶었습니다.
+저희 팀의 목표는 재밌는 프로젝트를 만들어 보자! 였습니다.
 
-그 중 실시간 통신과 `Canvas API`를 이용 할 수 있는, 시각적으로 재미있는 프로젝트를 고민해보다 리듬게임이라는 아이디어를 생각하고 시작하게 되었습니다.
+그 중 싱글스레드 `JavaScript`를 이용해 게임을 만들면 재밌지 않을까? 라는 물음으로부터 시작하였습니다.
+
+그렇게 실시간 통신과 `Canvas API`를 이용 할 수 있는, 시각적으로 재미있는 프로젝트를 고민하여 리듬게임이라는 아이디어를 선택하였습니다.
 
 # **🎥 서비스 화면**
 
@@ -80,12 +77,12 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 |                        | 정영빈 | 이상혁 | 허수빈 |
 | ---------------------- | -----: | -----: | -----: |
 | Login 페이지           |   100% |     0% |     0% |
-| Lobby 페이지           |    10% |    90% |        |
-| BattleRoom 페이지      |    70% |    20% |    10% |
-| BattleResults 페이지   |    80% |    20% |        |
+| Lobby 페이지           |        |   100% |        |
+| BattleRoom 페이지      |    70% |    30% |        |
+| BattleResults 페이지   |    70% |    30% |        |
 | RoomMaker 페이지       |   100% |        |        |
 | Records 페이지         |   100% |        |        |
-| AudioVisualizer 페이지 |    30% |        |    70% |
+| AudioVisualizer 페이지 |        |        |   100% |
 | Loading 페이지         |   100% |        |        |
 | GameController 기능    |   100% |        |        |
 | 유닛 테스트            |    30% |    70% |        |
@@ -97,18 +94,18 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 
 <br/>
 
-|                              | 정영빈 | 이상혁 | 허수빈 |
-| ---------------------------- | -----: | -----: | -----: |
-| 실시간 배틀 룸 기능          |   100% |        |     0% |
-| Login 기능                   |   100% |        |        |
-| 방 생성 기능                 |    80% |        |    20% |
-| Token 인증 기능              |   100% |        |        |
-| 오디오 프록시 서버 기능      |        |        |   100% |
-| 음악 데이터 연동             |        |   100% |        |
-| 스키마 디자인                |    50% |    50% |        |
-| 실시간 로비 방 렌더링 기능   |        |   100% |        |
-| 실시간 로비 유저 렌더링 기능 |        |   100% |        |
-| 유닛 테스트                  |        |        |   100% |
+|                         | 정영빈 | 이상혁 | 허수빈 |
+| ----------------------- | -----: | -----: | -----: |
+| 실시간 배틀 룸 기능     |   100% |        |     0% |
+| Login 기능              |   100% |        |        |
+| 방 생성 기능            |    80% |        |    20% |
+| Token 인증              |   100% |        |        |
+| 오디오 프록시 서버 기능 |        |        |   100% |
+| 음악 데이터 연동        |        |   100% |        |
+| 스키마 디자인           |    50% |    50% |        |
+| 실시간 로비 방 렌더링   |        |   100% |        |
+| 실시간 로비 유저 렌더링 |        |   100% |        |
+| 유닛 테스트             |        |        |   100% |
 
 </details>
 <br/>
@@ -228,7 +225,7 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 
 <br>
 
-### **`Web Audio API`!?**
+### **`Web Audio API`를 선택한 이유**
 
 <hr>
 
@@ -260,12 +257,11 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 
 여기서 Buffer가 무엇인지 알 필요가 있습니다.
 
-Buffer란?
-CPU와 보조기억장치 사이에서 사용되는 임시 저장 공간을 뜻합니다.
+`Buffer`란? RAM에 작은 영역인 `Buffer`란 이름의 버스 정류장을 만들어 일련의 데이터 스트림이 모이면 (출발 시간이 되면) 처리되기 위해 내보내어 집니다.
 
-이 임시 저장 공간에 Audio Data를 **8비트의 정수 배열로 변환 시켜 담아** 이걸 소스 노드와 연결 시킵니다.
+이 `Buffer`에 Audio Data를 **8비트의 정수 배열로 변환 시켜 담아** 이걸 `AudioContext`의 시작 지점인 `SoucrNode`와 연결 시킵니다.
 
-다음은 출력된 `AudioBuffer` 데이터입니다.
+다음은 `AudioBuffer` 예시입니다.
 
 <p>
   <img width="750" alt="image" src="https://user-images.githubusercontent.com/115068443/228592960-d7eba3c8-d267-4e9a-9a5c-f57c5f71c5ed.png">
@@ -273,15 +269,13 @@ CPU와 보조기억장치 사이에서 사용되는 임시 저장 공간을 뜻�
 
 <img width="350" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/1c2254de-72f5-4e88-bfc8-ccfda806d192">
 
-이렇게 연결된 SourceNode와 EffectsNode들의 작업을 통해 Destination으로 출력이 됩니다.
+이렇게 연결된 `SourceNode`와 일련의 작업 노드들의 가공을 통해 `Destination`(output)으로 출력이 됩니다.
 
 <img width="200" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/45ac2cf1-7a88-4d7f-94c6-e9ad197ffd71">
 
-이러한 작업 노드 들을 통해 목적지로 가게 됩니다.
-
 <br>
 
-### **Web Audio API와 Canvas API 연결하기**
+### **`Web Audio API`와 `Canvas API` 연결하기**
 
 <hr>
 
@@ -300,10 +294,10 @@ CPU와 보조기억장치 사이에서 사용되는 임시 저장 공간을 뜻�
 이렇게 변환한 `dataArray`와 `Canvas API`를 통해 data를 그려 줍니다.
 
 <p>
-<img width="550" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/6c7f366f-a057-4b6f-b652-90e66152571a">
+  <img width="550" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/6c7f366f-a057-4b6f-b652-90e66152571a">
 </p>
 <p>
-<img width="500" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/9fe0248f-1514-490e-93a4-d9ad18dd54d3">
+  <img width="500" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/9fe0248f-1514-490e-93a4-d9ad18dd54d3">
 </p>
 
 <img width="600" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/533cd0b1-8f25-47ea-9494-f4d018b03a75">
@@ -311,15 +305,111 @@ CPU와 보조기억장치 사이에서 사용되는 임시 저장 공간을 뜻�
 <br>
 <br>
 
-## **Socket.IO와 Redux의 결합**
+## **실시간 콤보, 이펙트, 결과창의 구현**
 
-이제 실시간으로 점수와 콤보 그리고 상대방의 이펙트들을 실시간으로 전송이 되어야 했습니다.
+<br>
+
+이제 실시간으로 노트가 히트될 때 마다 변화하는 스코어, 콤보, 이펙트 그리고 결과창을 구현하기 위해 실시간으로 통신이 이루어져야 했습니다.
 이를 위해서는 Redux를 통해 상대가 입력하는 정보와 내가 입력하는 정보를 나눌 필요가 있었습니다.
 
+<p>
+  <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/05510b05-2d41-44b6-aca7-6c33d56f3d1a">
+  <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/087ff138-8ce4-477f-8cdd-bbd3d9839a7b">
+</p>
+
+### **실시간으로 어떻게 표시해줄 수 있을까?**
+
+<hr>
+
+이제 나 자신의 점수와 스코어, 콤보를 관리하는 것 부터가 시작이었습니다.
+그 다음 관리된 정보를 상대방한테 보내주면 되겠다! 라는 프로세스를 정립하고 시작하였습니다.
+
+나 자신의 점수와 스코어, 콤보를 관리하기 위해서는 하나의 Resource에서 전부 관리해주는 것이 옳다고 판단하였고, 전역 상태 관리 툴인 Redux를 선택하게 되었습니다.
+
+1. 내 정보는 `useState`를 통해 관리
+
+<p>
+  <img width="250" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/dffd50de-0da9-495a-9a66-e329e4599446">
+</p>
+
+2. 상대방한테 내 정보를 표시하는 것은 `Redux`를 통해 관리한 내 정보를 `Socket`을 통해 전송하면 `Socket`에서는 `BattleUser`의 정보로 전달 받음.
+
+<p>
+  <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/b8da00b0-e326-4606-b59b-30c0173a36ad">
+</p>
+<p>
+  <img width="600" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/198354eb-9b35-45a3-9f0b-438fb7e48c45">
+</p>
+
+3. `GameController`에서는 `BattleUser`의 정보가 `props`로 있을 경우 `BattleUser`의 정보를 **아닐 경우 현재 combo등을** 표시!
+
+<p>
+  <img width="500" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/8e347417-82f1-4900-9550-68dd7ed6b1b0">
+</p>
+<p>
+  <img width="300" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/fd303846-c5db-442c-98e4-504b44cc594d">
+</p>
+<p>
+  <img width="450" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/a541ed42-1667-4140-8e23-192eab1b5aff">
+</p>
+
+### **useLayoutEffect의 적용**
+
+<hr>
+
+그렇게 입력된 정보들을 결과창으로 그대로 보내주면 되지 않을까? 라고 단순히 생각하려 했으나, **결과 값이 원하는 대로 표시되지 않는 이슈**가 있었습니다.
+
+단순히 노래의 길이와 현재 시작한 시간이 같아질 때 저장한 정보를 `dispatch`하면 되겠다 라는 생각을 했으나,
+
+문제를 확인해 보니 값이 제대로 들어오지 않는 것을 알 수 있었고,
+
+<p>
+  <img width="435" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/334bab14-0c08-467a-8aaf-e45f5e9bdbf1">
+</p>
+
+그 이유에 대해 조사해 보며 이유를 알 수 있었습니다.
+
+1. `useEffect`와 `requestAnimationFrame`을 같이 이용,
+2. `useEffect`의 `Cleanup`이 실행 시 `requestAnimationFrame`이 다음 프레임을 한번 더 불러 값이 초기화되는 부분을 알 수 있었습니다.
+
+`requestAnimationFrame`은 `Repaint` 이전에 주어진 콜백을 실행하도록 지시합니다.
+
+<p>
+  <img width="300" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/4117410a-239c-410c-82e6-3ff66efaa262">
+</p>
+
+위 그림과 같은 예시로 한 프레임 안에서 콜백을 실행 한 뒤 Painting을 진행합니다.
+
+반면, `useEffect`는 실제로 class형 컴포넌트의 메소드인 `componentDidUpdate`와 동일하게 `DOM`이 업데이트된 후 동기적으로 실행되는 것이 아니라, **나중에 실행**된다는 것입니다.
+
+<br>
+
+<p>
+  <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/3d8723d8-a33c-4e1a-bdaa-860a89b06171">
+</p>
+
+이 말은 브라우저가 `useEffect`가 실행되기 전에 `Repaint`할 수 있다는 말입니다.
+
+여기서 문제는 `useEffect`의 `cleanup`이 동기적으로 실행되지 않기 때문에, `cleanup`이 호출되기 전에 `requestAnimationFrame`(새 프레임)이 호출 된다는 것입니다.
+
+<p>
+  <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/0dc3b5fd-63a1-4f3d-8218-ba7201cf3d36">
+</p>
+
+이는 본질적으로 타이밍 문제였는데, 컴포넌트가 `DOM`에 렌더링되는 시점과, 클린업 함수가 호출되는 시점 사이에 스케쥴을 잡아 브라우저가 Repaint 하는 경우가 있는 것이 문제였습니다.
+
+이를 해결하기 위해 `useEffect` 외에도 `DOM`이 업데이트 된 후 동기적으로 실행된다는 점을 제외하면 동일한 방식인 `useLayoutEffect`를 도입해 해결해보고자 하였습니다.
+
+<p>
+  <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/368363d5-6aaf-4425-af29-8846f4a4d323">
+</p>
+
+`useLayoutEffect`내에서 스케쥴된 업데이트는 브라우저가 `Paint`하기 전에 동기적으로 실행된 다는 점을 알 수 있었기에, 이를 적용해 원하는 값을 얻을 수 있었습니다.
+
 <br>
 <br>
 
-## 실시간 배틀을 어떻게 최적화 해줄 수 있을까?
+## **실시간 통신을 사용해 어떻게 사용자 경험을 향상시킬 수 있을까?**
 
 노트에 대한 많은 정보가 전달되는 순간에 상대의 키값또한 많이 전달되므로 순간적으로 화면이 끊기는오류 현상 발생 하여 버퍼 오버플로우, 클라이언트 부하가 발생하는 현상이 발견되어 Socket.IO를 통한 실시간 배틀에서의 최적화를 고민하게 되었습니다.
 
@@ -495,23 +585,22 @@ setInterval(() => {
 ### Frontend
 
 - React
-- react-redux
+- Redux
 - React Router
-- [Styled Components](https://reactnative.dev/docs/stylesheet)
-- [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
-- [Canvas API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
-- socket.io-client
+- Styled Components
+- Web Audio API
+- Canvas API
+- Socket.io
 - ESLint
 - Firebase
 
 ### Backend
 
-- [Node.js](https://nodejs.org/ko/)
-- [Express](https://expressjs.com/ko/)
-- [MongoDB](https://www.mongodb.com/cloud/atlas/register)
-- [Mongoose](https://mongoosejs.com/)
-- Socket.IO
-- AWS S3
+- Node.js
+- Express
+- MongoDB
+- Mongoose
+- Socket.io
 - ESLint
 
 <br>
@@ -536,6 +625,30 @@ setInterval(() => {
 
 # 🏠 Members
 
-- [이상혁](https://github.com/HyukE) : mign2ki2@gmail.com
-- [정영빈](https://github.com/oyobbeb) : oyobbeb@gmail.com
-- [허수빈](https://github.com/shuh319) : shuh319@gmail.com
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/oyobbeb">
+        <img src="https://avatars.githubusercontent.com/u/113571767?v=4" alt="정영빈 프로필" width="200px" height="200px" />
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/HyukE">
+	      <img src="https://avatars.githubusercontent.com/u/107290583?v=4" alt="이상혁 프로필" width="200px" height="200px" />
+    </td>
+  </tr>
+  <tr>
+    <td>
+    <ul>
+      <li><a href="https://avatars.githubusercontent.com/u/113571767?v=4">Yeongbin Jeong 정영빈</a></li>
+		<li>oyobbeb@gmail.com</li>
+	</ul>
+    </td>
+    <td>
+    <ul>
+      <li><a href="https://avatars.githubusercontent.com/u/107290583?v=4">Sanghyuk Lee 이상혁</a></li>
+		<li>mign2ki2@gmail.com</li>
+	</ul>
+    </td>
+  </tr>
+</table>
