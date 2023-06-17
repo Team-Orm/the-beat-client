@@ -1,6 +1,6 @@
 # **🎶 The Beat**
 
-The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리케이션**입니다.
+The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어플리케이션**입니다.
 
 <p>
   <img width=500 src="https://github.com/Team-Orm/the-beat-client/assets/113571767/ab1459bd-297e-4fc8-9a68-8ac4ef77f45e" />
@@ -17,27 +17,25 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 - [🎥시연 화면](#🎥-시연-화면)
 - [기능 및 작업 기여도](#기능-및-작업-기여도)
 - [🔥 Issue Points](#🔥-issue-points)
-
-* [Canvas API를 통해 어떻게 리듬게임을 구현할 수 있을까?](#canvas-api를-통해-어떻게-리듬게임을-구현할-수-있을까)
-  - [Canvas API를 선택한 이유](#canvas-api를-선택한-이유)
-  - [델타 타임의 적용](#델타-타임의-적용)
-  - [다음 프레임 호출은 `setTimeout`과 `requestAnimationFrame`중 무엇을 써야 할 까?](#다음-프레임-호출은-settimeout과-requestanimationframe중-무엇을-써야-할-까)
-  - [`Miss` 처리](#miss-처리)
-* [`Web Audio API`와 `Canvas API`의 싱크를 어떻게 맞출 수 있을까?](#web-audio-api와-canvas-api의-싱크를-어떻게-맞출-수-있을까)
-  - [`Web Audio API`를 선택한 이유](#web-audio-api를-선택한-이유)
-  - [`Web Audio API` 기본 원리](#web-audio-api-기본-원리)
-  - [`Web Audio API`와 `Canvas API` 연결하기](#web-audio-api와-canvas-api-연결하기)
-* [실시간 콤보, 이펙트, 결과창의 구현](#실시간-콤보-이펙트-결과창의-구현)
-  - [`Redux`를 선택한 이유](#1-프록시-서버-생성)
-  - [`useLayoutEffect`의 적용](#uselayouteffect의-적용)
-* [Latency를 어떻게 줄일 수 있을까?](#5-socketio를-통한-실시간-배틀에서-어떻게-최적화를-해줄-수-있을까)
-  - [`Socket.IO`를 선택한 이유](#1-socketio를-선택한-이유)
-  - [2) Socket.IO로 실시간 기능을 구축하는 경우 염두에 두어야 할 점](#2-socketio로-실시간-기능을-구축하는-경우-염두에-두어야-할-점)
-  - [3) socket.IO 최적화의 중요성](#2-socketio-최적화의-중요성)
-  - [4) Socket.IO 최적화에 대한 몇 가지 규칙과 모범 사례](#3-socketio-최적화에-대한-몇-가지-규칙과-모범-사례)
-  - [5) 구조적인 Socket.IO의 최적화 방법](#4-구조적인-socketio의-최적화-방법)
-  - [6) Token Bucket Algorithm](#5-token-bucket-algorithm)
-
+  - [Canvas API를 통해 어떻게 리듬게임을 구현할 수 있을까?](#canvas-api를-통해-어떻게-리듬게임을-구현할-수-있을까)
+    - [Canvas API를 선택한 이유](#canvas-api를-선택한-이유)
+    - [델타 타임의 적용](#델타-타임의-적용)
+    - [다음 프레임 호출은 setTimeout과 requestAnimationFrame중 무엇을 써야 할 까?](#다음-프레임-호출은-settimeout과-requestanimationframe중-무엇을-써야-할-까)
+    - [Miss처리](#miss-처리)
+  - [Web Audio API와 Canvas API의 싱크를 어떻게 맞출 수 있을까?](#web-audio-api와-canvas-api의-싱크를-어떻게-맞출-수-있을까)
+    - [Web Audio API를 선택한 이유](#web-audio-api를-선택한-이유)
+    - [Web Audio API 기본 원리](#web-audio-api-기본-원리)
+    - [Web Audio API와 Canvas API 연결하기](#web-audio-api와-canvas-api-연결하기)
+  - [실시간 콤보, 이펙트, 결과창의 구현](#실시간-콤보-이펙트-결과창의-구현)
+    - [실시간으로 어떻게 표시해줄 수 있을까?](#실시간으로-어떻게-표시해줄-수-있을까)
+    - [useLayoutEffect의 적용](#uselayouteffect의-적용)
+  - [Latency를 어떻게 줄일 수 있을까?](#5-socketio를-통한-실시간-배틀에서-어떻게-최적화를-해줄-수-있을까)
+    - [`Socket.IO`를 선택한 이유](#1-socketio를-선택한-이유)
+    - [2) Socket.IO로 실시간 기능을 구축하는 경우 염두에 두어야 할 점](#2-socketio로-실시간-기능을-구축하는-경우-염두에-두어야-할-점)
+    - [3) socket.IO 최적화의 중요성](#2-socketio-최적화의-중요성)
+    - [4) Socket.IO 최적화에 대한 몇 가지 규칙과 모범 사례](#3-socketio-최적화에-대한-몇-가지-규칙과-모범-사례)
+    - [5) 구조적인 Socket.IO의 최적화 방법](#4-구조적인-socketio의-최적화-방법)
+    - [6) Token Bucket Algorithm](#5-token-bucket-algorithm)
 - [🗓 Schedule](#-schedule)
 - [🔗 Repository Link](#-repository-link)
 - [🛠 Tech Stacks](#-tech-stacks)
@@ -45,7 +43,6 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 - [🚀 Deployment](#🚀-deployment)
 - [🏠 Members](#-members)
 
-<br>
 <br>
 
 # **💪 Motivation**
@@ -55,6 +52,8 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 그 중 싱글스레드 `JavaScript`를 이용해 게임을 만들면 재밌지 않을까? 라는 물음으로부터 시작하였습니다.
 
 그렇게 실시간 통신과 `Canvas API`를 이용 할 수 있는, 시각적으로 재미있는 프로젝트를 고민하여 리듬게임이라는 아이디어를 선택하였습니다.
+
+<br>
 
 # **🎥 서비스 화면**
 
@@ -112,7 +111,9 @@ The Beat는 실시간 통신을 이용한 **배틀형 리듬게임 웹 어플리
 
 # 🔥 Issue Points
 
-3주간의 프로젝트를 진행하며 여러 이슈들 중 핵심적인 이슈 요소들은 다음과 같은 요소가 있었습니다.
+3주간의 프로젝트를 진행하며 겪은 여러 이슈들 중 핵심적인 이슈들을 설명하겠습니다.
+
+<br>
 
 ## **Canvas API를 통해 어떻게 리듬게임을 구현할 수 있을까?**
 
