@@ -6,15 +6,14 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
   <img width=500 src="https://github.com/Team-Orm/the-beat-client/assets/113571767/ab1459bd-297e-4fc8-9a68-8ac4ef77f45e" />
 </p>
 
-[Deployment🏠](https://frabjous-brigadeiros-9943ad.netlify.app/)
+[Deployment🏠](https://thebeat.fun)
 
 <br>
 
 # 📖 Table of Contents
 
-- [🎶 The beat](#🎶-the-beat)
 - [💪 Motivation](#💪-motivation)
-- [🎥시연 화면](#🎥-시연-화면)
+- [🎥서비스 화면](#🎥-서비스-화면)
 - [기능 및 작업 기여도](#기능-및-작업-기여도)
 - [🔥 Issue Points](#🔥-issue-points)
   - [Canvas API를 통해 어떻게 리듬게임을 구현할 수 있을까?](#canvas-api를-통해-어떻게-리듬게임을-구현할-수-있을까)
@@ -29,7 +28,7 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
   - [실시간 콤보, 이펙트, 결과창의 구현](#실시간-콤보-이펙트-결과창의-구현)
     - [실시간으로 어떻게 표시해줄 수 있을까?](#실시간으로-어떻게-표시해줄-수-있을까)
     - [useLayoutEffect의 적용](#uselayouteffect의-적용)
-  - [실시간 통신을 사용해 어떻게 사용자 경험을 향상시킬 수 있을까?](#실시간-통신을-사용해-어떻게-사용자-경험을-향상시킬-수-있을까)
+  - [Socket.IO를 더 효율적으로 사용해보기](#socketio를-더-효율적으로-사용해보기)
     - [Socket.IO와 WebSocket 중 어떤 것을 사용해야 하지?](#socketio와-websocket-중-어떤-것을-사용해야-하지)
     - [Socket.IO 최적화의 중요성](#socketio-최적화의-중요성)
     - [프로젝트 에서 Socket.IO를 어떻게 최적화를 적용하지?](#프로젝트-에서-socketio를-어떻게-최적화를-적용하지)
@@ -267,7 +266,11 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
 
 <img width="350" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/1c2254de-72f5-4e88-bfc8-ccfda806d192">
 
+<br>
+
 이렇게 연결된 `SourceNode`와 일련의 작업 노드들의 가공을 통해 `Destination`(output)으로 출력이 됩니다.
+
+<br>
 
 <img width="200" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/45ac2cf1-7a88-4d7f-94c6-e9ad197ffd71">
 
@@ -319,10 +322,9 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
 
 <hr>
 
-이제 나 자신의 점수와 스코어, 콤보를 관리하는 것 부터가 시작이었습니다.
-그 다음 관리된 정보를 상대방한테 보내주면 되겠다! 라는 프로세스를 정립하고 시작하였습니다.
+그 다음 Task는 나 자신의 점수와 스코어, 콤보를 관리하고 실시간으로 상대방에게 넘겨주는 것을 해결해야 했습니다.
 
-나 자신의 점수와 스코어, 콤보를 관리하기 위해서는 하나의 Resource에서 전부 관리해주는 것이 옳다고 판단하였고, 전역 상태 관리 툴인 Redux를 선택하게 되었습니다.
+나 자신의 정보를 관리하기 위해서는 하나의 Resource에서 전부 관리해주는 것이 옳다고 판단하였고, 전역 상태 관리 툴인 `Redux`를 선택하게 되었습니다.
 
 1. 내 정보는 `useState`를 통해 관리
 
@@ -339,46 +341,47 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
   <img width="600" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/198354eb-9b35-45a3-9f0b-438fb7e48c45">
 </p>
 
-3. `GameController`에서는 `BattleUser`의 정보가 `props`로 있을 경우 `BattleUser`의 정보를 **아닐 경우 현재 combo등을** 표시!
+3. `GameController`에서는 `BattleUser`의 정보가 `props`로 있을 경우 `BattleUser`의 정보를 표시, **아닐 경우 현재 `currentCombo`를** 표시!
 
 <p>
-  <img width="500" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/8e347417-82f1-4900-9550-68dd7ed6b1b0">
+  <img width="450" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/8e347417-82f1-4900-9550-68dd7ed6b1b0">
 </p>
 <p>
   <img width="300" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/fd303846-c5db-442c-98e4-504b44cc594d">
 </p>
 <p>
-  <img width="450" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/a541ed42-1667-4140-8e23-192eab1b5aff">
+  <img width="500" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/a541ed42-1667-4140-8e23-192eab1b5aff">
 </p>
 
 ### **useLayoutEffect의 적용**
 
 <hr>
 
-그렇게 입력된 정보들을 결과창으로 그대로 보내주면 되지 않을까? 라고 단순히 생각하려 했으나, **결과 값이 원하는 대로 표시되지 않는 이슈**가 있었습니다.
+이제는 노래가 끝날 때 결과창을 표시해주면 됐습니다. 그러나 **결과 값이 원하는 대로 표시되지 않는 이슈**가 있었습니다.
 
-단순히 노래의 길이와 현재 시작한 시간이 같아질 때 저장한 정보를 `dispatch`하면 되겠다 라는 생각을 했으나,
+처음 해결 방법은 입력된 정보들을 결과창으로 그대로 보내주면 되지 않을까? 라고 단순히 생각하여,
 
-문제를 확인해 보니 값이 제대로 들어오지 않는 것을 알 수 있었고,
+**단순히 노래의 길이와 현재 시작한 시간이 같아질 때** 저장한 정보를 `dispatch`하면 되겠다 라는 생각을 했으나,
+
+1. `console.log(콤보)`를 확인해 보니 두번 렌더링이 되며 값이 제대로 들어오지 않는 것을 알 수 있었습니다.
 
 <p>
   <img width="435" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/334bab14-0c08-467a-8aaf-e45f5e9bdbf1">
 </p>
 
-그 이유에 대해 조사해 보며 이유를 알 수 있었습니다.
+그 이유에 대해 조사를 해보며 이유를 알 수 있었습니다.
 
-1. `useEffect`와 `requestAnimationFrame`을 같이 이용,
-2. `useEffect`의 `Cleanup`이 실행 시 `requestAnimationFrame`이 다음 프레임을 한번 더 불러 값이 초기화되는 부분을 알 수 있었습니다.
-
-`requestAnimationFrame`은 `Repaint` 이전에 주어진 콜백을 실행하도록 지시합니다.
+1. `useEffect`와 `requestAnimationFrame`을 같이 이용.
+2. `requestAnimationFrame`은 `Repaint` 이전 주어진 콜백을 실행한 후 `Layout`과 `Paint`를 진행 합니다.
+3. `useEffect`의 `cleanup`이 브라우저의 `Paint` 이후에 실행되며 requestAnimationFrame을 한 번 더 호출해 값이 초기화되는 것이었습니다.
 
 <p>
   <img width="300" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/4117410a-239c-410c-82e6-3ff66efaa262">
 </p>
 
-위 그림과 같은 예시로 한 프레임 안에서 콜백을 실행 한 뒤 Painting을 진행합니다.
+위 이미지처럼 한 프레임 안에서 콜백을 먼저 호출한 뒤 `Painting`을 진행합니다.
 
-반면, `useEffect`는 실제로 class형 컴포넌트의 메소드인 `componentDidUpdate`와 동일하게 `DOM`이 업데이트된 후 동기적으로 실행되는 것이 아니라, **나중에 실행**된다는 것입니다.
+반면, `useEffect`는 실제로 `DOM`이 업데이트된 후 동기적으로 실행되는 것이 아니라, **나중에 실행**된다는 것이 문제였습니다.
 
 <br>
 
@@ -386,28 +389,32 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
   <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/3d8723d8-a33c-4e1a-bdaa-860a89b06171">
 </p>
 
-이 말은 브라우저가 `useEffect`가 실행되기 전에 `Repaint`할 수 있다는 말입니다.
+<br>
 
-여기서 문제는 `useEffect`의 `cleanup`이 동기적으로 실행되지 않기 때문에, `cleanup`이 호출되기 전에 `requestAnimationFrame`(새 프레임)이 호출 된다는 것입니다.
+그래서 `useEffect`가 실행되기 전에, `requestAnimationFrame`이 스케쥴을 선점해 `Repaint` 할 수 있다는 것이 문제였습니다.
 
 <p>
   <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/0dc3b5fd-63a1-4f3d-8218-ba7201cf3d36">
 </p>
 
-이는 본질적으로 타이밍 문제였는데, 컴포넌트가 `DOM`에 렌더링되는 시점과, 클린업 함수가 호출되는 시점 사이에 스케쥴을 잡아 브라우저가 Repaint 하는 경우가 있는 것이 문제였습니다.
-
-이를 해결하기 위해 `useEffect` 외에도 `DOM`이 업데이트 된 후 동기적으로 실행된다는 점을 제외하면 동일한 방식인 `useLayoutEffect`를 도입해 해결해보고자 하였습니다.
+- 이 말은 `useEffect`의 `cleanup`이 나중에 실행되기 때문에, `rAF`가 한번 더 호출되고 `cleanup`이 실행되어 값이 원하는 값으로 들어오지 않았습니다.
+- 이를 해결하기 위해 `useEffect` 외에도 `DOM`이 업데이트 된 후 동기적으로 실행된다는 점을 제외하면 동일한 방식인 `useLayoutEffect`를 도입해 해결해보고자 하였습니다.
 
 <p>
   <img width="400" alt="image" src="https://github.com/Team-Orm/the-beat-client/assets/113571767/368363d5-6aaf-4425-af29-8846f4a4d323">
 </p>
 
-`useLayoutEffect`내에서 스케쥴된 업데이트는 브라우저가 `Paint`하기 전에 동기적으로 실행된 다는 점을 알 수 있었기에, 이를 적용해 원하는 값을 얻을 수 있었습니다.
+두 `Hook` 다 `React`가 `DOM`과 `Refs`를 최신화 시킨 뒤 실행이 되지만 차이가 있었습니다.
+
+- `useLayoutEffect`는 `React`가 `DOM`을 최신화 시킨 뒤 곧 바로 `Paint` 이전에 실행하고 정리합니다.
+- `useEffect`는 `React`가 `Paint`를 한 직 후 `Effect`를 실행하고 정리합니다.
+
+이를 적용해 `requestAnimationFrame`의 호출이 이루어지기 전에 `dispatch`를 통해 값을 받음으로써 원하는 결과값을 얻어 이슈를 해결하였습니다.
 
 <br>
 <br>
 
-## **실시간 통신을 사용해 어떻게 사용자 경험을 향상시킬 수 있을까?**
+## **Socket.IO를 더 효율적으로 사용해보기**
 
 노트에 대한 많은 정보가 전달되는 순간에 상대의 키값또한 많이 전달되므로 순간적으로 화면이 끊기는오류 현상 발생 하여 버퍼 오버플로우, 클라이언트 부하가 발생하는 현상이 발견되어 Socket.IO를 통한 실시간 배틀에서의 최적화를 고민하게 되었습니다.
 
@@ -487,13 +494,13 @@ Socket.IO를 구조화 해주어 얻은 결과로는 아래와 같습니다.
 - **효율적인 메시지 전송**: 최적화된 소켓 구조를 사용하면, 필요한 클라이언트에게만 메시지를 전송할 수 있어 트래픽이 줄어들고 통신이 효율적으로 이루어집니다.
 - **성능 향상**: 불필요한 메시지 전송이 줄어들어 클라이언트의 메시지 처리 부하가 감소하고, 전체적인 성능이 향상됩니다.
 - **유지 보수성**: 소켓 구조를 최적화하면 아래의 프로젝트에 사용한 코드처럼 구조가 명확해져서 유지 보수와 확장이 쉬워집니다.
-<br>
-<img width="400" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/059fc0fe-1eec-446f-b1f6-74a867161784">
-<br>
-<img width="650" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/88d75dce-87f2-4786-a8cc-2446dc3cea76">
+  <br>
+  <img width="400" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/059fc0fe-1eec-446f-b1f6-74a867161784">
+  <br>
+  <img width="650" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/88d75dce-87f2-4786-a8cc-2446dc3cea76">
 
-  <br>
-  <br>
+<br>
+<br>
 
 # 🗓 Schedule
 
