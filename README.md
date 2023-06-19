@@ -29,9 +29,9 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
     - [실시간으로 어떻게 표시해줄 수 있을까?](#실시간으로-어떻게-표시해줄-수-있을까)
     - [useLayoutEffect의 적용](#uselayouteffect의-적용)
   - [Socket.IO를 더 효율적으로 사용해보기](#socketio를-더-효율적으로-사용해보기)
-    - [Socket.IO와 WebSocket 중 어떤 것을 사용해야 하지?](#socketio와-websocket-중-어떤-것을-사용해야-하지)
+    - [Socket.IO 프레임워크를 사용한 이유](#socketio-프레임워크를-사용한-이유)
     - [Socket.IO 최적화의 중요성](#socketio-최적화의-중요성)
-    - [프로젝트 에서 Socket.IO를 어떻게 최적화를 적용하지?](#프로젝트-에서-socketio를-어떻게-최적화를-적용하지)
+    - [우리 프로젝트에서 Socket.IO를 어떻게 최적화 할 수 있을까?](#우리-프로젝트에서-socketio를-어떻게-최적화-할-수-있을까)
 - [🗓 Schedule](#-schedule)
 - [🔗 Repository Link](#-repository-link)
 - [🛠 Tech Stacks](#-tech-stacks)
@@ -425,6 +425,8 @@ The Beat 리듬게임 프로젝트에서는 Socket.IO을 사용하여 서버와 
 
 ### Socket.IO 프레임워크를 사용한 이유
 
+<hr>
+
 <img width="500" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/8623cbf0-64ca-4211-ac66-42e4ff4d9592">
 
 저희는 WebSocket을 단독으로 사용할지 아니면 Socket.IO 프레임워크를 사용할지 고민해봤습니다.
@@ -450,6 +452,8 @@ WebSocket만 사용해도 실시간 양방향 통신을 제공하지만, 아래�
 
 ### Socket.IO 최적화의 중요성
 
+<hr>
+
 소켓 최적화는 컴퓨터 네트워크에서 소켓 통신의 성능과 효율성을 향상시키는 프로세스를 말하며, 소켓 최적화는 응용 프로그램과 장치 간의 데이터 전송 속도와 안정성을 크게 향상시킬 수 있기 때문에 중요합니다.
 <br>
 
@@ -467,7 +471,9 @@ The beat 리듬게임에서 Socket.IO의 최적화가 필요한 이유는 아래
 
 <br>
 
-### 프로젝트에서 Socket.IO를 어떻게 최적화를 적용하지?
+### 우리 프로젝트에서 Socket.IO를 어떻게 최적화 할 수 있을까?
+
+<hr>
 
 The Beat 프로젝트에서는 Socket.IO의 'Namespace'와 'Room' 기능을 활용하여 서버 구조를 최적화하였습니다.
 <br>
