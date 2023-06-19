@@ -416,24 +416,24 @@ The Beat는 **실시간 통신**을 이용한 **배틀형 리듬게임 웹 어�
 
 ## **Socket.IO를 더 효율적으로 사용해보기**
 
-노트에 대한 많은 정보가 전달되는 순간에 상대의 키값또한 많이 전달되므로 순간적으로 화면이 끊기는오류 현상 발생 하여 버퍼 오버플로우, 클라이언트 부하가 발생하는 현상이 발견되어 Socket.IO를 통한 실시간 배틀에서의 최적화를 고민하게 되었습니다.
+노트에 대한 많은 정보가 전달될 때 상대의 키값 또한 전달되므로 순간적으로 Latency의 증가가 발견되어 Socket.IO를 통한 실시간 배틀에서의 최적화를 고민하게 되었습니다.
 
-The Beat 리듬게임 프로젝트에서는 socket.IO을 사용하여 서버와 여러 클라이언트 간의 실시간 통신을 합니다. 따라서 저희는 socket.IO 통신의 효율성과 성능이 중요하다고 판단했습니다.
-그리고 다음과 같은 다양한 방안을 고안하여 socket.IO 최적화를 추구하고자 노력하였습니다.
+The Beat 리듬게임 프로젝트에서는 Socket.IO을 사용하여 서버와 여러 클라이언트 간의 실시간 통신을 합니다. 따라서 저희는 Socket.IO 통신의 효율성과 성능이 중요하다고 판단했습니다.
+그리고 다음과 같은 다양한 방안을 고안하여 Socket.IO 최적화를 하고자 노력하였습니다.
 
 <br>
 
-### Socket.IO와 WebSocket 중 어떤 것을 사용해야 하지?
+### Socket.IO 프레임워크를 사용한 이유
 
 <img width="500" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/8623cbf0-64ca-4211-ac66-42e4ff4d9592">
 
-Socket.IO와 WebSocket는 모두 실시간 통신에 사용되는 기술이지만, 어떤 기술을 사용해야할지 각 기술의 특성을 이해하고 선택하였습니다.
+저희는 WebSocket을 단독으로 사용할지 아니면 Socket.IO 프레임워크를 사용할지 고민해봤습니다.
 
 **Socket.IO를 선택한 이유**
 <br>
-Socket.IO는 양방햔 통신을 하기위해 WebSocket 기술을 활용하는 라이브러리입니다.
+Socket.IO는 양방향 통신을 하기위해 WebSocket 기술을 활용하는 라이브러리입니다.
 <br>
-WebSocket도 실시간 양방향 통신을 제공하지만, 아래와 같은 Socket.IO가 제공하는 몇몇 기능들은 기본적으로 제공하지 않습니다.
+WebSocket만 사용해도 실시간 양방향 통신을 제공하지만, 아래와 같은 Socket.IO가 제공하는 몇몇 기능들은 기본적으로 제공하지 않습니다.
 
 - **실시간 이벤트 기반 통신**: 음악 게임에서는 사용자의 입력에 따라 실시간으로 게임이 반응해야 합니다. Socket.IO는 이벤트 기반의 통신을 지원하므로, 사용자의 각각의 액션을 이벤트로 취급하고 서버에 실시간으로 전달하는 것이 가능합니다.
 
@@ -441,8 +441,10 @@ WebSocket도 실시간 양방향 통신을 제공하지만, 아래와 같은 Soc
 
 - **네임스페이스와 룸 기능**: Socket.IO는 네임스페이스와 룸을 지원하여 다수의 사용자가 동시에 게임을 즐길 수 있도록 만듭니다. 또한, 룸을 사용하면 여러 플레이어가 동일한 게임 세션에 참여할 수 있으며, 서버는 특정 룸의 모든 클라이언트에게 쉽게 메시지를 전송할 수 있습니다
 
+- **환경 호환성 보장**: 모든 웹 브라우저나 네트워크 환경이 WebSocket을 지원하지 않는 경우, Socket.IO의 HTTP Long-Polling fallback기능은 어떠한 환경에서도 실시간 통신을 가능하게 합니다. 따라서, 저희 프로젝트는 어떠한 웹 브라우저에서도 실시간 통신이 가능합니다.
+
 <br>
-위와 같은 특징이 저희 프로젝트에 필요하여 Socket.IO를 선택하여 양방향 통신을 선택하였습니다.
+위와 같은 특징이 저희 프로젝트에 필요하여 Socket.IO를 선택하였습니다.
 
 <br>
 
@@ -465,7 +467,7 @@ The beat 리듬게임에서 Socket.IO의 최적화가 필요한 이유는 아래
 
 <br>
 
-### 프로젝트 에서 Socket.IO를 어떻게 최적화를 적용하지?
+### 프로젝트에서 Socket.IO를 어떻게 최적화를 적용하지?
 
 The Beat 프로젝트에서는 Socket.IO의 'Namespace'와 'Room' 기능을 활용하여 서버 구조를 최적화하였습니다.
 <br>
@@ -482,7 +484,7 @@ Socket.IO의 'Namespace'는 특정 주제 또는 주제 그룹에 대한 소켓 
 
 <br>
 
-**Socket.IO 최적화 결과**
+**Socket.IO 최적화 적용**
 <br>
 
 <img width="500" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/51bb40aa-0d22-4450-9040-eb56f6a7cc58">
@@ -494,10 +496,12 @@ Socket.IO를 구조화 해주어 얻은 결과로는 아래와 같습니다.
 - **효율적인 메시지 전송**: 최적화된 소켓 구조를 사용하면, 필요한 클라이언트에게만 메시지를 전송할 수 있어 트래픽이 줄어들고 통신이 효율적으로 이루어집니다.
 - **성능 향상**: 불필요한 메시지 전송이 줄어들어 클라이언트의 메시지 처리 부하가 감소하고, 전체적인 성능이 향상됩니다.
 - **유지 보수성**: 소켓 구조를 최적화하면 아래의 프로젝트에 사용한 코드처럼 구조가 명확해져서 유지 보수와 확장이 쉬워집니다.
-  <br>
+
+<br>
   <img width="400" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/059fc0fe-1eec-446f-b1f6-74a867161784">
-  <br>
-  <img width="650" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/88d75dce-87f2-4786-a8cc-2446dc3cea76">
+
+<br>
+<img width="650" src="https://github.com/Team-Orm/the-beat-client/assets/107290583/88d75dce-87f2-4786-a8cc-2446dc3cea76">
 
 <br>
 <br>
@@ -549,6 +553,7 @@ Socket.IO를 구조화 해주어 얻은 결과로는 아래와 같습니다.
 - Socket.io
 - ESLint
 - Firebase
+- Netlify
 
 ### Backend
 
@@ -558,6 +563,8 @@ Socket.IO를 구조화 해주어 얻은 결과로는 아래와 같습니다.
 - Mongoose
 - Socket.io
 - ESLint
+- AWS S3
+- AWS Elastic Beanstalk
 
 <br>
 <br>
@@ -566,7 +573,7 @@ Socket.IO를 구조화 해주어 얻은 결과로는 아래와 같습니다.
 
 - Frontend: React Testing Library, Jest
 - Backend: Jest, Supertest
-- E2E: Puppeteer, Jest
+- E2E: Puppeteer
 
 <br>
 <br>
@@ -592,19 +599,29 @@ Socket.IO를 구조화 해주어 얻은 결과로는 아래와 같습니다.
       <a href="https://github.com/HyukE">
 	      <img src="https://avatars.githubusercontent.com/u/107290583?v=4" alt="이상혁 프로필" width="200px" height="200px" />
     </td>
+    <td align="center">
+      <a href="https://github.com/shuh319">
+	      <img src="https://avatars.githubusercontent.com/u/115068443?v=4" alt="허수빈 프로필" width="200px" height="200px" />
+    </td>
   </tr>
   <tr>
     <td>
-    <ul>
-      <li><a href="https://avatars.githubusercontent.com/u/113571767?v=4">Yeongbin Jeong 정영빈</a></li>
-		<li>oyobbeb@gmail.com</li>
-	</ul>
+      <ul>
+        <li><a href="https://avatars.githubusercontent.com/u/113571767?v=4">Yeongbin Jeong 정영빈</a></li>
+        <li>oyobbeb@gmail.com</li>
+      </ul>
     </td>
     <td>
-    <ul>
-      <li><a href="https://avatars.githubusercontent.com/u/107290583?v=4">Sanghyuk Lee 이상혁</a></li>
-		<li>mign2ki2@gmail.com</li>
-	</ul>
+      <ul>
+        <li><a href="https://avatars.githubusercontent.com/u/107290583?v=4">Sanghyuk Lee 이상혁</a></li>
+        <li>mign2ki2@gmail.com</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://avatars.githubusercontent.com/u/115068443?v=4">Subin Heo</a></li>
+        <li>shuh319@gmail.com</li>
+      </ul>
     </td>
   </tr>
 </table>
